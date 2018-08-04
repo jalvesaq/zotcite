@@ -108,9 +108,9 @@ class ZoteroEntries:
             self._cite = '{Author}_{Year}'
 
         # Title words to be ignored
-        self._w = os.getenv('ZBannedWords')
-        if self._w is None:
-            self._w = 'a an the some from on in to of do with'
+        self._bwords = os.getenv('ZBannedWords')
+        if self._bwords is None:
+            self._bwords = 'a an the some from on in to of do with'
 
         # Bib entries by collection
         self._e = {}
@@ -173,15 +173,21 @@ class ZoteroEntries:
 
 
     def _load_zotero_data(self):
-        self._m = os.path.getmtime(self._z)
+        self._ztime = os.path.getmtime(self._z)
+        zcopy = self._tmpdir + '/copy_of_zotero.sqlite'
+        if os.path.isfile(zcopy):
+            zcopy_time = os.path.getmtime(zcopy)
+        else:
+            zcopy_time = 0
 
         # Make a copy of zotero.sqlite to avoid locks
-        with open(self._z, 'rb') as f:
-            b = f.read()
-        with open(self._tmpdir + '/copy_of_zotero.sqlite', 'wb') as f:
-            f.write(b)
+        if self._ztime > zcopy_time:
+            with open(self._z, 'rb') as f:
+                b = f.read()
+            with open(zcopy, 'wb') as f:
+                f.write(b)
 
-        conn = sqlite3.connect(self._tmpdir + '/copy_of_zotero.sqlite')
+        conn = sqlite3.connect(zcopy)
         self._cur = conn.cursor()
         self._add_most_fields()
         self._add_collection()
@@ -193,7 +199,6 @@ class ZoteroEntries:
         self._calculate_citekeys()
         self._separate_by_collection()
         conn.close()
-        os.remove(self._tmpdir + '/copy_of_zotero.sqlite')
 
 
     def _add_most_fields(self):
@@ -297,7 +302,7 @@ class ZoteroEntries:
             self._t[pId]['attachment'] = pKey + ':' + aPath
 
     def _calculate_citekeys(self):
-        ptrn = '^(' + ' |'.join(self._w) + ' )'
+        ptrn = '^(' + ' |'.join(self._bwords) + ' )'
         for k in self._t:
             if 'date' in self._t[k]:
                 year = re.sub(' .*', '', self._t[k]['date']).split('-')[0]
@@ -357,7 +362,7 @@ class ZoteroEntries:
             ptrn (string): The pattern to search for, converted to lower case.
             d    (string): The name of the markdown document.
         """
-        if os.path.getmtime(self._z) > self._m:
+        if os.path.getmtime(self._z) > self._ztime:
             self._load_zotero_data()
 
         collections = self._d[d]
@@ -456,13 +461,30 @@ class ZoteroEntries:
                     return "nOaTtAChMeNt"
         return "nOcItEkEy"
 
+    def GetRefData(self, zotkey):
+        """ Return the key's dictionary.
+
+            zotkey  (string): The Zotero key as it appears in the markdown document.
+        """
+
+        for c in self._e:
+            for k in self._e[c]:
+                if self._e[c][k]['zotkey'] == zotkey:
+                    return self._e[c][k]
+        return "NoCiteKey"
+
     def Info(self):
         """ Return information that might be useful for users of ZoteroEntries """
 
-        r = {'path': os.path.realpath(__file__),
-             'tmpdir': self._tmpdir,
-             'docs': str(self._d) + '\n',
-             'nrefs': []}
+        n = 0
         for c in self._e:
-            r['nrefs'].append(c +' = ' + str(len(self._e[c].keys())))
+            n += len(self._e[c].keys())
+        r = {'zotero.py': os.path.realpath(__file__),
+             'zotero.sqlite': self._z,
+             'tmpdir': self._tmpdir,
+             'number of references': n,
+             'docs': str(self._d) + '\n',
+             'citation template': self._cite,
+             'banned words': self._bwords,
+            }
         return r

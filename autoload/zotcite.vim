@@ -5,6 +5,21 @@ function zotcite#warning(wmsg)
     echohl None
 endfunction
 
+function zotcite#info()
+    if exists('g:zotcite_failed')
+        call zotcite#warning(g:zotcite_failed)
+        return
+    endif
+    let info = py3eval('ZotCite.Info()')
+    for key in keys(info)
+        echohl Title
+        echo key
+        echohl None
+        echo info[key]
+        echo ""
+    endfor
+endfunction
+
 function zotcite#CompleteBib(findstart, base)
     if a:findstart
         let line = getline(".")
@@ -19,7 +34,6 @@ function zotcite#CompleteBib(findstart, base)
         let resp = []
         let s:bib_finished = 0
         let lines = py3eval('ZotCite.GetMatch("'. citeptrn .'", "'. expand("%:p") .'")')
-        let g:TheLines = lines
         for line in lines
             let tmp = split(line, "\x09")
             call add(resp, {'word': tmp[0], 'abbr': tmp[1], 'menu': tmp[2]})
@@ -28,7 +42,7 @@ function zotcite#CompleteBib(findstart, base)
     endif
 endfunction
 
-function zotcite#GetZoteroAttachment()
+function zotcite#GetCitationKey()
     let oldisk = &iskeyword
     set iskeyword=@,48-57,_,192-255,@-@,#
     let wrd = expand('<cword>')
@@ -36,24 +50,48 @@ function zotcite#GetZoteroAttachment()
     if wrd =~ '^@'
         let wrd = substitute(wrd, '^@', '', '')
         let wrd = substitute(wrd, '#.*', '', '')
-        if wrd != ''
-            let repl = py3eval('ZotCite.GetAttachment("' . wrd . '")')
-            if repl == 'nOaTtAChMeNt'
-                call zotcite#warning(wrd . "'s attachment not found")
-            elseif repl =~ 'nOcLlCtN:'
-                call zotcite#warning('Collection "' . substitute(repl, 'nOcLlCtN:', '', '') . '" not found')
-            elseif repl == 'nOcItEkEy'
-                call zotcite#warning(wrd . " not found")
-            elseif repl == ''
-                call zotcite#warning('No reply from BibComplete')
+        return wrd
+    endif
+    return ''
+endfunction
+
+function zotcite#GetReferenceData()
+    let wrd = zotcite#GetCitationKey()
+    if wrd != ''
+        let repl = py3eval('ZotCite.GetRefData("' . wrd . '")')
+        if has_key(repl, 'alastnm')
+            echohl Identifier
+            echon repl['alastnm'] . ' '
+        endif
+        echohl Number
+        echon repl['year'] . ' '
+        if has_key(repl, 'title')
+            echohl Title
+            echon repl['title']
+            echohl None
+        endif
+    endif
+endfunction
+
+function zotcite#GetZoteroAttachment()
+    let wrd = zotcite#GetCitationKey()
+    if wrd != ''
+        let repl = py3eval('ZotCite.GetAttachment("' . wrd . '")')
+        if repl == 'nOaTtAChMeNt'
+            call zotcite#warning(wrd . "'s attachment not found")
+        elseif repl =~ 'nOcLlCtN:'
+            call zotcite#warning('Collection "' . substitute(repl, 'nOcLlCtN:', '', '') . '" not found')
+        elseif repl == 'nOcItEkEy'
+            call zotcite#warning(wrd . " not found")
+        elseif repl == ''
+            call zotcite#warning('No reply from BibComplete')
+        else
+            let fpath = repl
+            let fpath = expand('~/Zotero/storage/') . substitute(repl, ':storage:', '/', '')
+            if filereadable(fpath)
+                call system(s:open_cmd . ' "' . fpath . '"')
             else
-                let fpath = repl
-                let fpath = expand('~/Zotero/storage/') . substitute(repl, ':storage:', '/', '')
-                if filereadable(fpath)
-                    call system(s:open_cmd . ' "' . fpath . '"')
-                else
-                    call zotcite#warning('Could not find "' . fpath . '"')
-                endif
+                call zotcite#warning('Could not find "' . fpath . '"')
             endif
         endif
     endif
@@ -112,6 +150,7 @@ function zotcite#GetCollectionName()
 endfunction
 
 function zotcite#GlobalInit()
+    command Zinfo call zotcite#info()
     if !has('python3')
         let g:zotcite_failed = 'zotcite requires python3'
         call zotcite#warning(g:zotcite_failed)
@@ -133,7 +172,7 @@ function zotcite#GlobalInit()
     " Get information from ZoteroEntries and set environment variables for citeref
     let info = py3eval('ZotCite.Info()')
     let $Zotcite_tmpdir = info['tmpdir']
-    let zotcite_home = substitute(info['path'], '\(.*\)/.*', '\1', '')
+    let zotcite_home = substitute(info['zotero.py'], '\(.*\)/.*', '\1', '')
     if $PATH !~ zotcite_home
         if has("win32")
             let $PATH = zotcite_home . ';' . $PATH
@@ -170,7 +209,16 @@ function zotcite#Init()
     " And repeat this for every buffer
     if !exists('b:zotref_did_buffer_cmds')
         let b:zotref_did_buffer_cmds = 1
-        nnoremap <buffer><silent> <c-]> :call zotcite#GetZoteroAttachment()<cr>
+        if hasmapto('<Plug>ZOpenAttachment', 'n')
+            exec 'nnoremap <buffer><silent> <Plug>ZOpenAttachment :call zotcite#GetZoteroAttachment()<cr>'
+        else
+            nnoremap <buffer><silent> <Leader>zo :call zotcite#GetZoteroAttachment()<cr>
+        endif
+        if hasmapto('<Plug>ZCitationInfo', 'n')
+            exec 'nnoremap <buffer><silent> <Plug>ZCitationInfo :call zotcite#GetReferenceData()<cr>'
+        else
+            nnoremap <buffer><silent> <Leader>zi :call zotcite#GetReferenceData()<cr>
+        endif
         if exists('g:zotcite_conceallevel')
             exe 'set conceallevel=' . g:zotcite_conceallevel
         else

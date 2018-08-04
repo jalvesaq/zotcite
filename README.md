@@ -14,18 +14,18 @@ Zotcite requires Python 3 and Zotero 5.
 
 To insert citation keys, in Insert mode, type the `@` letter and one or more
 letters of either the last name of the first author or the reference title and
-press <kbd>CTRL</kbd><kbd>X</kbd><kbd>CTRL</kbd><kbd>O</kbd>.
+press `CTRL-X CTRL-O`.
 
 To convert a Markdown document with pandoc, use the `zotref` filter that comes
-with *zotcite*. The *zotcite* plugin adds the directory where `zotref` is to
+with Zotcite. The Zotcite plugin adds the directory where `zotref` is to
 the system `$PATH`. So, from within Vim/Neovim, do:
 
 ```
 !pandoc file_name.md -s -o file_name.html -F zotref -F pandoc-citeproc
 ```
 
-Of course, replace `file_name` with the actual name of the markdown document
-being edited, and `html` with the appropriate file extension.
+Replace `file_name` with the actual name of the markdown document being
+edited, and `html` with the appropriate file extension.
 
 To compile an RMarkdown document with the [Nvim-R](https://github.com/jalvesaq/Nvim-R)
 plugin, add the following lines to the YAML header of the document (replace
@@ -37,10 +37,34 @@ output:
     pandoc_args: ['-F', 'zotref', '-F', 'pandoc-citeproc']
 ```
 
-## Details and Customization
+To open the reference's attachment as registered in Zotero's database, put the
+cursor over the citation key and press `<Leader>zo` in Normal mode.
 
-You can change *Zotcite* behavior by setting some environment variables in
-your `vimrc`/`init.vim`. 
+To see additional information on a citation key, put ther cursor over it and
+press `<Leader>zi`.
+
+## Customization
+
+### Change default maps
+
+To change the shortcut to open reference attachment, set the value of
+`<Plug>ZOpenAttachment` in your vimrc as below:
+
+```vim
+nmap <c-]> <Plug>ZOpenAttachment
+```
+
+To change the shortcut to show information on the reference of a citation key,
+follow the example:
+
+```vim
+nmap <c-i> <Plug>ZCitationInfo
+```
+
+### Zotcite engine
+
+You can change most of Zotcite's behavior by setting some environment
+variables in your `vimrc`/`init.vim`.
 
 The citation keys inserted by Zotcite have the format `@ZoteroKey#Author_Year`
 where `ZoteroKey` is the key attributed by Zotero to the references stored in
@@ -91,6 +115,24 @@ follow the example:
 let $Zotcite_tmpdir = '/path/to/temporary_and_cache_directory
 ```
 
+If you want to restrict the search for references to specific collections
+while completing citation keys, set the value `collection` in the YAML header
+of the Markdown document, as in the examples:
+
+```
+---
+collection: ['New Paper']
+...
+```
+
+```
+---
+collection: ['PhD Thesis', 'New Paper']
+...
+```
+
+### Syntax Highlighting
+
 The above customization is done with environment variables, but the syntax
 highlighting customization is done with Vim variables.
 
@@ -106,4 +148,13 @@ different value, follow the example:
 
 ```vim
 let zotcite_conceallevel = 0
+```
+
+## Troubleshooting
+
+If either the plugin does not work or you want easy access to the values of
+some internal variables, do the following command:
+
+```vim
+:Zinfo
 ```

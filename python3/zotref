@@ -28,6 +28,9 @@ if __name__ == "__main__":
     # the string into the YAML header of a dummy markdown document.
     r = z.GetYamlRefs(c)
 
+    # To see the dummy markdown document created by `zotref` with the
+    # references in its YAML header, set the environment variable
+    # `DEBUG_zotref` with any value.
     if os.getenv('DEBUG_zotref'):
         with open('/tmp/DEBUG_zotref', 'w') as f:
             f.write(r)
