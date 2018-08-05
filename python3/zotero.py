@@ -482,7 +482,7 @@ class ZoteroEntries:
         r = {'zotero.py': os.path.realpath(__file__),
              'zotero.sqlite': self._z,
              'tmpdir': self._tmpdir,
-             'number of references': n,
+             'references found': n,
              'docs': str(self._d) + '\n',
              'citation template': self._cite,
              'banned words': self._bwords,

@@ -133,8 +133,7 @@ collection: ['PhD Thesis', 'New Paper']
 
 ### Syntax Highlighting
 
-The above customization is done with environment variables, but the syntax
-highlighting customization is done with Vim variables.
+Syntax highlighting customization is done with Vim variables.
 
 If you want to disable Zotcite's syntax highlighting of citation keys, put in
 your vimrc:
@@ -158,3 +157,6 @@ some internal variables, do the following command:
 ```vim
 :Zinfo
 ```
+
+Note that Zotcite will not enable omni completion if any of the buffer's lines
+matches the regular pattern `^bibliography:.*\.bib` when the markdown file is read.

@@ -10,14 +10,31 @@ function zotcite#info()
         call zotcite#warning(g:zotcite_failed)
         return
     endif
-    let info = py3eval('ZotCite.Info()')
-    for key in keys(info)
-        echohl Title
-        echo key
-        echohl None
-        echo info[key]
-        echo ""
-    endfor
+    if s:zrunning
+        let info = py3eval('ZotCite.Info()')
+        echohl Statement
+        echo 'Information from the Python module:'
+        for key in keys(info)
+            echohl Title
+            echo '  ' . key . repeat(' ', 18 - len(key))
+            echohl None
+            echon ': ' .info[key]
+        endfor
+    endif
+    if s:log != [] || &omnifunc != 'zotcite#CompleteBib'
+        if s:zrunning
+            echo " "
+            echohl Statement
+            echo 'Additional messages:'
+            echohl None
+        endif
+        if &omnifunc != 'zotcite#CompleteBib'
+            echo 'There is another omnifunc enabled: ' . &omnifunc
+        endif
+        for line in s:log
+            echo line
+        endfor
+    endif
 endfunction
 
 function zotcite#CompleteBib(findstart, base)
@@ -32,7 +49,6 @@ function zotcite#CompleteBib(findstart, base)
     else
         let citeptrn = substitute(a:base, '^@', '', '')
         let resp = []
-        let s:bib_finished = 0
         let lines = py3eval('ZotCite.GetMatch("'. citeptrn .'", "'. expand("%:p") .'")')
         for line in lines
             let tmp = split(line, "\x09")
@@ -150,7 +166,6 @@ function zotcite#GetCollectionName()
 endfunction
 
 function zotcite#GlobalInit()
-    command Zinfo call zotcite#info()
     if !has('python3')
         let g:zotcite_failed = 'zotcite requires python3'
         call zotcite#warning(g:zotcite_failed)
@@ -168,6 +183,7 @@ function zotcite#GlobalInit()
     " Start ZoteroEntries
     py3 from zotero import ZoteroEntries
     py3 ZotCite = ZoteroEntries()
+    let s:zrunning = 1
 
     " Get information from ZoteroEntries and set environment variables for citeref
     let info = py3eval('ZotCite.Info()')
@@ -199,6 +215,15 @@ function zotcite#Init()
         return
     endif
 
+    " Don't continue if bib file is already in use
+    let lines = getline(1, '$')
+    for line in lines
+        if line =~ '^bibliography:.*\.bib'
+            call add(s:log, 'Not enabled for "' . expand('%') . '" (' . line . ')')
+            return
+        endif
+    endfor
+
     " Do this only once
     if !exists('s:open_cmd')
         if zotcite#GlobalInit() == 0
@@ -228,3 +253,5 @@ function zotcite#Init()
     endif
 endfunction
 
+let s:log = []
+let s:zrunning = 0
