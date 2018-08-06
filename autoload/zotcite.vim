@@ -21,7 +21,7 @@ function zotcite#info()
             echon ': ' .info[key]
         endfor
     endif
-    if s:log != [] || &omnifunc != 'zotcite#CompleteBib'
+    if s:log != [] || (&omnifunc != '' && &omnifunc != 'zotcite#CompleteBib')
         if s:zrunning
             echo " "
             echohl Statement
