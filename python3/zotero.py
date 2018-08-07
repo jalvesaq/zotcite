@@ -121,14 +121,16 @@ class ZoteroEntries:
         # Path of zotero.sqlite
         if os.getenv('ZoteroSQLpath') is None:
             if os.path.isfile(os.getenv('HOME') + '/Zotero/zotero.sqlite'):
-                zsql = os.getenv('HOME') + '/Zotero/zotero.sqlite'
+                self._z = os.getenv('HOME') + '/Zotero/zotero.sqlite'
+            else:
+                self._errmsg('The file zotero.sqlite3 was not found. Please, define the environment variable ZoteroSQLpath.')
+                return None
         else:
-            zsql = os.path.expanduser(os.getenv('ZoteroSQLpath'))
-        if zsql is None:
-            sys.stderr.write('The file zotero.sqlite3 was not found. Please, define the environment variable ZoteroSQLpath.\n')
-            sys.stderr.flush()
-            sys.exit(1)
-        self._z = zsql
+            if os.path.isfile(os.path.expanduser(os.getenv('ZoteroSQLpath'))):
+                self._z = os.path.expanduser(os.getenv('ZoteroSQLpath'))
+            else:
+                self._errmsg('Please, check if $ZoteroSQLpath is correct: "' + os.getenv('ZoteroSQLpath') + '" not found.')
+                return None
 
         # Temporary directory
         if os.getenv('Zotcite_tmpdir') is None:
@@ -145,7 +147,14 @@ class ZoteroEntries:
         else:
             self._tmpdir = os.path.expanduser(os.getenv('Zotcite_tmpdir'))
         if not os.path.isdir(self._tmpdir):
-            os.mkdir(self._tmpdir)
+            try:
+                os.mkdir(self._tmpdir)
+            except:
+                self._exception()
+                return None
+        if not os.access(self._tmpdir, os.W_OK):
+            self._errmsg('Please, either set or fix the value of $Zotcite_tmpdir: "' + self._tmpdir + '" is not writable.')
+            return None
 
         self._load_zotero_data()
 
@@ -349,6 +358,17 @@ class ZoteroEntries:
             if self._t[k]['collection'] not in self._e:
                 self._e[self._t[k]['collection']] = {}
             self._e[self._t[k]['collection']][str(k)] = self._t[k]
+
+    @classmethod
+    def _errmsg(cls, msg):
+        sys.stderr.write(msg + '\n')
+        sys.stderr.flush()
+
+    def _exception(self):
+        import traceback
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+        self._errmsg("Zotcite error: " + "".join(line for line in lines))
 
     @classmethod
     def _get_compl_line(cls, e):

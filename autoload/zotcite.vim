@@ -183,10 +183,17 @@ function zotcite#GlobalInit()
     " Start ZoteroEntries
     py3 from zotero import ZoteroEntries
     py3 ZotCite = ZoteroEntries()
-    let s:zrunning = 1
 
     " Get information from ZoteroEntries and set environment variables for citeref
-    let info = py3eval('ZotCite.Info()')
+    try
+        let info = py3eval('ZotCite.Info()')
+    catch *
+        let g:zotcite_failed = 'Failed to create ZoteroEntries object.'
+        let s:zrunning = 0
+        return 0
+    endtry
+    let s:zrunning = 1
+
     let $Zotcite_tmpdir = info['tmpdir']
     let zotcite_home = substitute(info['zotero.py'], '\(.*\)/.*', '\1', '')
     if $PATH !~ zotcite_home
