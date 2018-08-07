@@ -16,6 +16,9 @@ To insert citation keys, in Insert mode, type the `@` letter and one or more
 letters of either the last name of the first author or the reference title and
 press `CTRL-X CTRL-O`.
 
+You will soon be able to also use [citation.vim](https://github.com/rafaqz/citation.vim)
+to insert the citation keys.
+
 To convert a Markdown document with pandoc, use the `zotref` filter that comes
 with Zotcite. The Zotcite plugin adds the directory where `zotref` is to
 the system `$PATH`. So, from within Vim/Neovim, do:
@@ -160,3 +163,10 @@ some internal variables, do the following command:
 
 Note that Zotcite will not enable omni completion if any of the buffer's lines
 matches the regular pattern `^bibliography:.*\.bib` when the markdown file is read.
+
+## Acknowledgment
+
+Zotcite code is based on the
+[citation.vim](https://github.com/rafaqz/citation.vim) project which provides
+[Unite](https://github.com/Shougo/unite.vim) sources for insertion of Zotero
+and bibtex citation keys and has many other features.
