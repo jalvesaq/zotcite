@@ -23,8 +23,8 @@ To convert a Markdown document with pandoc, use the `zotref` filter that comes
 with Zotcite. The Zotcite plugin adds the directory where `zotref` is to
 the system `$PATH`. So, from within Vim/Neovim, do:
 
-```
-!pandoc file_name.md -s -o file_name.html -F zotref -F pandoc-citeproc
+```vim
+:!pandoc file_name.md -s -o file_name.html -F zotref -F pandoc-citeproc
 ```
 
 Replace `file_name` with the actual name of the markdown document being
@@ -34,7 +34,7 @@ To compile an RMarkdown document with the [Nvim-R](https://github.com/jalvesaq/N
 plugin, add the following lines to the YAML header of the document (replace
 `pdf_document` with the desired output):
 
-```
+```yaml
 output:
   pdf_document:
     pandoc_args: ['-F', 'zotref', '-F', 'pandoc-citeproc']
