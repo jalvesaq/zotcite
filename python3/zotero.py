@@ -119,10 +119,11 @@ class ZoteroEntries:
         self._t = {}
 
         # Path of zotero.sqlite
-        zsql = os.getenv('ZoteroSQLpath')
-        if zsql is None:
+        if os.getenv('ZoteroSQLpath') is None:
             if os.path.isfile(os.getenv('HOME') + '/Zotero/zotero.sqlite'):
                 zsql = os.getenv('HOME') + '/Zotero/zotero.sqlite'
+        else:
+            zsql = os.path.expanduser(os.getenv('ZoteroSQLpath'))
         if zsql is None:
             sys.stderr.write('The file zotero.sqlite3 was not found. Please, define the environment variable ZoteroSQLpath.\n')
             sys.stderr.flush()
@@ -130,8 +131,7 @@ class ZoteroEntries:
         self._z = zsql
 
         # Temporary directory
-        self._tmpdir = os.getenv('Zotcite_tmpdir')
-        if self._tmpdir is None:
+        if os.getenv('Zotcite_tmpdir') is None:
             if os.getenv('XDG_CACHE_HOME') and os.path.isdir(os.getenv('XDG_CACHE_HOME')):
                 self._tmpdir = os.getenv('XDG_CACHE_HOME') + '/zotcite'
             elif os.getenv('APPDATA') and os.path.isdir(os.getenv('APPDATA')):
@@ -142,6 +142,8 @@ class ZoteroEntries:
                 self._tmpdir = os.path.expanduser('~/Library/Caches/zotcite')
             else:
                 self._tmpdir = '/tmp/.zotcite'
+        else:
+            self._tmpdir = os.path.expanduser(os.getenv('Zotcite_tmpdir'))
         if not os.path.isdir(self._tmpdir):
             os.mkdir(self._tmpdir)
 
