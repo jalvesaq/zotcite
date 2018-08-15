@@ -46,6 +46,16 @@ cursor over the citation key and press `<Leader>zo` in Normal mode.
 To see additional information on a citation key, put ther cursor over it and
 press `<Leader>zi`.
 
+The goal of Zotcite is to avoid the need of exporting bib files from Zotero,
+but if for any reason you need a bib file with your citation keys, do the
+following:
+
+```vim
+!zotbib file_name.md file_name.bib
+```
+
+Note: `file_name.bib` will be overridden if it already exists.
+
 ## Customization
 
 ### Change default maps
@@ -67,7 +77,8 @@ nmap <c-i> <Plug>ZCitationInfo
 ### Zotcite engine
 
 You can change most of Zotcite's behavior by setting some environment
-variables in your `vimrc`/`init.vim`.
+variables in your `vimrc`/`init.vim` (or in your `~/.bashrc`, if you use bash
+as your shell).
 
 The citation keys inserted by Zotcite have the format `@ZoteroKey#Author_Year`
 where `ZoteroKey` is the key attributed by Zotero to the references stored in

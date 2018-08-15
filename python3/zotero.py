@@ -100,6 +100,96 @@ class ZoteroEntries:
         'websiteTitle'        : 'container-title',
         'websiteType'         : 'genre'}
 
+    # Conversion from zotero.sqlite to bib types
+    _zbt = {
+        'artwork'             : 'Misc',
+        'audioRecording'      : 'Misc',
+        'blogPost'            : 'Misc',
+        'book'                : 'Book',
+        'bookSection'         : 'InCollection',
+        'case'                : 'Misc',
+        'computerProgram'     : 'Book',
+        'conferencePaper'     : 'InProceedings',
+        'dictionaryEntry'     : 'InCollection',
+        'document'            : 'TechReport',
+        'email'               : 'Misc',
+        'encyclopediaArticle' : 'InCollection',
+        'film'                : 'Misc',
+        'forumPost'           : 'Misc',
+        'hearing'             : 'Misc',
+        'instantMessage'      : 'Misc',
+        'interview'           : 'Misc',
+        'journalArticle'      : 'Article',
+        'letter'              : 'Misc',
+        'magazineArticle'     : 'Article',
+        'newspaperArticle'    : 'Article',
+        'note'                : 'Misc',
+        'podcast'             : 'Misc',
+        'presentation'        : 'Misc',
+        'radioBroadcast'      : 'Misc',
+        'statute'             : 'Misc',
+        'thesis'              : 'Thesis',
+        'tvBroadcast'         : 'Misc',
+        'videoRecording'      : 'Misc'}
+
+    # Conversion from zotero.sqlite to bib fields
+    # It's incomplete and accuracy isn't guaranteed!
+    _zbf = {
+        'abstractNote'        : 'abstract',
+        'accessDate'          : 'urldate',
+        'applicationNumber'   : 'call-number',
+        'archiveLocation'     : 'archive_location',
+        'artworkMedium'       : 'medium',
+        'artworkSize'         : 'dimensions',
+        'attachment'          : 'file',
+        'audioFileType'       : 'medium',
+        'blogTitle'           : 'booktitle',
+        'bookTitle'           : 'booktitle',
+        'callNumber'          : 'call-number',
+        'code'                : 'booktitle',
+        'codeNumber'          : 'volume',
+        'codePages'           : 'pages',
+        'codeVolume'          : 'volume',
+        'conferenceName'      : 'event',
+        'court'               : 'authority',
+        'date'                : 'issued',
+        'dictionaryTitle'     : 'booktitle',
+        'distributor'         : 'publisher',
+        'encyclopediaTitle'   : 'booktitle',
+        'extra'               : 'note',
+        'filingDate'          : 'submitted',
+        'forumTitle'          : 'booktitle',
+        'genre'               : 'type',
+        'history'             : 'references',
+        'institution'         : 'publisher',
+        'interviewMedium'     : 'medium',
+        'issue'               : 'number',
+        'issuingAuthority'    : 'authority',
+        'legalStatus'         : 'status',
+        'legislativeBody'     : 'authority',
+        'libraryCatalog'      : 'source',
+        'meetingName'         : 'event',
+        'numPages'            : 'pages',
+        'numberOfVolumes'     : 'volume',
+        'place'               : 'address',
+        'priorityNumbers'     : 'issue',
+        'proceedingsTitle'    : 'booktitle',
+        'programTitle'        : 'booktitle',
+        'programmingLanguage' : 'type',
+        'publicationTitle'    : 'booktitle',
+        'reporter'            : 'booktitle',
+        'runningTime'         : 'dimensions',
+        'seriesNumber'        : 'number',
+        'session'             : 'chapter-number',
+        'shortTitle'          : 'shorttitle',
+        'system'              : 'medium',
+        'thesisType'          : 'type',
+        'university'          : 'publisher',
+        'url'                 : 'URL',
+        'versionNumber'       : 'version',
+        'websiteTitle'        : 'booktitle',
+        'websiteType'         : 'type'}
+
     def __init__(self):
 
         # Template for citation keys
@@ -467,6 +557,65 @@ class ZoteroEntries:
                         ref += self._get_yaml_ref(self._e[c][e], k)
         if ref != '':
             ref = '---\nreferences:\n' + ref + '...\n\ndummy text\n'
+        return ref
+
+    def _get_bib_ref(self, e, citekey):
+        # Fix the type
+        if e['etype'] in self._zbt:
+            e['etype'] = e['etype'].replace(e['etype'], self._zbt[e['etype']])
+        # Escape quotes of all fields and rename some fields
+        for f in e:
+            if isinstance(e[f], str):
+                e[f] = re.sub('"', '\\"', e[f])
+        ekeys = list(e.keys())
+        for f in ekeys:
+            if f in self._zbf:
+                e[self._zbf[f]] = e.pop(f)
+
+        if e['etype'] == 'Article' and 'booktitle' in e:
+            e['journal'] = e.pop('booktitle')
+        if e['etype'] == 'InCollection' and not 'editor' in e:
+            e['etype'] = 'InBook'
+
+        ref = '\n@' + e['etype'] + '{' + citekey + ',\n'
+        for aa in ['author', 'editor', 'contributor', 'translator',
+                   'container-author']:
+            if aa in e:
+                names = []
+                ref += '  ' + aa + ' = {'
+                for last, first in e[aa]:
+                    names.append(last + ', ' + first)
+                ref += ' and '.join(names) + '},\n'
+        if 'issued' in e:
+            d = re.sub(' .*', '', e['issued']).split('-')
+            if d[0] != '0000':
+                ref += '  year = {' + e['year'] + '},\n'
+                if d[1] != '00':
+                    ref += '  month = {' + d[1] + '},\n'
+                if d[2] != '00':
+                    ref += '  day = {' + d[2] + '},\n'
+        dont = ['etype', 'issued', 'abstract', 'citekey', 'zotkey',
+                'collection', 'author', 'editor', 'contributor', 'translator',
+                'alastnm', 'container-author', 'tags', 'year']
+        for f in e:
+            if f not in dont:
+                ref += '  ' + f + ' = {' + str(e[f]) + '},\n'
+        ref += '}\n'
+        return ref
+
+    def GetBib(self, keys):
+        """ Build the contents of a .bib file
+
+            keys (list): List of citation keys (not Zotero keys) present in the document.
+        """
+
+        ref = ''
+        for c in self._e:
+            for e in self._e[c]:
+                for k in keys:
+                    zotkey = re.sub('#.*', '', k)
+                    if zotkey == self._e[c][e]['zotkey']:
+                        ref += self._get_bib_ref(self._e[c][e], k)
         return ref
 
     def GetAttachment(self, zotkey):
