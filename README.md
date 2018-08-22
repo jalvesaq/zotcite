@@ -40,6 +40,9 @@ output:
     pandoc_args: ['-F', 'zotref', '-F', 'pandoc-citeproc']
 ```
 
+Note: The Windows operating system doesn't know that `zotref` should be run by
+Python. Please, tell me if you know how to solve this issue.
+
 To open the reference's attachment as registered in Zotero's database, put the
 cursor over the citation key and press `<Leader>zo` in Normal mode.
 
@@ -54,7 +57,7 @@ following:
 !zotbib file_name.md file_name.bib
 ```
 
-Note: `file_name.bib` will be overridden if it already exists.
+Note: `file_name.bib` will be overwritten if it already exists.
 
 ## Customization
 

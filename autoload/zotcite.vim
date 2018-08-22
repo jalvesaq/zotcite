@@ -49,7 +49,7 @@ function zotcite#CompleteBib(findstart, base)
     else
         let citeptrn = substitute(a:base, '^@', '', '')
         let resp = []
-        let lines = py3eval('ZotCite.GetMatch("'. citeptrn .'", "'. expand("%:p") .'")')
+        let lines = py3eval('ZotCite.GetMatch("'. citeptrn .'", "'. escape(expand("%:p"), '\\') .'")')
         for line in lines
             let tmp = split(line, "\x09")
             call add(resp, {'word': tmp[0], 'abbr': tmp[1], 'menu': tmp[2]})
@@ -158,7 +158,7 @@ function zotcite#GetCollectionName()
     let newc = zotcite#GetYamlField('collection')
     if !exists('b:zotcite_cllctn') || newc != b:zotcite_cllctn
         let b:zotcite_cllctn = newc
-        let repl = py3eval('ZotCite.SetCollections("' . expand("%:p") . '", ' . string(b:zotcite_cllctn) . ')')
+        let repl = py3eval('ZotCite.SetCollections("' . escape(expand("%:p"), '\\') . '", ' . string(b:zotcite_cllctn) . ')')
         if repl != ''
             call zotcite#warning(repl)
         endif
@@ -195,11 +195,18 @@ function zotcite#GlobalInit()
     let s:zrunning = 1
 
     let $Zotcite_tmpdir = info['tmpdir']
-    let zotcite_home = substitute(info['zotero.py'], '\(.*\)/.*', '\1', '')
-    if $PATH !~ zotcite_home
-        if has("win32")
+    let zotcite_home = info['zotero.py']
+    if has('win32')
+        let zotcite_home = substitute(zotcite_home, '\(.*\)\\.*', '\1', '')
+    else
+        let zotcite_home = substitute(zotcite_home, '\(.*\)/.*', '\1', '')
+    endif
+    if has("win32")
+        if $PATH !~ escape(zotcite_home, '\\')
             let $PATH = zotcite_home . ';' . $PATH
-        else
+        endif
+    else
+        if $PATH !~ zotcite_home
             let $PATH = zotcite_home . ':' . $PATH
         endif
     endif

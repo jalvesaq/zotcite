@@ -210,8 +210,8 @@ class ZoteroEntries:
 
         # Path of zotero.sqlite
         if os.getenv('ZoteroSQLpath') is None:
-            if os.path.isfile(os.getenv('HOME') + '/Zotero/zotero.sqlite'):
-                self._z = os.getenv('HOME') + '/Zotero/zotero.sqlite'
+            if os.path.isfile(os.path.expanduser('~/Zotero/zotero.sqlite')):
+                self._z = os.path.expanduser('~/Zotero/zotero.sqlite')
             else:
                 self._errmsg('The file zotero.sqlite3 was not found. Please, define the environment variable ZoteroSQLpath.')
                 return None
