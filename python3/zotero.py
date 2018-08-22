@@ -212,8 +212,10 @@ class ZoteroEntries:
         if os.getenv('ZoteroSQLpath') is None:
             if os.path.isfile(os.path.expanduser('~/Zotero/zotero.sqlite')):
                 self._z = os.path.expanduser('~/Zotero/zotero.sqlite')
+            elif os.path.isfile(os.getenv('USERPROFILE') + '/Zotero/zotero.sqlite'):
+                self._z = os.getenv('USERPROFILE') + '/Zotero/zotero.sqlite'
             else:
-                self._errmsg('The file zotero.sqlite3 was not found. Please, define the environment variable ZoteroSQLpath.')
+                self._errmsg('The file zotero.sqlite was not found. Please, define the environment variable ZoteroSQLpath.')
                 return None
         else:
             if os.path.isfile(os.path.expanduser(os.getenv('ZoteroSQLpath'))):
@@ -518,28 +520,28 @@ class ZoteroEntries:
             if f in self._zcf:
                 e[self._zcf[f]] = e.pop(f)
 
-        ref = '- type: ' + e['etype'] + '\n  id: ' + citekey + '\n'
+        ref = '  - type: "' + e['etype'] + '"\n    id: "' + citekey + '"\n'
         for aa in ['author', 'editor', 'contributor', 'translator',
                    'container-author']:
             if aa in e:
-                ref += '  ' + aa + ':\n'
+                ref += '    ' + aa + ':\n'
                 for last, first in e[aa]:
-                    ref += '  - family: "' + last + '"\n'
-                    ref += '    given: "' + first + '"\n'
+                    ref += '      - family: "' + last + '"\n'
+                    ref += '        given: "' + first + '"\n'
         if 'issued' in e:
             d = re.sub(' .*', '', e['issued']).split('-')
             if d[0] != '0000':
-                ref += '  issued:\n    year: ' + e['year'] + '\n'
+                ref += '    issued:\n      - year: "' + e['year'] + '"\n'
                 if d[1] != '00':
-                    ref += '    month: ' + d[1] + '\n'
+                    ref += '        month: "' + d[1] + '"\n'
                 if d[2] != '00':
-                    ref += '    day: ' + d[2] + '\n'
+                    ref += '        day: "' + d[2] + '"\n'
         dont = ['etype', 'issued', 'abstract', 'citekey', 'zotkey',
                 'collection', 'author', 'editor', 'contributor', 'translator',
                 'alastnm', 'container-author', 'tags', 'year']
         for f in e:
             if f not in dont:
-                ref += '  ' + f + ': "' + str(e[f]) + '"\n'
+                ref += '    ' + f + ': "' + str(e[f]) + '"\n'
         return ref
 
     def GetYamlRefs(self, keys):
