@@ -558,7 +558,7 @@ class ZoteroEntries:
                     if zotkey == self._e[c][e]['zotkey']:
                         ref += self._get_yaml_ref(self._e[c][e], k)
         if ref != '':
-            ref = '---\nreferences:\n' + ref + '...\n\ndummy text\n'
+            ref = 'references:\n' + ref
         return ref
 
     def _get_bib_ref(self, e, citekey):

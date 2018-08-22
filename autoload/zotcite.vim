@@ -113,6 +113,17 @@ function zotcite#GetZoteroAttachment()
     endif
 endfunction
 
+function zotcite#AddYamlRefs()
+    let bigstr = join(getline(1, '$'))
+    let bigstr = substitute(bigstr, '.\{-}\(@[A-Z0-9]\{8}#[[:alnum:]à-öø-ÿÀ-ÖØ-ß_:\-]\+\).\{-}', ' \1 ', 'g')
+    let bigstr = substitute(bigstr, '\(.*@[A-Z0-9]\{8}#[[:alnum:]à-öø-ÿÀ-ÖØ-ß_:\-]\+\) .*', '\1', 'g')
+    let bigstr = substitute(bigstr, '@', '', 'g')
+    let rlist = uniq(sort(split(bigstr)))
+    exe 'let refs = py3eval("ZotCite.GetYamlRefs(' . string(rlist) . ')")'
+    let rlines = split(refs, "\n")
+    call append(line('.'), rlines)
+endfunction
+
 function zotcite#GetYamlField(field)
     if getline(1) != '---'
         return []
@@ -213,6 +224,7 @@ function zotcite#GlobalInit()
     let $RmdFile = expand("%:p")
 
     call zotcite#GetCollectionName()
+    command ZYamlRefs call zotcite#AddYamlRefs()
     return 1
 endfunction
 

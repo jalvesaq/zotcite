@@ -27,6 +27,8 @@ if __name__ == "__main__":
     # Get the references for the found citekeys formatted as the YAML and put
     # the string into the YAML header of a dummy markdown document.
     r = z.GetYamlRefs(c)
+    if r != '':
+        r = '---\n' + r + '...\n\ndummy text\n'
 
     # To see the dummy markdown document created by `zotref` with the
     # references in its YAML header, set the environment variable

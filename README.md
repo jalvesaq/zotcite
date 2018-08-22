@@ -41,12 +41,22 @@ output:
 ```
 
 Note: The Windows operating system doesn't know that `zotref` should be run by
-Python. Please, tell me if you know how to solve this issue.
+Python, and, instead of running `zotref` directly you would have to run a
+batch script such as:
+
+```
+py C:\Users\yourlogin\vimfiles\plugged\zotcite\python3\zotref
+```
+
+That is, the Python 3 executable followed by `zotref` path. If `zotref` still
+fails to work properly, please, try adding the references to the YAML header
+with `:ZYamlRefs`. Then, if there are only ascii characters in the references
+you will have a chance of successfully compiling the document on Windows.
 
 To open the reference's attachment as registered in Zotero's database, put the
 cursor over the citation key and press `<Leader>zo` in Normal mode.
 
-To see additional information on a citation key, put ther cursor over it and
+To see additional information on a citation key, put the cursor over it and
 press `<Leader>zi`.
 
 The goal of Zotcite is to avoid the need of exporting bib files from Zotero,
