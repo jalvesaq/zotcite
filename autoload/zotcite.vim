@@ -1,5 +1,9 @@
 
 function zotcite#warning(wmsg)
+    if v:vim_did_enter == 0
+        exe 'autocmd VimEnter * call zotcite#warning("' . escape(a:wmsg, '"') . '")'
+        return
+    endif
     echohl WarningMsg
     echomsg a:wmsg
     echohl None
@@ -200,6 +204,7 @@ function zotcite#GlobalInit()
         let info = py3eval('ZotCite.Info()')
     catch *
         let g:zotcite_failed = 'Failed to create ZoteroEntries object.'
+        call zotcite#warning(g:zotcite_failed)
         let s:zrunning = 0
         return 0
     endtry
@@ -276,6 +281,7 @@ function zotcite#Init()
             set conceallevel=2
         endif
         setlocal omnifunc=zotcite#CompleteBib
+        autocmd BufWritePost <buffer> call zotcite#GetCollectionName()
     endif
 endfunction
 
