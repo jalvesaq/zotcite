@@ -16,8 +16,13 @@ To insert citation keys, in Insert mode, type the `@` letter and one or more
 letters of either the last name of the first author or the reference title and
 press `CTRL-X CTRL-O`. The matching of citation keys is case insensitive.
 
-You will soon be able to also use [citation.vim](https://github.com/rafaqz/citation.vim)
-to insert the citation keys.
+You can also use [citation.vim](https://github.com/rafaqz/citation.vim)
+to insert the citation keys if you set the Zotero key to be the first part of
+the citation key followed by a hash tag. Example:
+
+```vim
+let g:citation_vim_key_format = "{zotero_key}#{author}_{date}"
+```
 
 To convert a Markdown document with pandoc, use the `zotref` filter that comes
 with Zotcite. The Zotcite plugin adds the directory where `zotref` is to
