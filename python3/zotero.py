@@ -296,12 +296,19 @@ class ZoteroEntries:
         self._add_collection()
         self._add_authors()
         self._add_type()
-        self._add_note()
-        self._add_tags() # Not used yet
+        # self._add_note() # Not used
+        # self._add_tags() # Not used yet
         self._add_attachments()
         self._calculate_citekeys()
         self._separate_by_collection()
         conn.close()
+
+        # Debug:
+        #with open('/tmp/ZData', 'w') as f:
+        #    for c in self._e:
+        #        f.write(str(c) + ':\n')
+        #        for k in self._e[c]:
+        #            f.write('  ' + str(self._e[c][k]) + '\n')
 
 
     def _add_most_fields(self):
@@ -511,10 +518,13 @@ class ZoteroEntries:
         # Fix the type
         if e['etype'] in self._zct:
             e['etype'] = e['etype'].replace(e['etype'], self._zct[e['etype']])
-        # Escape quotes of all fields and rename some fields
+
+        # Escape quotes of all fields
         for f in e:
             if isinstance(e[f], str):
                 e[f] = re.sub('"', '\\"', e[f])
+
+        # Rename some fields
         ekeys = list(e.keys())
         for f in ekeys:
             if f in self._zcf:
@@ -565,10 +575,13 @@ class ZoteroEntries:
         # Fix the type
         if e['etype'] in self._zbt:
             e['etype'] = e['etype'].replace(e['etype'], self._zbt[e['etype']])
-        # Escape quotes of all fields and rename some fields
+
+        # Escape quotes of all fields
         for f in e:
             if isinstance(e[f], str):
                 e[f] = re.sub('"', '\\"', e[f])
+
+        # Rename some fields
         ekeys = list(e.keys())
         for f in ekeys:
             if f in self._zbf:
