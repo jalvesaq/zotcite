@@ -224,7 +224,7 @@ function zotcite#GlobalInit()
     let $RmdFile = expand("%:p")
 
     call zotcite#GetCollectionName()
-    command ZYamlRefs call zotcite#AddYamlRefs()
+    command ZRefs call zotcite#AddYamlRefs()
     return 1
 endfunction
 

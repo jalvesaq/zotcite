@@ -14,7 +14,7 @@ Zotcite requires Python 3 and Zotero 5.
 
 To insert citation keys, in Insert mode, type the `@` letter and one or more
 letters of either the last name of the first author or the reference title and
-press `CTRL-X CTRL-O`.
+press `CTRL-X CTRL-O`. The matching of citation keys is case insensitive.
 
 You will soon be able to also use [citation.vim](https://github.com/rafaqz/citation.vim)
 to insert the citation keys.
@@ -48,10 +48,11 @@ batch script such as:
 py C:\Users\yourlogin\vimfiles\plugged\zotcite\python3\zotref
 ```
 
-That is, the Python 3 executable followed by `zotref` path. If `zotref` still
-fails to work properly, please, try adding the references to the YAML header
-with `:ZYamlRefs`. Then, if there are only ascii characters in the references
-you will have a chance of successfully compiling the document on Windows.
+That is, a command with the Python 3 executable followed by `zotref` path. If
+`zotref` still fails to work properly, please, try adding the references to
+the YAML header with `:ZRefs`. Then, if there are only ascii characters in
+the references you will have a chance of successfully compiling the document
+on Windows.
 
 To open the reference's attachment as registered in Zotero's database, put the
 cursor over the citation key and press `<Leader>zo` in Normal mode.
