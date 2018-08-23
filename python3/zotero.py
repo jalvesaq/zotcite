@@ -497,6 +497,7 @@ class ZoteroEntries:
         p4 = []
         p5 = []
         p6 = []
+        ptrn = ptrn.lower()
         for c in collections:
             for k in self._e[c]:
                 if self._e[c][k]['citekey'].lower().find(ptrn) == 0:
