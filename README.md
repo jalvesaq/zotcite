@@ -62,8 +62,14 @@ on Windows.
 To open the reference's attachment as registered in Zotero's database, put the
 cursor over the citation key and press `<Leader>zo` in Normal mode.
 
-To see additional information on a citation key, put the cursor over it and
-press `<Leader>zi`.
+Put the cursor over a citation key and press:
+
+  - `<Leader>zi` to see in the status bar the last name of all authors, the
+    year and the title of the reference.
+
+  - `<Leader>za` to see all fields of a reference as stored by Zotcite.
+
+  - `<Leader>zy` to see how the reference will be converted into YAML.
 
 The goal of Zotcite is to avoid the need of exporting bib files from Zotero,
 but if for any reason you need a bib file with your citation keys, do the

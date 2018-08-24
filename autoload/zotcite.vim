@@ -75,20 +75,39 @@ function zotcite#GetCitationKey()
     return ''
 endfunction
 
-function zotcite#GetReferenceData()
+function zotcite#GetReferenceData(type)
     let wrd = zotcite#GetCitationKey()
     if wrd != ''
-        let repl = py3eval('ZotCite.GetRefData("' . wrd . '")')
-        if has_key(repl, 'alastnm')
-            echohl Identifier
-            echon repl['alastnm'] . ' '
+        if a:type == 'yaml'
+            let repl = py3eval('ZotCite.GetYamlRefs(["' . wrd . '"])')
+            let repl = substitute(repl, "^references:[\n\r]*", '', '')
+            echo repl
+            return
         endif
-        echohl Number
-        echon repl['year'] . ' '
-        if has_key(repl, 'title')
-            echohl Title
-            echon repl['title']
-            echohl None
+        let repl = py3eval('ZotCite.GetRefData("' . wrd . '")')
+        if a:type == 'raw'
+            for key in keys(repl)
+                echohl Title
+                echo key
+                echohl None
+                if type(repl[key]) == v:t_string
+                    echon ': ' . repl[key]
+                else
+                    echon ': ' . string(repl[key])
+                endif
+            endfor
+        else
+            if has_key(repl, 'alastnm')
+                echohl Identifier
+                echon repl['alastnm'] . ' '
+            endif
+            echohl Number
+            echon repl['year'] . ' '
+            if has_key(repl, 'title')
+                echohl Title
+                echon repl['title']
+                echohl None
+            endif
         endif
     endif
 endfunction
@@ -271,9 +290,19 @@ function zotcite#Init()
             nnoremap <buffer><silent> <Leader>zo :call zotcite#GetZoteroAttachment()<cr>
         endif
         if hasmapto('<Plug>ZCitationInfo', 'n')
-            exec 'nnoremap <buffer><silent> <Plug>ZCitationInfo :call zotcite#GetReferenceData()<cr>'
+            exec 'nnoremap <buffer><silent> <Plug>ZCitationInfo :call zotcite#GetReferenceData("ayt")<cr>'
         else
-            nnoremap <buffer><silent> <Leader>zi :call zotcite#GetReferenceData()<cr>
+            nnoremap <buffer><silent> <Leader>zi :call zotcite#GetReferenceData("ayt")<cr>
+        endif
+        if hasmapto('<Plug>ZCitationCompleteInfo', 'n')
+            exec 'nnoremap <buffer><silent> <Plug>ZCitationCompleteInfo :call zotcite#GetReferenceData("raw")<cr>'
+        else
+            nnoremap <buffer><silent> <Leader>za :call zotcite#GetReferenceData("raw")<cr>
+        endif
+        if hasmapto('<Plug>ZCitationYamlRef', 'n')
+            exec 'nnoremap <buffer><silent> <Plug>ZCitationYamlRef :call zotcite#GetReferenceData("yaml")<cr>'
+        else
+            nnoremap <buffer><silent> <Leader>zy :call zotcite#GetReferenceData("yaml")<cr>
         endif
         if exists('g:zotcite_conceallevel')
             exe 'set conceallevel=' . g:zotcite_conceallevel
