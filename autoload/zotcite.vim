@@ -62,6 +62,36 @@ function zotcite#CompleteBib(findstart, base)
     endif
 endfunction
 
+function zotcite#Seek(key)
+    let citeptrn = substitute(a:key, ' .*', '', '')
+    let lines = py3eval('ZotCite.GetMatch("'. citeptrn .'", "'. escape(expand("%:p"), '\\') .'")')
+    let resp = ''
+    for line in lines
+        let tmp = split(line, "\x09")
+        echohl Identifier
+        echo tmp[1] . ' '
+        if tmp[2] =~ '^([0-9][0-9][0-9][0-9]) '
+            let year = substitute(tmp[2], '^(\([0-9][0-9][0-9][0-9]\)) .*', '\1', '')
+            let ttl = substitute(tmp[2], '^([0-9][0-9][0-9][0-9]) ', '', '')
+        elseif tmp[2] =~ '^() '
+            let year = ''
+            let ttl = substitute(tmp[2], '^() ', '', '')
+        else
+            let year = ''
+            let ttl = tmp[2]
+        endif
+        let room = &columns - len(tmp[1]) - len(year) - 3
+        if len(ttl) > room
+            let ttl = substitute(ttl, '^\(.\{'.room.'}\).*', '\1', '')
+        endif
+        echohl Number
+        echon  year . ' '
+        echohl Title
+        echon ttl
+        echohl None
+    endfor
+endfunction
+
 function zotcite#GetCitationKey()
     let oldisk = &iskeyword
     set iskeyword=@,48-57,_,192-255,@-@,#
@@ -249,6 +279,7 @@ function zotcite#GlobalInit()
 
     call zotcite#GetCollectionName()
     command ZRefs call zotcite#AddYamlRefs()
+    command -nargs=1 ZSeek call zotcite#Seek(<q-args>)
     return 1
 endfunction
 

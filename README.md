@@ -5,10 +5,11 @@ Omni completion of citation keys from Zotero database for Markdown and RMarkdown
 ## Installation
 
 Zotcite can be installed as any Vim plugin. It is recommended the use of a
-plugin manager, such as
-[Vim-Plug](https://github.com/junegunn/vim-plug).
+plugin manager, such as [Vim-Plug](https://github.com/junegunn/vim-plug). It
+requires Python 3 and Zotero 5.
 
-Zotcite requires Python 3 and Zotero 5.
+The `zotero` module does not import the `vim` module. Hence, its code could
+easily be adapted to other text editors such as Emacs or Gedit.
 
 ## Use
 
@@ -59,10 +60,10 @@ the YAML header with `:ZRefs`. Then, if there are only ascii characters in
 the references you will have a chance of successfully compiling the document
 on Windows.
 
-To open the reference's attachment as registered in Zotero's database, put the
-cursor over the citation key and press `<Leader>zo` in Normal mode.
+In Vim's Normal mode, put the cursor over a citation key and press:
 
-Put the cursor over a citation key and press:
+  - `<Leader>zo` to open the reference's attachment as registered in Zotero's
+    database.
 
   - `<Leader>zi` to see in the status bar the last name of all authors, the
     year and the title of the reference.
@@ -70,6 +71,14 @@ Put the cursor over a citation key and press:
   - `<Leader>za` to see all fields of a reference as stored by Zotcite.
 
   - `<Leader>zy` to see how the reference will be converted into YAML.
+
+You can also use the command `:ZSeek` to see what references have either a
+last author's name or title matching the pattern that you are seeking for.
+Example:
+
+```vim
+:ZSeek marx
+```
 
 The goal of Zotcite is to avoid the need of exporting bib files from Zotero,
 but if for any reason you need a bib file with your citation keys, do the
@@ -92,12 +101,27 @@ To change the shortcut to open reference attachment, set the value of
 nmap <c-]> <Plug>ZOpenAttachment
 ```
 
-To change the shortcut to show information on the reference of a citation key,
+To change the shortcut to see basic information on the reference of a
+citation key, follow the example:
+
+```vim
+nmap ,I <Plug>ZCitationInfo
+```
+
+To change the shortcut to see how the reference of a citation key is stored
+by Zotcite, follow the example:
+
+```vim
+nmap ,A <Plug>ZCitationCompleteInfo
+```
+
+To change the shortcut to see how the reference is converted into YAML,
 follow the example:
 
 ```vim
-nmap <c-i> <Plug>ZCitationInfo
+nmap ,Y <Plug>ZCitationCompleteInfo
 ```
+
 
 ### Zotcite engine
 
