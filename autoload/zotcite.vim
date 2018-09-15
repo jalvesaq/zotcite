@@ -340,7 +340,10 @@ function zotcite#Init()
         else
             set conceallevel=2
         endif
-        setlocal omnifunc=zotcite#CompleteBib
+        " Let Nvim-R control the omni completion
+        if !exists('b:rplugin_non_r_omnifunc')
+            setlocal omnifunc=zotcite#CompleteBib
+        endif
         autocmd BufWritePost <buffer> call zotcite#GetCollectionName()
     endif
 endfunction
