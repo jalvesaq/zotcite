@@ -8,6 +8,9 @@ import sqlite3
 # written by Rafael Schouten: https://github.com/rafaqz/citation.vim
 # Code and/or ideas were also adapted from zotxt, pypandoc, and pandocfilters.
 
+# To debug this code, create a /tmp/test.md file and do:
+# pandoc testzotcite.md -t json | /full/path/to/zotcite/python3/zotref
+
 class ZoteroEntries:
     """ Create an object storing all references from ~/Zotero/zotero.sqlite """
 
@@ -443,6 +446,9 @@ class ZoteroEntries:
         for item_id, in self._cur.fetchall():
             if item_id in self._e:
                 del self._e[item_id]
+            for c in self._c:
+                if item_id in self._c[c]:
+                    self._c[c].remove(item_id)
 
         for k in self._e:
             self._e[k]['alastnm'] = re.sub('^, ', '', self._e[k]['alastnm'])
