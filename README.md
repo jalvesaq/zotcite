@@ -73,8 +73,9 @@ In Vim's Normal mode, put the cursor over a citation key and press:
   - `<Leader>zy` to see how the reference will be converted into YAML.
 
 You can also use the command `:ZSeek` to see what references have either a
-last author's name or title matching the pattern that you are seeking for.
-Example:
+last author's name or title matching the pattern that you are seeking for. The
+references displayed in the command line at the bottom of the screen will be
+the same that would be in a omni completion menu. Example:
 
 ```vim
 :ZSeek marx
@@ -85,7 +86,7 @@ but if for any reason you need a bib file with your citation keys, do the
 following:
 
 ```vim
-!zotbib file_name.md file_name.bib
+:!zotbib file_name.md file_name.bib
 ```
 
 Note: `file_name.bib` will be overwritten if it already exists.
