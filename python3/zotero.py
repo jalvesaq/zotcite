@@ -407,7 +407,8 @@ class ZoteroEntries:
             """
         self._cur.execute(query)
         for pKey, pId, aPath in self._cur.fetchall():
-            self._e[pId]['attachment'] = pKey + ':' + aPath
+            if pId in self._e:
+                self._e[pId]['attachment'] = pKey + ':' + aPath
 
     def _calculate_citekeys(self):
         ptrn = '^(' + ' |'.join(self._bwords) + ' )'
