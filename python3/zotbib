@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """
-Pandoc filter to add references from Zotero database to the YAML header.
+Application to extract citation keys from a Markdown document, get the
+references from the Zotero database and save them in a bib file.
 """
 
 import sys
