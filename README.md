@@ -138,12 +138,13 @@ mandatory because `zotref` uses it to add the bibliographic data that is
 parsed by `pandoc-citeproc`, but it will be concealed by Vim. The remaining of
 the key is customizable. You can define whether it will include or not the
 first author's last name (in either lower case `{author}` or title case
-`{Author}`), the first word of the title (`{title}` or `{Title}`) and the year
-(with either four digits `{Year}` or only two `{year}`). Examples:
+`{Author}`), the last name of the first three authors (either `{authors}` or
+`{Authors}`), the first word of the title (`{title}` or `{Title}`) and the
+year (with either four digits `{Year}` or only two `{year}`). Examples:
 
 ```vim
 let $ZCitationTemplate = '{author}{year}'
-let $ZCitationTemplate = '{Author}_{Year}_{Title}'
+let $ZCitationTemplate = '{Authors}_{Year}_{Title}'
 ```
 
 The following words are deleted from the title before its first word is

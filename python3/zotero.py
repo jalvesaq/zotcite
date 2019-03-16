@@ -198,7 +198,7 @@ class ZoteroEntries:
         # Template for citation keys
         self._cite = os.getenv('ZCitationTemplate')
         if self._cite is None:
-            self._cite = '{Author}_{Year}'
+            self._cite = '{Authors}_{Year}'
 
         # Title words to be ignored
         self._bwords = os.getenv('ZBannedWords')
@@ -291,8 +291,6 @@ class ZoteroEntries:
         self._add_most_fields()
         self._add_authors()
         self._add_type()
-        # self._add_note() # Not used
-        # self._add_tags() # Not used yet
         self._add_attachments()
         self._calculate_citekeys()
         self._delete_items()
@@ -387,18 +385,6 @@ class ZoteroEntries:
                 else:
                     self._e[item_id]['etype'] = item_type
 
-    def _add_note(self):
-        query = u"""
-            SELECT itemNotes.parentItemID, itemNotes.note
-            FROM itemNotes
-            WHERE
-                itemNotes.parentItemID IS NOT NULL;
-            """
-        self._cur.execute(query)
-        for item_id, item_note in self._cur.fetchall():
-            if item_id in self._e:
-                self._e[item_id]['note'] = item_note
-
     def _add_attachments(self):
         query = u"""
             SELECT items.key, itemAttachments.parentItemID, itemAttachments.path
@@ -427,6 +413,11 @@ class ZoteroEntries:
                 titlew = ''
             if 'author' in self._e[k]:
                 lastname = self._e[k]['author'][0][0]
+                lastnames = ''
+                for ln in self._e[k]['author']:
+                    lastnames = lastnames + '_' + ln[0]
+                lastnames = re.sub('^_', '', lastnames)
+                lastnames = re.sub('_.*_.*_.*', '_etal', lastnames)
             else:
                 lastname = 'No_author'
             lastname = re.sub('\W', '', lastname)
@@ -434,6 +425,8 @@ class ZoteroEntries:
             key = self._cite
             key = re.sub('{author}', lastname.lower(), key)
             key = re.sub('{Author}', lastname.title(), key)
+            key = re.sub('{authors}', lastnames.lower(), key)
+            key = re.sub('{Authors}', lastnames.title(), key)
             key = re.sub('{year}', re.sub('^[0-9][0-9]', '', year), key)
             key = re.sub('{Year}', year, key)
             key = re.sub('{title}', titlew.lower(), key)
