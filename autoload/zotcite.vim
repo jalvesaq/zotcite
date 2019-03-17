@@ -95,6 +95,7 @@ function zotcite#printmatches(mtchs, prefix)
             echon mt['author'] . ' '
             let room = room - len(idx) - 2
         else
+            echohl Identifier
             echo mt['author'] . ' '
         endif
         if len(mt['ttl']) > room
@@ -110,13 +111,20 @@ endfunction
 
 function zotcite#Seek(key)
     let mtchs = zotcite#getmach(a:key)
-    call zotcite#printmatches(mtchs, 1)
+    call zotcite#printmatches(mtchs, 0)
 endfunction
 
 function zotcite#GetNote(key)
     let mtchs = zotcite#getmach(a:key)
+    if len(mtchs) == 0
+        echo 'No matches found.'
+        return
+    endif
     call zotcite#printmatches(mtchs, 1)
     let idx = input('Your choice: ')
+    if idx == "" || idx <= 0 || idx > len(mtchs)
+        return
+    endif
     if $ZoteroSQLpath != ""
         let resp = system('zotnote "' . $ZoteroSQLpath . '" ' . mtchs[idx - 1]['key'])
     elseif filereadable(expand('~/Zotero/zotero.sqlite'))
@@ -125,7 +133,12 @@ function zotcite#GetNote(key)
         call zotcite#warning('The Zotero database was not found. Please, set the value of $ZoteroSQLpath')
         return
     endif
-    call append('.', split(resp, "\n"))
+    if resp == ""
+        redraw
+        echo 'No note found.'
+    else
+        call append('.', split(resp, "\n"))
+    endif
 endfunction
 
 function zotcite#GetCitationKey()
