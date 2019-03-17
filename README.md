@@ -13,6 +13,17 @@ easily be adapted to other text editors such as Emacs or Gedit.
 
 ## Use
 
+To extract notes from Zotero and insert them into the markdown document, use
+the Vim command `:Znote key` where is `key` is a word with one or more letters
+of authors names or from a reference title. By default, the colon separating
+the year from the page is replaced by ", p. ". If you want to use the colon or
+any other string as separator, set the value of `$ZYearPageSep` in your vimrc
+(or init.vim). Example:
+
+```vim
+let $ZYearPageSep = ':'
+```
+
 To insert citation keys, in Insert mode, type the `@` letter and one or more
 letters of either the last name of the first author or the reference title and
 press `CTRL-X CTRL-O`. The matching of citation keys is case insensitive.
@@ -24,10 +35,6 @@ the citation key followed by a hash tag. Example:
 ```vim
 let g:citation_vim_key_format = "{zotero_key}#{author}_{date}"
 ```
-
-To insert in Vim notes stored in Zotero, use the command `:Znote key` where is
-`key` is a word with one or more letters of authors names or from a reference
-title.
 
 To convert a Markdown document with pandoc, use the `zotref` filter that comes
 with Zotcite. The Zotcite plugin adds the directory where `zotref` is to
@@ -101,11 +108,12 @@ Note: `file_name.bib` will be overwritten if it already exists.
 
   2. Read the papers, highlighting important passages and making annotations.
 
-  3. Use Zotero's ZotFile extension to extract from the PDF documents the text
-     that your have highlighted and the notes that you have added.
+  3. Use Zotero's [ZotFile](http://zotfile.com/) extension to extract from the
+     PDF documents the text that your have highlighted and the notes that you
+     have added.
 
   4. In Vim/Neovim, run the command `:Znote` to extract your notes from
-     Zotero's database and insert them in the markdown document.
+     Zotero's database and insert them into the markdown document.
 
   5. Finish editing your markdown document.
 

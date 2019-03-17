@@ -125,19 +125,12 @@ function zotcite#GetNote(key)
     if idx == "" || idx <= 0 || idx > len(mtchs)
         return
     endif
-    if $ZoteroSQLpath != ""
-        let resp = system('zotnote "' . $ZoteroSQLpath . '" ' . mtchs[idx - 1]['key'])
-    elseif filereadable(expand('~/Zotero/zotero.sqlite'))
-        let resp = system('zotnote "' . expand('~/Zotero/zotero.sqlite') . '" ' . mtchs[idx - 1]['key'])
-    else
-        call zotcite#warning('The Zotero database was not found. Please, set the value of $ZoteroSQLpath')
-        return
-    endif
-    if resp == ""
+    let repl = py3eval('ZotCite.GetNotes("' . mtchs[idx - 1]['key'] . '")')
+    if repl == ""
         redraw
         echo 'No note found.'
     else
-        call append('.', split(resp, "\n"))
+        call append('.', split(repl, "\n"))
     endif
 endfunction
 

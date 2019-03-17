@@ -270,7 +270,7 @@ class ZoteroEntries:
         return ''
 
 
-    def _load_zotero_data(self):
+    def _copy_zotero_data(self):
         self._ztime = os.path.getmtime(self._z)
         zcopy = self._tmpdir + '/copy_of_zotero.sqlite'
         if os.path.isfile(zcopy):
@@ -284,7 +284,10 @@ class ZoteroEntries:
                 b = f.read()
             with open(zcopy, 'wb') as f:
                 f.write(b)
+        return zcopy
 
+    def _load_zotero_data(self):
+        zcopy = self._copy_zotero_data()
         conn = sqlite3.connect(zcopy)
         self._cur = conn.cursor()
         self._get_collections()
@@ -647,6 +650,91 @@ class ZoteroEntries:
             if self._e[k]['zotkey'] == zotkey:
                 return self._e[k]
         return "NoCiteKey"
+
+    def GetNotes(self, key):
+        zcopy = self._copy_zotero_data()
+        conn = sqlite3.connect(zcopy)
+        cur = conn.cursor()
+
+        query = u"""
+                SELECT items.itemID, items.key
+                FROM items
+                """
+        cur.execute(query)
+
+        key_id = ''
+        for item_id, item_key in cur.fetchall():
+            if item_key == key:
+                key_id = item_id
+                break
+
+        cur.execute(u"SELECT itemID FROM deletedItems")
+        zdel = []
+        for item_id, in cur.fetchall():
+            zdel.append(item_id)
+
+        query = u"""
+                SELECT itemNotes.itemID, itemNotes.parentItemID, itemNotes.note
+                FROM itemNotes
+                WHERE
+                    itemNotes.parentItemID IS NOT NULL;
+                """
+        cur.execute(query)
+        notes = ""
+        for item_id, item_pId, item_note in cur.fetchall():
+            if item_pId == key_id and not item_id in zdel:
+                notes += item_note
+
+        conn.close()
+
+        if key_id in self._e:
+            citekey = self._e[key_id]['citekey']
+        else:
+            citekey = ""
+        if os.getenv('ZYearPageSep') is None:
+            ypsep = ', p. '
+        else:
+            ypsep = os.getenv('ZYearPageSep')
+
+        notes = re.sub('<div .*?>', '', notes, flags=re.M)
+        notes = re.sub('</div>', '', notes, flags=re.M)
+        notes = re.sub('<em>(.*?)</em>', '*\\1*', notes, flags=re.M)
+        notes = re.sub('<strong>(.*?)</strong>', '**\\1**', notes, flags=re.M)
+        notes = re.sub('<b>(.*?)</b>', '**\\1**', notes, flags=re.M)
+        notes = re.sub('<i>(.*?)</i>', '*\\1*', notes, flags=re.M)
+        notes = re.sub('<br>', '  \n', notes, flags=re.M)
+        notes = re.sub('<br />', '  \n', notes, flags=re.M)
+        notes = re.sub('<p>', '\n\n', notes, flags=re.M)
+        notes = re.sub('</p>', '', notes, flags=re.M)
+        notes = re.sub('\[', '\\[', notes, flags=re.M)
+        notes = re.sub('\]', '\\]', notes, flags=re.M)
+        notes = re.sub('_', '\\_', notes, flags=re.M)
+        notes = re.sub('#', '\\#', notes, flags=re.M)
+        notes = re.sub('&amp;', '&', notes, flags=re.M)
+        notes = re.sub('<h1>(.*?)</h1>', '\n# \\1\n', notes, flags=re.M)
+        notes = re.sub('<h2>(.*?)</h2>', '\n## \\1\n', notes, flags=re.M)
+        notes = re.sub('<h3>(.*?)</h3>', '\n### \\1\n', notes, flags=re.M)
+        notes = re.sub('<h4>(.*?)</h4>', '\n#### \\1\n', notes, flags=re.M)
+        notes = re.sub('<h5>(.*?)</h5>', '\n###### \\1\n', notes, flags=re.M)
+        if citekey == "":
+            # More than two authors:
+            notes = re.sub('\(<a href="zotero.*?">(.*?) et al ([0-9]*):([0-9]*)</a>\)', '[@' + key + '#\\1_etal_\\2' + ypsep + '\\3]', notes, flags=re.M)
+            # Two authors:
+            notes = re.sub('\(<a href="zotero.*?">(.*?) and (.*?) ([0-9]*):([0-9]*)</a>\)', '[@' + key + '#\\1_\\2_\\3' + ypsep + '\\4]', notes, flags=re.M)
+            # One author:
+            notes = re.sub('\(<a href="zotero.*?">(.*?) ([0-9]*):([0-9]*)</a>\)', '[@' + key + '#\\1_\\2' + ypsep + '\\3]', notes, flags=re.M)
+            # None of the above...
+            notes = re.sub('\(<a href="zotero.*?">(.*?)</a>\)', '[@' + key + '#\\1]', notes, flags=re.M)
+        else:
+            notes = re.sub('\(<a href="zotero.*?">(.*?) et al ([0-9]*):([0-9]*)</a>\)', '[@' + key + '#' + citekey + ypsep + '\\3]', notes, flags=re.M)
+            notes = re.sub('\(<a href="zotero.*?">(.*?) and (.*?) ([0-9]*):([0-9]*)</a>\)', '[@' + key + '#' + citekey + ypsep + '\\4]', notes, flags=re.M)
+            notes = re.sub('\(<a href="zotero.*?">(.*?) ([0-9]*):([0-9]*)</a>\)', '[@' + key + '#' + citekey + ypsep + '\\3]', notes, flags=re.M)
+            notes = re.sub('\(<a href="zotero.*?">(.*?)</a>\)', '[@' + key + '#\\1]', notes, flags=re.M)
+        notes = re.sub('<a title="(.*?)" href="(.*?)">(.*?)</a>', '[\\3](\\2 "\\1")', notes, flags=re.M)
+        notes = re.sub('<a href="(.*?)">(.*?)</a>', '[\\2](\\1)', notes, flags=re.M)
+
+        return notes + '\n'
+
 
     def Info(self):
         """ Return information that might be useful for users of ZoteroEntries """
