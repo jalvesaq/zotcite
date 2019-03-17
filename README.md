@@ -25,6 +25,10 @@ the citation key followed by a hash tag. Example:
 let g:citation_vim_key_format = "{zotero_key}#{author}_{date}"
 ```
 
+To insert in Vim notes stored in Zotero, use the command `:Znote key` where is
+`key` is a word with one or more letters of authors names or from a reference
+title.
+
 To convert a Markdown document with pandoc, use the `zotref` filter that comes
 with Zotcite. The Zotcite plugin adds the directory where `zotref` is to
 the system `$PATH`. So, from within Vim/Neovim, do:
@@ -56,7 +60,7 @@ py C:\Users\yourlogin\vimfiles\plugged\zotcite\python3\zotref
 
 That is, a command with the Python 3 executable followed by `zotref` path. If
 `zotref` still fails to work properly, please, try adding the references to
-the YAML header with `:ZRefs`. Then, if there are only ascii characters in
+the YAML header with `:Zrefs`. Then, if there are only ascii characters in
 the references you will have a chance of successfully compiling the document
 on Windows.
 
@@ -72,13 +76,13 @@ In Vim's Normal mode, put the cursor over a citation key and press:
 
   - `<Leader>zy` to see how the reference will be converted into YAML.
 
-You can also use the command `:ZSeek` to see what references have either a
+You can also use the command `:Zseek` to see what references have either a
 last author's name or title matching the pattern that you are seeking for. The
 references displayed in the command line at the bottom of the screen will be
 the same that would be in a omni completion menu. Example:
 
 ```vim
-:ZSeek marx
+:Zseek marx
 ```
 
 The goal of Zotcite is to avoid the need of exporting bib files from Zotero,
@@ -90,6 +94,21 @@ following:
 ```
 
 Note: `file_name.bib` will be overwritten if it already exists.
+
+## Suggested workflow
+
+  1. Use Zotero's browser connector to download papers in the PDF format.
+
+  2. Read the papers, highlighting important passages and making annotations.
+
+  3. Use Zotero's ZotFile extension to extract from the PDF documents the text
+     that your have highlighted and the notes that you have added.
+
+  4. In Vim/Neovim, run the command `:Znote` to extract your notes from
+     Zotero's database and insert them in the markdown document.
+
+  5. Finish editing your markdown document.
+
 
 ## Customization
 

@@ -62,34 +62,70 @@ function zotcite#CompleteBib(findstart, base)
     endif
 endfunction
 
-function zotcite#Seek(key)
+function zotcite#getmach(key)
     let citeptrn = substitute(a:key, ' .*', '', '')
     let lines = py3eval('ZotCite.GetMatch("'. citeptrn .'", "'. escape(expand("%:p"), '\\') .'")')
-    let resp = ''
+    let resp = []
     for line in lines
         let tmp = split(line, "\x09")
-        echohl Identifier
-        echo tmp[1] . ' '
+        let item = {'key': substitute(tmp[0], '#.*', '', ''), 'author': tmp[1]}
         if tmp[2] =~ '^([0-9][0-9][0-9][0-9]) '
-            let year = substitute(tmp[2], '^(\([0-9][0-9][0-9][0-9]\)) .*', '\1', '')
-            let ttl = substitute(tmp[2], '^([0-9][0-9][0-9][0-9]) ', '', '')
+            let item['year'] = substitute(tmp[2], '^(\([0-9][0-9][0-9][0-9]\)) .*', '\1', '')
+            let item['ttl'] = substitute(tmp[2], '^([0-9][0-9][0-9][0-9]) ', '', '')
         elseif tmp[2] =~ '^() '
-            let year = ''
-            let ttl = substitute(tmp[2], '^() ', '', '')
+            let item['year'] = ''
+            let item['ttl'] = substitute(tmp[2], '^() ', '', '')
         else
-            let year = ''
-            let ttl = tmp[2]
+            let item['year'] = ''
+            let item['ttl'] = tmp[2]
         endif
-        let room = &columns - len(tmp[1]) - len(year) - 3
-        if len(ttl) > room
-            let ttl = substitute(ttl, '^\(.\{'.room.'}\).*', '\1', '')
+        call add(resp, item)
+    endfor
+    return resp
+endfunction
+
+function zotcite#printmatches(mtchs, prefix)
+    let idx = 0
+    for mt in a:mtchs
+        let idx += 1
+        let room = &columns - len(mt['year']) - len(mt['author']) - 3
+        if a:prefix
+            echo idx . ': '
+            echohl Identifier
+            echon mt['author'] . ' '
+            let room = room - len(idx) - 2
+        else
+            echo mt['author'] . ' '
+        endif
+        if len(mt['ttl']) > room
+            let mt['ttl'] = substitute(mt['ttl'], '^\(.\{'.room.'}\).*', '\1', '')
         endif
         echohl Number
-        echon  year . ' '
+        echon  mt['year'] . ' '
         echohl Title
-        echon ttl
+        echon mt['ttl']
         echohl None
     endfor
+endfunction
+
+function zotcite#Seek(key)
+    let mtchs = zotcite#getmach(a:key)
+    call zotcite#printmatches(mtchs, 1)
+endfunction
+
+function zotcite#GetNote(key)
+    let mtchs = zotcite#getmach(a:key)
+    call zotcite#printmatches(mtchs, 1)
+    let idx = input('Your choice: ')
+    if $ZoteroSQLpath != ""
+        let resp = system('zotnote "' . $ZoteroSQLpath . '" ' . mtchs[idx - 1]['key'])
+    elseif filereadable(expand('~/Zotero/zotero.sqlite'))
+        let resp = system('zotnote "' . expand('~/Zotero/zotero.sqlite') . '" ' . mtchs[idx - 1]['key'])
+    else
+        call zotcite#warning('The Zotero database was not found. Please, set the value of $ZoteroSQLpath')
+        return
+    endif
+    call append('.', split(resp, "\n"))
 endfunction
 
 function zotcite#GetCitationKey()
@@ -278,8 +314,13 @@ function zotcite#GlobalInit()
     let $RmdFile = expand("%:p")
 
     call zotcite#GetCollectionName()
-    command ZRefs call zotcite#AddYamlRefs()
-    command -nargs=1 ZSeek call zotcite#Seek(<q-args>)
+    command Zrefs call zotcite#AddYamlRefs()
+    command -nargs=1 Zseek call zotcite#Seek(<q-args>)
+    command -nargs=1 Znote call zotcite#GetNote(<q-args>)
+
+    " 2019-03-17:
+    command ZRefs call zotcite#warning('The command :ZRefs was renamed as :Zrefs') | delcommand ZRefs
+    command -nargs=1 ZSeek call zotcite#warning('The command :ZSeek was renamed as :Zseek') | delcommand ZSeek
     return 1
 endfunction
 
