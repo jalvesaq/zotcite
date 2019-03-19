@@ -396,7 +396,7 @@ class ZoteroEntries:
             """
         self._cur.execute(query)
         for pKey, pId, aPath in self._cur.fetchall():
-            if pId in self._e:
+            if pId in self._e and not pKey is None:
                 self._e[pId]['attachment'] = pKey + ':' + aPath
 
     def _calculate_citekeys(self):
