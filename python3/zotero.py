@@ -205,7 +205,7 @@ class ZoteroEntries:
         if self._bwords is None:
             self._bwords = 'a an the some from on in to of do with'
 
-        # Path of zotero.sqlite
+        # Path to zotero.sqlite
         if os.getenv('ZoteroSQLpath') is None:
             if os.path.isfile(os.path.expanduser('~/Zotero/zotero.sqlite')):
                 self._z = os.path.expanduser('~/Zotero/zotero.sqlite')
@@ -396,7 +396,7 @@ class ZoteroEntries:
             """
         self._cur.execute(query)
         for pKey, pId, aPath in self._cur.fetchall():
-            if pId in self._e and not pKey is None:
+            if pId in self._e and not pKey is None and not aPath is None:
                 self._e[pId]['attachment'] = pKey + ':' + aPath
 
     def _calculate_citekeys(self):
