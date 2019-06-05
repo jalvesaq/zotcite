@@ -34,6 +34,11 @@ function zotcite#info()
         endif
         if &omnifunc != 'zotcite#CompleteBib'
             echo 'There is another omnifunc enabled: ' . &omnifunc
+            if &filetype == "rmd"
+                if len(glob(expand("%:p:h") . '/*.bib', 0, 1)) > 0
+                    echo "There is a .bib file in this directory. Omni completion might not work."
+                endif
+            endif
         endif
         for line in s:log
             echo line
