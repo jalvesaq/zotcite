@@ -423,7 +423,7 @@ class ZoteroEntries:
                 lastnames = re.sub('_.*_.*_.*', '_etal', lastnames)
             else:
                 lastname = 'No_author'
-                lastnames = 'No_authors'
+                lastnames = 'No_author'
             lastname = re.sub('\W', '', lastname)
             titlew = re.sub('\W', '', titlew)
             key = self._cite
