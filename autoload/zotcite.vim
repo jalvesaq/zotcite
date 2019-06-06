@@ -324,7 +324,6 @@ function zotcite#GlobalInit()
     endif
     let $RmdFile = expand("%:p")
 
-    call zotcite#GetCollectionName()
     command Zrefs call zotcite#AddYamlRefs()
     command -nargs=1 Zseek call zotcite#Seek(<q-args>)
     command -nargs=1 Znote call zotcite#GetNote(<q-args>)
@@ -396,6 +395,7 @@ function zotcite#Init()
         if !exists('b:rplugin_non_r_omnifunc')
             setlocal omnifunc=zotcite#CompleteBib
         endif
+        call zotcite#GetCollectionName()
         autocmd BufWritePost <buffer> call zotcite#GetCollectionName()
     endif
 endfunction

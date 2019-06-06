@@ -485,7 +485,10 @@ class ZoteroEntries:
         else:
             keys = []
             for c in collections:
-                keys += self._c[c]
+                if c in self._c:
+                    keys += self._c[c]
+        if keys == []:
+            keys = self._e.keys()
 
         # priority level
         p1 = []
