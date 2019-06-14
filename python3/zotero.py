@@ -372,6 +372,8 @@ class ZoteroEntries:
                 # Special field for citation seeking
                 if ctype == 'author':
                     self._e[item_id]['alastnm'] += ', ' + lastname
+                if ctype == 'editor' and not 'author' in self._e[item_id]:
+                    self._e[item_id]['alastnm'] += ', ' + lastname
 
     def _add_type(self):
         query = u"""
@@ -419,11 +421,18 @@ class ZoteroEntries:
                 lastnames = ''
                 for ln in self._e[k]['author']:
                     lastnames = lastnames + '_' + ln[0]
-                lastnames = re.sub('^_', '', lastnames)
-                lastnames = re.sub('_.*_.*_.*', '_etal', lastnames)
             else:
-                lastname = 'No_author'
-                lastnames = 'No_author'
+                if 'editor' in self._e[k]:
+                    lastname = self._e[k]['editor'][0][0]
+                    lastnames = ''
+                    for ln in self._e[k]['editor']:
+                        lastnames = lastnames + '_' + ln[0]
+                else:
+                    lastname = 'No_author'
+                    lastnames = 'No_author'
+
+            lastnames = re.sub('^_', '', lastnames)
+            lastnames = re.sub('_.*_.*_.*', '_etal', lastnames)
             lastname = re.sub('\W', '', lastname)
             titlew = re.sub('\W', '', titlew)
             key = self._cite
