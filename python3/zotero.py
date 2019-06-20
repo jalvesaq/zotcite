@@ -488,15 +488,15 @@ class ZoteroEntries:
         if os.path.getmtime(self._z) > self._ztime:
             self._load_zotero_data()
 
-        collections = self._d[d]
-        if collections == []:
-            keys = self._e.keys()
-        else:
+        if d in self._d and self._d[d]:
+            collections = self._d[d]
             keys = []
             for c in collections:
                 if c in self._c:
                     keys += self._c[c]
-        if keys == []:
+            if keys == []:
+                keys = self._e.keys()
+        else:
             keys = self._e.keys()
 
         # priority level
