@@ -374,6 +374,12 @@ class ZoteroEntries:
                     self._e[item_id]['alastnm'] += ', ' + lastname
                 if ctype == 'editor' and not 'author' in self._e[item_id]:
                     self._e[item_id]['alastnm'] += ', ' + lastname
+                if ctype == 'seriesEditor' and not 'author' in self._e[item_id] and not 'editor' in self._e[item_id]:
+                    self._e[item_id]['alastnm'] += ', ' + lastname
+                if ctype == 'contributor' and not 'seriesEditor' in self._e[item_id] and not 'author' in self._e[item_id] and not 'editor' in self._e[item_id]:
+                    self._e[item_id]['alastnm'] += ', ' + lastname
+                if ctype == 'translator' and not 'contributor' in self._e[item_id] and not 'seriesEditor' in self._e[item_id] and not 'author' in self._e[item_id] and not 'editor' in self._e[item_id]:
+                    self._e[item_id]['alastnm'] += ', ' + lastname
 
     def _add_type(self):
         query = u"""
@@ -428,8 +434,26 @@ class ZoteroEntries:
                     for ln in self._e[k]['editor']:
                         lastnames = lastnames + '_' + ln[0]
                 else:
-                    lastname = 'No_author'
-                    lastnames = 'No_author'
+                    if 'seriesEditor' in self._e[k]:
+                        lastname = self._e[k]['seriesEditor'][0][0]
+                        lastnames = ''
+                        for ln in self._e[k]['seriesEditor']:
+                            lastnames = lastnames + '_' + ln[0]
+                    else:
+                        if 'contributor' in self._e[k]:
+                            lastname = self._e[k]['contributor'][0][0]
+                            lastnames = ''
+                            for ln in self._e[k]['contributor']:
+                                lastnames = lastnames + '_' + ln[0]
+                        else:
+                            if 'translator' in self._e[k]:
+                                lastname = self._e[k]['translator'][0][0]
+                                lastnames = ''
+                                for ln in self._e[k]['translator']:
+                                    lastnames = lastnames + '_' + ln[0]
+                            else:
+                                lastname = 'No_author'
+                                lastnames = 'No_author'
 
             lastnames = re.sub('^_', '', lastnames)
             lastnames = re.sub('_.*_.*_.*', '_etal', lastnames)
