@@ -3,6 +3,7 @@ import sys
 import os
 import re
 import sqlite3
+import copy
 
 # A lot of code was either adapted or plainly copied from citation_vim,
 # written by Rafael Schouten: https://github.com/rafaqz/citation.vim
@@ -64,6 +65,7 @@ class ZoteroEntries:
         'conferenceName'      : 'event',
         'court'               : 'authority',
         'date'                : 'issued',
+        'issueDate'           : 'issued',
         'dictionaryTitle'     : 'container-title',
         'distributor'         : 'publisher',
         'encyclopediaTitle'   : 'container-title',
@@ -88,8 +90,10 @@ class ZoteroEntries:
         'programmingLanguage' : 'genre',
         'publicationTitle'    : 'container-title',
         'reporter'            : 'container-title',
+        'reviewedAuthor'      : 'reviewed-author',
         'runningTime'         : 'dimensions',
         'series'              : 'collection-title',
+        'seriesEditor'        : 'collection-editor',
         'seriesNumber'        : 'collection-number',
         'seriesTitle'         : 'collection-title',
         'session'             : 'chapter-number',
@@ -193,6 +197,10 @@ class ZoteroEntries:
         'websiteTitle'        : 'booktitle',
         'websiteType'         : 'type'}
 
+    _creators = ["editor", "seriesEditor", "translator", "reviewedAuthor",
+                 "artist", "performer", "composer", "director", "podcaster",
+                 "cartographer", "programmer", "presenter", "interviewee",
+                 "interviewer", "recipient", "sponsor", "inventor"]
     def __init__(self):
 
         # Template for citation keys
@@ -372,14 +380,18 @@ class ZoteroEntries:
                 # Special field for citation seeking
                 if ctype == 'author':
                     self._e[item_id]['alastnm'] += ', ' + lastname
-                if ctype == 'editor' and not 'author' in self._e[item_id]:
-                    self._e[item_id]['alastnm'] += ', ' + lastname
-                if ctype == 'seriesEditor' and not 'author' in self._e[item_id] and not 'editor' in self._e[item_id]:
-                    self._e[item_id]['alastnm'] += ', ' + lastname
-                if ctype == 'contributor' and not 'seriesEditor' in self._e[item_id] and not 'author' in self._e[item_id] and not 'editor' in self._e[item_id]:
-                    self._e[item_id]['alastnm'] += ', ' + lastname
-                if ctype == 'translator' and not 'contributor' in self._e[item_id] and not 'seriesEditor' in self._e[item_id] and not 'author' in self._e[item_id] and not 'editor' in self._e[item_id]:
-                    self._e[item_id]['alastnm'] += ', ' + lastname
+                else:
+                    sought = ['author']
+                    for c in self._creators:
+                        if ctype == c:
+                            flag = False
+                            for s in sought:
+                                if s in self._e[item_id]:
+                                    flag = True
+                                    break
+                            if not flag:
+                                self._e[item_id]['alastnm'] += ', ' + lastname
+                        sought.append(c)
 
     def _add_type(self):
         query = u"""
@@ -413,7 +425,10 @@ class ZoteroEntries:
             if 'date' in self._e[k]:
                 year = re.sub(' .*', '', self._e[k]['date']).split('-')[0]
             else:
-                year = ''
+                if 'issueDate' in self._e[k]:
+                    year = re.sub(' .*', '', self._e[k]['issueDate']).split('-')[0]
+                else:
+                    year = ''
             self._e[k]['year'] = year
             if 'title' in self._e[k]:
                 title = re.sub(ptrn, '', self._e[k]['title'].lower())
@@ -422,38 +437,17 @@ class ZoteroEntries:
             else:
                 self._e[k]['title'] = ''
                 titlew = ''
-            if 'author' in self._e[k]:
-                lastname = self._e[k]['author'][0][0]
-                lastnames = ''
-                for ln in self._e[k]['author']:
-                    lastnames = lastnames + '_' + ln[0]
-            else:
-                if 'editor' in self._e[k]:
-                    lastname = self._e[k]['editor'][0][0]
-                    lastnames = ''
-                    for ln in self._e[k]['editor']:
+            lastname = 'No_author'
+            lastnames = ''
+            creators = ['author'] + self._creators
+            for c in creators:
+                if c in self._e[k]:
+                    lastname = self._e[k][c][0][0]
+                    for ln in self._e[k][c]:
                         lastnames = lastnames + '_' + ln[0]
-                else:
-                    if 'seriesEditor' in self._e[k]:
-                        lastname = self._e[k]['seriesEditor'][0][0]
-                        lastnames = ''
-                        for ln in self._e[k]['seriesEditor']:
-                            lastnames = lastnames + '_' + ln[0]
-                    else:
-                        if 'contributor' in self._e[k]:
-                            lastname = self._e[k]['contributor'][0][0]
-                            lastnames = ''
-                            for ln in self._e[k]['contributor']:
-                                lastnames = lastnames + '_' + ln[0]
-                        else:
-                            if 'translator' in self._e[k]:
-                                lastname = self._e[k]['translator'][0][0]
-                                lastnames = ''
-                                for ln in self._e[k]['translator']:
-                                    lastnames = lastnames + '_' + ln[0]
-                            else:
-                                lastname = 'No_author'
-                                lastnames = 'No_author'
+                    break
+            if lastnames == '':
+                lastnames = 'No_author'
 
             lastnames = re.sub('^_', '', lastnames)
             lastnames = re.sub('_.*_.*_.*', '_etal', lastnames)
@@ -547,10 +541,21 @@ class ZoteroEntries:
         resp = p1 + p2 + p3 + p4 + p5 + p6
         return resp
 
-    def _get_yaml_ref(self, e, citekey):
+    def _get_yaml_ref(self, entry, citekey):
+        e = copy.deepcopy(entry)
+
         # Fix the type
         if e['etype'] in self._zct:
             e['etype'] = e['etype'].replace(e['etype'], self._zct[e['etype']])
+
+        # https://www.zotero.org/support/kb/item_types_and_fields#item_creators
+        # Fix author type:
+        atype = ["artist", "performer", "director", "podcaster",
+                 "cartographer", "programmer", "presenter",
+                 "interviewee", "sponsor", "inventor"]
+        for a in atype:
+            if a in e and not 'author' in e:
+                e['author'] = e.pop(a)
 
         # Escape quotes of all fields
         for f in e:
@@ -564,8 +569,9 @@ class ZoteroEntries:
                 e[self._zcf[f]] = e.pop(f)
 
         ref = '  - type: "' + e['etype'] + '"\n    id: "' + citekey + '"\n'
-        for aa in ['author', 'editor', 'contributor', 'translator',
-                   'container-author']:
+        atype = ["author", "editor", "collection-editor", "translator",
+                 "reviewed-author", "composer", "interviewer", "recipient"]
+        for aa in atype:
             if aa in e:
                 ref += '    ' + aa + ':\n'
                 for last, first in e[aa]:
@@ -579,9 +585,8 @@ class ZoteroEntries:
                     ref += '        month: "' + d[1] + '"\n'
                 if d[2] != '00':
                     ref += '        day: "' + d[2] + '"\n'
-        dont = ['etype', 'issued', 'abstract', 'citekey', 'zotkey',
-                'collection', 'author', 'editor', 'contributor', 'translator',
-                'alastnm', 'container-author', 'year']
+        dont = ['etype', 'issued', 'abstract', 'citekey', 'zotkey', 'collection',
+                'alastnm', 'container-author', 'year'] + atype
         for f in e:
             if f not in dont:
                 ref += '    ' + f + ': "' + str(e[f]) + '"\n'
@@ -603,7 +608,9 @@ class ZoteroEntries:
             ref = 'references:\n' + ref
         return ref
 
-    def _get_bib_ref(self, e, citekey):
+    def _get_bib_ref(self, entry, citekey):
+        e = copy.deepcopy(entry)
+
         # Fix the type
         if e['etype'] in self._zbt:
             e['etype'] = e['etype'].replace(e['etype'], self._zbt[e['etype']])
