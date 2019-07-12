@@ -189,25 +189,45 @@ function zotcite#GetReferenceData(type)
     endif
 endfunction
 
+function zotcite#OpenAttachment(strg)
+    let fpath = expand('~/Zotero/storage/') . substitute(a:strg, ':storage:', '/', '')
+    if filereadable(fpath)
+        call system(s:open_cmd . ' "' . fpath . '"')
+    else
+        call zotcite#warning('Could not find "' . fpath . '"')
+    endif
+endfunction
+
 function zotcite#GetZoteroAttachment()
     let wrd = zotcite#GetCitationKey()
     if wrd != ''
         let repl = py3eval('ZotCite.GetAttachment("' . wrd . '")')
-        if repl == 'nOaTtAChMeNt'
+        if len(repl) == 0
+            call zotcite#warning('Got empty list')
+            return
+        endif
+        if repl[0] == 'nOaTtAChMeNt'
             call zotcite#warning(wrd . "'s attachment not found")
-        elseif repl =~ 'nOcLlCtN:'
+        elseif repl[0] =~ 'nOcLlCtN:'
             call zotcite#warning('Collection "' . substitute(repl, 'nOcLlCtN:', '', '') . '" not found')
-        elseif repl == 'nOcItEkEy'
+        elseif repl[0] == 'nOcItEkEy'
             call zotcite#warning(wrd . " not found")
-        elseif repl == ''
-            call zotcite#warning('No reply from BibComplete')
         else
-            let fpath = repl
-            let fpath = expand('~/Zotero/storage/') . substitute(repl, ':storage:', '/', '')
-            if filereadable(fpath)
-                call system(s:open_cmd . ' "' . fpath . '"')
+            if len(repl) == 1
+                call zotcite#OpenAttachment(repl[0])
             else
-                call zotcite#warning('Could not find "' . fpath . '"')
+                let idx = 1
+                for at in repl
+                    echohl Number
+                    echo idx
+                    echohl None
+                    echon  '. ' . substitute(at, '.*storage:', '', '')
+                    let idx += 1
+                endfor
+                let idx = input('Your choice: ')
+                if idx != '' && idx >= 1 && idx <= len(repl)
+                    call zotcite#OpenAttachment(repl[idx - 1])
+                endif
             endif
         endif
     endif

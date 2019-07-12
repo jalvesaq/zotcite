@@ -160,6 +160,7 @@ class ZoteroEntries:
         'conferenceName'      : 'event',
         'court'               : 'authority',
         'date'                : 'issued',
+        'issueDate'           : 'issued',
         'dictionaryTitle'     : 'booktitle',
         'distributor'         : 'publisher',
         'encyclopediaTitle'   : 'booktitle',
@@ -417,7 +418,10 @@ class ZoteroEntries:
         self._cur.execute(query)
         for pKey, pId, aPath in self._cur.fetchall():
             if pId in self._e and not pKey is None and not aPath is None:
-                self._e[pId]['attachment'] = pKey + ':' + aPath
+                if 'attachment' in self._e[pId]:
+                    self._e[pId]['attachment'].append(pKey + ':' + aPath)
+                else:
+                    self._e[pId]['attachment'] = [pKey + ':' + aPath]
 
     def _calculate_citekeys(self):
         ptrn = '^(' + ' |'.join(self._bwords) + ' )'
@@ -681,8 +685,8 @@ class ZoteroEntries:
             if self._e[k]['zotkey'] == zotkey:
                 if 'attachment' in self._e[k]:
                     return self._e[k]['attachment']
-                return "nOaTtAChMeNt"
-        return "nOcItEkEy"
+                return ["nOaTtAChMeNt"]
+        return ["nOcItEkEy"]
 
     def GetRefData(self, zotkey):
         """ Return the key's dictionary.
