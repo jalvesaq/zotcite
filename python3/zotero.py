@@ -254,6 +254,12 @@ class ZoteroEntries:
             self._errmsg('Please, either set or fix the value of $Zotcite_tmpdir: "' + self._tmpdir + '" is not writable.')
             return None
 
+        # Fields that should not be added to the YAML references:
+        if os.getenv('Zotcite_exclude') is None:
+            self._exclude = []
+        else:
+            self._exclude = os.getenv('Zotcite_exclude').split()
+
         self._c = {}
         self._e = {}
         self._load_zotero_data()
@@ -590,7 +596,7 @@ class ZoteroEntries:
                 if d[2] != '00':
                     ref += '        day: "' + d[2] + '"\n'
         dont = ['etype', 'issued', 'abstract', 'citekey', 'zotkey', 'collection',
-                'alastnm', 'container-author', 'year'] + atype
+                'alastnm', 'container-author', 'year'] + self._exclude + atype
         for f in e:
             if f not in dont:
                 ref += '    ' + f + ': "' + str(e[f]) + '"\n'
@@ -794,5 +800,6 @@ class ZoteroEntries:
              'docs': str(self._d) + '\n',
              'citation template': self._cite,
              'banned words': self._bwords,
+             'excluded fields': str(self._exclude),
             }
         return r
