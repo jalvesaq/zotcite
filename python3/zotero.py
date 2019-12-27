@@ -501,10 +501,13 @@ class ZoteroEntries:
 
     @classmethod
     def _get_compl_line(cls, e):
-        if e['alastnm'] == '':
+        alastnm = e['alastnm']
+        if alastnm == '':
             line = e['zotkey'] + '#' + e['citekey'] + '\x09 \x09(' + e['year'] + ') ' + e['title']
         else:
-            line = e['zotkey'] + '#' + e['citekey'] + '\x09' + e['alastnm'] + '\x09(' + e['year'] + ') ' + e['title']
+            if len(alastnm) > 40:
+                alastnm = alastnm[:40] + "…"
+            line = e['zotkey'] + '#' + e['citekey'] + '\x09' + alastnm + '\x09(' + e['year'] + ') ' + e['title']
         return line
 
     def GetMatch(self, ptrn, d):
