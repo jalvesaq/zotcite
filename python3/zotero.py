@@ -464,15 +464,15 @@ class ZoteroEntries:
             lastname = re.sub('\W', '', lastname)
             titlew = re.sub('\W', '', titlew)
             key = self._cite
-            key = re.sub('{author}', lastname.lower(), key)
-            key = re.sub('{Author}', lastname.title(), key)
-            key = re.sub('{authors}', lastnames.lower(), key)
-            key = re.sub('{Authors}', lastnames.title(), key)
-            key = re.sub('{year}', re.sub('^[0-9][0-9]', '', year), key)
-            key = re.sub('{Year}', year, key)
-            key = re.sub('{title}', titlew.lower(), key)
-            key = re.sub('{Title}', titlew.title(), key)
-            key = re.sub(' ', '', key)
+            key = key.replace('{author}', lastname.lower(), 1)
+            key = key.replace('{Author}', lastname.title(), 1)
+            key = key.replace('{authors}', lastnames.lower(), 1)
+            key = key.replace('{Authors}', lastnames.title(), 1)
+            key = key.replace('{year}', re.sub('^[0-9][0-9]', '', year), 1)
+            key = key.replace('{Year}', year, 1)
+            key = key.replace('{title}', titlew.lower(), 1)
+            key = key.replace('{Title}', titlew.title(), 1)
+            key = key.replace(' ', '', 1)
             self._e[k]['citekey'] = key
 
 
