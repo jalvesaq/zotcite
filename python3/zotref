@@ -19,9 +19,8 @@ if __name__ == "__main__":
     # Get json from pandoc (stdin)
     i = sys.stdin.read()
 
-    # To avoid duplicated references, replace the visible part of the citation
-    # key with a constant string because only the Zotero's key matters:
-    i = re.sub('"citationId":"([^"]+)#([^"]+)"', '"citationId":"\\1#x"', i)
+    # To avoid duplicated references, delete the visible part of the citation key
+    i = re.sub('"citationId":"([^"]+)#[^"]+"', '"citationId":"\\1"', i)
 
     j = json.load(io.StringIO(i))
 
