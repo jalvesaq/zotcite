@@ -570,11 +570,6 @@ class ZoteroEntries:
             if a in e and not 'author' in e:
                 e['author'] = e.pop(a)
 
-        # Escape quotes of all fields
-        for f in e:
-            if isinstance(e[f], str):
-                e[f] = re.sub('"', '\\"', e[f])
-
         # Rename some fields
         ekeys = list(e.keys())
         for f in ekeys:
@@ -602,7 +597,8 @@ class ZoteroEntries:
                 'alastnm', 'container-author', 'year'] + self._exclude + atype
         for f in e:
             if f not in dont:
-                ref += '    ' + f + ': "' + str(e[f]) + '"\n'
+                # Escape quotes of all fields
+                ref += '    ' + f + ': "' + re.sub('"', '\\"', str(e[f])) + '"\n'
         return ref
 
     def GetYamlRefs(self, keys):
