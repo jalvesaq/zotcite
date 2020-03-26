@@ -215,10 +215,11 @@ class ZoteroEntries:
             self._bwords = 'a an the some from on in to of do with'
 
         # Path to zotero.sqlite
+        self._get_zotero_prefs()
         if os.getenv('ZoteroSQLpath') is None:
             if os.path.isfile(os.path.expanduser('~/Zotero/zotero.sqlite')):
                 self._z = os.path.expanduser('~/Zotero/zotero.sqlite')
-            elif os.path.isfile(os.getenv('USERPROFILE') + '/Zotero/zotero.sqlite'):
+            elif os.getenv('USERPROFILE') is not None and os.path.isfile(os.getenv('USERPROFILE') + '/Zotero/zotero.sqlite'):
                 self._z = os.getenv('USERPROFILE') + '/Zotero/zotero.sqlite'
             else:
                 self._errmsg('The file zotero.sqlite was not found. Please, define the environment variable ZoteroSQLpath.')
@@ -284,6 +285,27 @@ class ZoteroEntries:
                     return 'Collection "' + c + '" not found in Zotero database.'
         return ''
 
+
+    def _get_zotero_prefs(self):
+        self._dd = ''
+        self._ad = ''
+        if os.path.isfile(os.path.expanduser('~/.zotero/zotero/profiles.ini')):
+            with open(os.path.expanduser('~/.zotero/zotero/profiles.ini'), 'r') as f:
+                lines = f.readlines()
+            for line in lines:
+                if line.find('Path=') == 0:
+                    zprofile = line.replace('Path=', '').replace('\n', '')
+                    zprefs = os.path.expanduser('~/.zotero/zotero/') + zprofile + '/prefs.js'
+                    if os.path.isfile(zprefs):
+                        with open(zprefs, 'r') as f:
+                            prefs = f.readlines()
+                        for pref in prefs:
+                            if pref.find('extensions.zotero.baseAttachmentPath') > 0:
+                                self._ad = re.sub('.*", "(.*)".*\n', '\\1', pref)
+                            if os.getenv('ZoteroSQLpath') is None and pref.find('extensions.zotero.dataDir') > 0:
+                                self._dd = re.sub('.*", "(.*)".*\n', '\\1', pref)
+                                if os.path.isfile(self._dd + '/zotero.sqlite'):
+                                    os.environ["ZoteroSQLpath"] = self._dd + '/zotero.sqlite'
 
     def _copy_zotero_data(self):
         self._ztime = os.path.getmtime(self._z)
@@ -793,6 +815,8 @@ class ZoteroEntries:
         """ Return information that might be useful for users of ZoteroEntries """
 
         r = {'zotero.py': os.path.realpath(__file__),
+             'data dir': self._dd,
+             'attachments dir': self._ad,
              'zotero.sqlite': self._z,
              'tmpdir': self._tmpdir,
              'references found': len(self._e.keys()),

@@ -190,9 +190,24 @@ function zotcite#GetReferenceData(type)
 endfunction
 
 function zotcite#OpenAttachment(strg)
-    let fpath = expand('~/Zotero/storage/') . substitute(a:strg, ':storage:', '/', '')
+    if a:strg =~ ':attachments:'
+	" The user has set Edit / Preferences / Files and Folders / Base directory for linked attachments
+	let fpath = substitute(a:strg, '.*:attachments:', '/' . g:zotcite_attach_dir . '/', '')
+	if g:zotcite_attach_dir == ''
+	    call zotcite#warning('Attachments dir is not defined')
+	endif
+    elseif a:strg =~ ':/'
+	" Absolute file path
+	let fpath = substitute(a:strg, '.*:/', '/', '')
+    elseif a:strg =~ ':storage:'
+	" Default path
+	let fpath = g:zotcite_data_dir . substitute(a:strg, '\(.*\):storage:', '/storage/\1/', '')
+    else
+	let fpath = a:strg
+    endif
+
     if filereadable(fpath)
-        call system(s:open_cmd . ' "' . fpath . '"')
+        call system(s:open_cmd . ' "' . fpath . '" &')
     else
         call zotcite#warning('Could not find "' . fpath . '"')
     endif
@@ -328,6 +343,8 @@ function zotcite#GlobalInit()
 
     let $Zotcite_tmpdir = info['tmpdir']
     let zotcite_home = info['zotero.py']
+    let g:zotcite_data_dir = info['data dir']
+    let g:zotcite_attach_dir = info['attachments dir']
     if has('win32')
         let zotcite_home = substitute(zotcite_home, '\(.*\)\\.*', '\1', '')
     else
