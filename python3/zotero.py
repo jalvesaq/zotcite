@@ -619,8 +619,10 @@ class ZoteroEntries:
                 'alastnm', 'container-author', 'year'] + self._exclude + atype
         for f in e:
             if f not in dont:
-                # Escape quotes of all fields
-                ref += '    ' + f + ': "' + re.sub('"', '\\"', str(e[f])) + '"\n'
+                # Escape quotes and line breaks of all fields
+                txt = re.sub('"', '\\"', str(e[f]))
+                txt = re.sub('\n', '\\\\n', txt)
+                ref += '    ' + f + ': "' + txt + '"\n'
         return ref
 
     def GetYamlRefs(self, keys):
