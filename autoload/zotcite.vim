@@ -311,6 +311,24 @@ function zotcite#GetCollectionName()
     endif
 endfunction
 
+function zotcite#SetPath()
+    if has("win32")
+        if $PATH !~ escape(s:zotcite_home, '\\')
+            let $PATH = s:zotcite_home . ';' . $PATH
+        endif
+    else
+        if $PATH !~ s:zotcite_home
+            let $PATH = s:zotcite_home . ':' . $PATH
+        endif
+    endif
+endfunction
+
+function zotcite#ODTtoMarkdown(odt)
+    call zotcite#SetPath()
+    let mdf = system("odt2md '" . a:odt . "'")
+    exe 'tabnew ' . mdf
+endfunction
+
 function zotcite#GlobalInit()
     if !has('python3')
         let g:zotcite_failed = 'zotcite requires python3'
@@ -342,23 +360,10 @@ function zotcite#GlobalInit()
     let s:zrunning = 1
 
     let $Zotcite_tmpdir = info['tmpdir']
-    let zotcite_home = info['zotero.py']
     let g:zotcite_data_dir = info['data dir']
     let g:zotcite_attach_dir = info['attachments dir']
-    if has('win32')
-        let zotcite_home = substitute(zotcite_home, '\(.*\)\\.*', '\1', '')
-    else
-        let zotcite_home = substitute(zotcite_home, '\(.*\)/.*', '\1', '')
-    endif
-    if has("win32")
-        if $PATH !~ escape(zotcite_home, '\\')
-            let $PATH = zotcite_home . ';' . $PATH
-        endif
-    else
-        if $PATH !~ zotcite_home
-            let $PATH = zotcite_home . ':' . $PATH
-        endif
-    endif
+
+    call zotcite#SetPath()
     let $RmdFile = expand("%:p")
 
     command Zrefs call zotcite#AddYamlRefs()
@@ -437,5 +442,6 @@ function zotcite#Init()
     endif
 endfunction
 
+let s:zotcite_home = expand('<sfile>:h:h') . '/python3'
 let s:log = []
 let s:zrunning = 0

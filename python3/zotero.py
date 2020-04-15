@@ -495,6 +495,7 @@ class ZoteroEntries:
             key = key.replace('{title}', titlew.lower(), 1)
             key = key.replace('{Title}', titlew.title(), 1)
             key = key.replace(' ', '', 1)
+            key = key.replace('-', '', 1)
             self._e[k]['citekey'] = key
 
 
@@ -728,7 +729,21 @@ class ZoteroEntries:
                 return self._e[k]
         return "NoCiteKey"
 
+    def GetCitationById(self, Id):
+        """ Return the complete citation string.
+
+            Id  (string): The item ID as stored by Zotero.
+        """
+
+        if Id in self._e.keys():
+            return '@' + self._e[Id]['zotkey'] + '#' + self._e[Id]['citekey']
+        return "IdNotFound"
+
     def GetNotes(self, key):
+        """ Return user notes from a reference.
+
+            key (string): The Zotero key as it appears in the markdown document.
+        """
         zcopy = self._copy_zotero_data()
         conn = sqlite3.connect(zcopy)
         cur = conn.cursor()

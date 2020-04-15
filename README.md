@@ -102,6 +102,28 @@ following:
 
 Note: `file_name.bib` will be overwritten if it already exists.
 
+If you have an OpenDocument Text with citations inserted by the Zotero
+extension, and want to convert it to Markdown, you can use the `odt2md`
+application from the `python3` directory to help you converting the document.
+Example:
+
+```
+/path/to/zotcite/python3/odt2md Document.odt
+```
+
+Within Vim/Neovim, you can run the command `:Zodt2md` to convert the ODT
+document and see the resulting Markdown document in a new tab:
+
+```vim
+:Zodt2md Document.odt
+```
+
+Note that the conversion is not perfect because the visible text from the
+citation fields are not deleted. You have to delete them manually, keeping
+what is needed, such as the page numbers that you have added manually. It is
+not possible to automatize this step because LibreOffice allows the manual
+edition of the citation fields.
+
 ## Suggested workflow
 
   1. Use Zotero's browser connector to download papers in the PDF format.
