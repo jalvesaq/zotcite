@@ -494,8 +494,8 @@ class ZoteroEntries:
             key = key.replace('{Year}', year, 1)
             key = key.replace('{title}', titlew.lower(), 1)
             key = key.replace('{Title}', titlew.title(), 1)
-            key = key.replace(' ', '', 1)
-            key = key.replace('-', '', 1)
+            key = key.replace(' ', '')
+            key = key.replace('-', '')
             self._e[k]['citekey'] = key
 
 
