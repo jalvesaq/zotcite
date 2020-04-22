@@ -727,7 +727,7 @@ class ZoteroEntries:
         for k in self._e:
             if self._e[k]['zotkey'] == zotkey:
                 return self._e[k]
-        return "NoCiteKey"
+        return {}
 
     def GetCitationById(self, Id):
         """ Return the complete citation string.
@@ -778,6 +778,9 @@ class ZoteroEntries:
                 notes += item_note
 
         conn.close()
+
+        if notes == '':
+            return ''
 
         if key_id in self._e:
             citekey = self._e[key_id]['citekey']

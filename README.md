@@ -24,6 +24,10 @@ any other string as separator, set the value of `$ZYearPageSep` in your vimrc
 let $ZYearPageSep = ':'
 ```
 
+Similarly, to extract notes from a PDF document, use the Vim command
+`:Zpdfnote`. The page numbers of the notes will be wrong if the PDF document
+includes cover page.
+
 To insert citation keys, in Insert mode, type the `@` letter and one or more
 letters of either the last name of the first author or the reference title and
 press `CTRL-X CTRL-O`. The matching of citation keys is case insensitive.

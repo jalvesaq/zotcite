@@ -51,8 +51,18 @@ function zotcite#CompleteBib(findstart, base)
         let line = getline(".")
         let cpos = getpos(".")
         let idx = cpos[2] -2
-        while line[idx] =~ '\w' && idx > 0
-            let idx -= 1
+        while idx > 0
+            if line[idx] =~ '\w'
+                let idx -= 1
+            elseif idx > 1 && line[idx-1] >= "\xc2" && line[idx-1] <= "\xdf" && line[idx] >= "\x80" && line[idx] <= "\xbf"
+                " UTF-8 character (two bytes)
+                let idx -= 2
+            elseif idx > 2 && line[idx-2] >= "\xe0" && line[idx-2] <= "\xef" && line[idx-1] >= "\x80" && line[idx-1] <= "\xbf" && line[idx] >= "\x80" && line[idx] <= "\xbf"
+                " UTF-8 character (three bytes)
+                let idx -= 3
+            else
+                break
+            endif
         endwhile
         return idx + 1
     else
@@ -86,6 +96,9 @@ function zotcite#getmach(key)
         endif
         call add(resp, item)
     endfor
+    if len(resp) == 0
+        echo 'No matches found.'
+    endif
     return resp
 endfunction
 
@@ -120,22 +133,15 @@ function zotcite#Seek(key)
 endfunction
 
 function zotcite#GetNote(key)
-    let mtchs = zotcite#getmach(a:key)
-    if len(mtchs) == 0
-        echo 'No matches found.'
-        return
-    endif
-    call zotcite#printmatches(mtchs, 1)
-    let idx = input('Your choice: ')
-    if idx == "" || idx <= 0 || idx > len(mtchs)
-        return
-    endif
-    let repl = py3eval('ZotCite.GetNotes("' . mtchs[idx - 1]['key'] . '")')
-    if repl == ""
-        redraw
-        echo 'No note found.'
-    else
-        call append('.', split(repl, "\n"))
+    let zotkey = zotcite#FindCitationKey(a:key)
+    if zotkey != ''
+        let repl = py3eval('ZotCite.GetNotes("' . zotkey . '")')
+        if repl == ''
+            redraw
+            echo 'No note found.'
+        else
+            call append('.', split(repl, "\n"))
+        endif
     endif
 endfunction
 
@@ -152,16 +158,27 @@ function zotcite#GetCitationKey()
     return ''
 endfunction
 
+function zotcite#GetYamlRef()
+    let wrd = zotcite#GetCitationKey()
+    if wrd != ''
+        let repl = py3eval('ZotCite.GetYamlRefs(["' . wrd . '"])')
+        let repl = substitute(repl, "^references:[\n\r]*", '', '')
+        if repl == ''
+            call zotcite#warning('Citation key not found')
+        else
+            echo repl
+        endif
+    endif
+endfunction
+
 function zotcite#GetReferenceData(type)
     let wrd = zotcite#GetCitationKey()
     if wrd != ''
-        if a:type == 'yaml'
-            let repl = py3eval('ZotCite.GetYamlRefs(["' . wrd . '"])')
-            let repl = substitute(repl, "^references:[\n\r]*", '', '')
-            echo repl
+        let repl = py3eval('ZotCite.GetRefData("' . wrd . '")')
+        if len(repl) == 0
+            call zotcite#warning('Citation key not found')
             return
         endif
-        let repl = py3eval('ZotCite.GetRefData("' . wrd . '")')
         if a:type == 'raw'
             for key in keys(repl)
                 echohl Title
@@ -189,12 +206,14 @@ function zotcite#GetReferenceData(type)
     endif
 endfunction
 
-function zotcite#OpenAttachment(strg)
+function zotcite#TranslateZPath(strg)
+    let fpath = a:strg
     if a:strg =~ ':attachments:'
 	" The user has set Edit / Preferences / Files and Folders / Base directory for linked attachments
-	let fpath = substitute(a:strg, '.*:attachments:', '/' . g:zotcite_attach_dir . '/', '')
 	if g:zotcite_attach_dir == ''
 	    call zotcite#warning('Attachments dir is not defined')
+        else
+            let fpath = substitute(a:strg, '.*:attachments:', '/' . g:zotcite_attach_dir . '/', '')
 	endif
     elseif a:strg =~ ':/'
 	" Absolute file path
@@ -202,50 +221,82 @@ function zotcite#OpenAttachment(strg)
     elseif a:strg =~ ':storage:'
 	" Default path
 	let fpath = g:zotcite_data_dir . substitute(a:strg, '\(.*\):storage:', '/storage/\1/', '')
-    else
-	let fpath = a:strg
     endif
-
-    if filereadable(fpath)
-        call system(s:open_cmd . ' "' . fpath . '" &')
-    else
+    if !filereadable(fpath)
         call zotcite#warning('Could not find "' . fpath . '"')
+        let fpath = ''
     endif
+    return fpath
 endfunction
 
-function zotcite#GetZoteroAttachment()
-    let wrd = zotcite#GetCitationKey()
-    if wrd != ''
-        let repl = py3eval('ZotCite.GetAttachment("' . wrd . '")')
-        if len(repl) == 0
-            call zotcite#warning('Got empty list')
-            return
-        endif
-        if repl[0] == 'nOaTtAChMeNt'
-            call zotcite#warning(wrd . "'s attachment not found")
-        elseif repl[0] =~ 'nOcLlCtN:'
-            call zotcite#warning('Collection "' . substitute(repl, 'nOcLlCtN:', '', '') . '" not found')
-        elseif repl[0] == 'nOcItEkEy'
-            call zotcite#warning(wrd . " not found")
+function zotcite#GetPDFPath(zotkey)
+    let repl = py3eval('ZotCite.GetAttachment("' . a:zotkey . '")')
+    if len(repl) == 0
+        call zotcite#warning('Got empty list')
+        return
+    endif
+    if repl[0] == 'nOaTtAChMeNt'
+        redraw
+        call zotcite#warning('Attachment not found')
+    elseif repl[0] == 'nOcItEkEy'
+        redraw
+        call zotcite#warning('Citation key not found')
+    else
+        if len(repl) == 1
+            return zotcite#TranslateZPath(repl[0])
         else
-            if len(repl) == 1
-                call zotcite#OpenAttachment(repl[0])
-            else
-                let idx = 1
-                for at in repl
-                    echohl Number
-                    echo idx
-                    echohl None
-                    echon  '. ' . substitute(at, '.*storage:', '', '')
-                    let idx += 1
-                endfor
-                let idx = input('Your choice: ')
-                if idx != '' && idx >= 1 && idx <= len(repl)
-                    call zotcite#OpenAttachment(repl[idx - 1])
-                endif
+            let idx = 1
+            for at in repl
+                echohl Number
+                echo idx
+                echohl None
+                echon  '. ' . substitute(zotcite#TranslateZPath(at), '.*storage:', '', '')
+                let idx += 1
+            endfor
+            let idx = input('Your choice: ')
+            if idx != '' && idx >= 1 && idx <= len(repl)
+                return zotcite#TranslateZPath(repl[idx - 1])
             endif
         endif
     endif
+    return ''
+endfunction
+
+function zotcite#FindCitationKey(str)
+    let mtchs = zotcite#getmach(a:str)
+    if len(mtchs) == 0
+        return ''
+    endif
+    call zotcite#printmatches(mtchs, 1)
+    let idx = input('Your choice: ')
+    if idx == "" || idx <= 0 || idx > len(mtchs)
+        return ''
+    endif
+    return mtchs[idx - 1]['key']
+endfunction
+
+function zotcite#OpenAttachment()
+    let zotkey = zotcite#GetCitationKey()
+    let fpath = zotcite#GetPDFPath(zotkey)
+    if fpath != ''
+        call system(s:open_cmd . ' "' . fpath . '" &')
+    endif
+endfunction
+
+function zotcite#GetPDFNote(key)
+    let zotkey = zotcite#FindCitationKey(a:key)
+    let fpath = zotcite#GetPDFPath(zotkey)
+    if fpath == ''
+        return
+    endif
+    let repl = py3eval('ZotCite.GetRefData("' . zotkey . '")')
+    let citekey = " '@" . zotkey . '#' . repl['citekey'] . "' "
+    let page1 = 1
+    if has_key(repl, 'pages') && repl['pages'] =~ '[0-9]-'
+        let page1 = substitute(repl['pages'], '-.*', '', '')
+    endif
+    let notes = system("pdfnotes '" . fpath . "'" . citekey . page1)
+    call append(line('.'), split(notes, '\n'))
 endfunction
 
 function zotcite#AddYamlRefs()
@@ -369,6 +420,7 @@ function zotcite#GlobalInit()
     command Zrefs call zotcite#AddYamlRefs()
     command -nargs=1 Zseek call zotcite#Seek(<q-args>)
     command -nargs=1 Znote call zotcite#GetNote(<q-args>)
+    command -nargs=1 Zpdfnote call zotcite#GetPDFNote(<q-args>)
 
     " 2019-03-17:
     command ZRefs call zotcite#warning('The command :ZRefs was renamed as :Zrefs') | delcommand ZRefs
@@ -409,9 +461,9 @@ function zotcite#Init()
     if !exists('b:zotref_did_buffer_cmds')
         let b:zotref_did_buffer_cmds = 1
         if hasmapto('<Plug>ZOpenAttachment', 'n')
-            exec 'nnoremap <buffer><silent> <Plug>ZOpenAttachment :call zotcite#GetZoteroAttachment()<cr>'
+            exec 'nnoremap <buffer><silent> <Plug>ZOpenAttachment :call zotcite#OpenAttachment()<cr>'
         else
-            nnoremap <buffer><silent> <Leader>zo :call zotcite#GetZoteroAttachment()<cr>
+            nnoremap <buffer><silent> <Leader>zo :call zotcite#OpenAttachment()<cr>
         endif
         if hasmapto('<Plug>ZCitationInfo', 'n')
             exec 'nnoremap <buffer><silent> <Plug>ZCitationInfo :call zotcite#GetReferenceData("ayt")<cr>'
@@ -424,9 +476,9 @@ function zotcite#Init()
             nnoremap <buffer><silent> <Leader>za :call zotcite#GetReferenceData("raw")<cr>
         endif
         if hasmapto('<Plug>ZCitationYamlRef', 'n')
-            exec 'nnoremap <buffer><silent> <Plug>ZCitationYamlRef :call zotcite#GetReferenceData("yaml")<cr>'
+            exec 'nnoremap <buffer><silent> <Plug>ZCitationYamlRef :call zotcite#GetYamlRef()<cr>'
         else
-            nnoremap <buffer><silent> <Leader>zy :call zotcite#GetReferenceData("yaml")<cr>
+            nnoremap <buffer><silent> <Leader>zy :call zotcite#GetYamlRef()<cr>
         endif
         if exists('g:zotcite_conceallevel')
             exe 'set conceallevel=' . g:zotcite_conceallevel
