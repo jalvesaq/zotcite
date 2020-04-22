@@ -1,12 +1,43 @@
 # Zotcite
 
-Omni completion of citation keys from Zotero database for Markdown and RMarkdown documents.
+_Zotcite_ is a Vim plugin that provides integration with Zotero. With
+_zotcite_ you can:
+
+  - Do omni completion of citation keys from Zotero database in both
+    Markdown and RMarkdown documents.
+
+  - See information on the reference under cursor.
+
+  - Use the `zotref` filter to pre-process the Markdown document before it
+    is passed to `pandoc-citeproc`, avoiding the need of `bib` files.
+
+  - Open the PDF attachment of the reference associated with the citation key
+    under cursor.
+
+  - Extract highlighted text and text notes from PDF attachments of
+    references.
+
+  - Extract Zotero notes from Zotero database.
+
+  - Add all cited references to the YAML header of the Markdown document.
+
+_Zotcite_ is being developed and tested on Linux and should work flawlessly on
+other Unix systems, such as Mac OS X. It may require additional configuration
+on Windows.
+
+Requirements:
+
+  - Zotero 5
+
+  - Python 3
+
+  - python3-poppler-qt5 (only if you are going to extract annotations from PDF
+    documents)
 
 ## Installation
 
 Zotcite can be installed as any Vim plugin. It is recommended the use of a
-plugin manager, such as [Vim-Plug](https://github.com/junegunn/vim-plug). It
-requires Python 3 and Zotero 5.
+plugin manager, such as [Vim-Plug](https://github.com/junegunn/vim-plug).
 
 The `zotero` module does not import the `vim` module. Hence, its code could
 easily be adapted to other text editors such as Emacs or Gedit.
