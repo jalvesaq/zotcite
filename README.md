@@ -62,7 +62,7 @@ easily be adapted to other text editors such as Emacs or Gedit.
 ## Usage
 
 Please, read the plugin's
-[documentation](https://raw.githubusercontent.com/jalvesaq/zotcite/master/doc/vimcmdline.txt)
+[documentation](https://raw.githubusercontent.com/jalvesaq/zotcite/master/doc/zotcite.txt)
 for further instructions.
 
 ## Acknowledgment
