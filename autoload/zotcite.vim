@@ -64,8 +64,25 @@ function zotcite#CompleteBib(findstart, base)
                 break
             endif
         endwhile
-        return idx + 1
+        if line[idx] == '@'
+            let s:compl_type = 1
+            return idx + 1
+        elseif b:non_z_omnifunc != ''
+            let s:compl_type = 2
+            let Ofun = function(b:non_z_omnifunc)
+            return Ofun(a:findstart, a:base)
+        else
+            let s:compl_type = 3
+            return idx + 1
+        endif
     else
+        if s:compl_type == 2
+            let Ofun = function(b:non_z_omnifunc)
+            return Ofun(a:findstart, a:base)
+        endif
+        if s:compl_type == 3
+            return []
+        endif
         let citeptrn = substitute(a:base, '^@', '', '')
         let resp = []
         let lines = py3eval('ZotCite.GetMatch("'. citeptrn .'", "'. escape(expand("%:p"), '\\') .'")')
@@ -485,7 +502,16 @@ function zotcite#Init()
         else
             set conceallevel=2
         endif
-        " Let Nvim-R control the omni completion
+        if &omnifunc != 'zotcite#CompleteBib' && &omnifunc != 'RmdNonRCompletion'&& &omnifunc != 'CompleteR'
+            let b:non_z_omnifunc = &omnifunc
+        elseif exists('*pandoc#completion#Complete')
+            let b:non_z_omnifunc = 'pandoc#completion#Complete'
+        elseif exists('*htmlcomplete#CompleteTags')
+            let b:non_z_omnifunc = 'htmlcomplete#CompleteTags'
+        else
+            let b:non_z_omnifunc = ''
+        endif
+        " Let Nvim-R control the omni completion (it will call zotcite#CompleteBib).
         if !exists('b:rplugin_non_r_omnifunc')
             setlocal omnifunc=zotcite#CompleteBib
         endif
