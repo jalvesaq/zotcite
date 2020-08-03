@@ -65,6 +65,10 @@ Please, read the plugin's
 [documentation](https://raw.githubusercontent.com/jalvesaq/zotcite/master/doc/zotcite.txt)
 for further instructions.
 
+## Known bug
+
+Zotcite syntax highlighting will not be enabled if the file type is `pandoc`.
+
 ## Acknowledgment
 
 Zotcite code is based on the
