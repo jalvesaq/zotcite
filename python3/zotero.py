@@ -289,8 +289,14 @@ class ZoteroEntries:
     def _get_zotero_prefs(self):
         self._dd = ''
         self._ad = ''
+        zp = None
         if os.path.isfile(os.path.expanduser('~/.zotero/zotero/profiles.ini')):
-            with open(os.path.expanduser('~/.zotero/zotero/profiles.ini'), 'r') as f:
+            zp = os.path.expanduser('~/.zotero/zotero/profiles.ini')
+        else:
+            if os.path.isfile(os.path.expanduser('~/Library/Application Support/Zotero/profiles.ini')):
+                zp = os.path.expanduser('~/Library/Application Support/Zotero/profiles.ini')
+        if zp:
+            with open(zp, 'r') as f:
                 lines = f.readlines()
             for line in lines:
                 if line.find('Path=') == 0:
