@@ -312,6 +312,10 @@ class ZoteroEntries:
                                 self._dd = re.sub('.*", "(.*)".*\n', '\\1', pref)
                                 if os.path.isfile(self._dd + '/zotero.sqlite'):
                                     os.environ["ZoteroSQLpath"] = self._dd + '/zotero.sqlite'
+        # Workaround for Windows:
+        if self._dd == '' and os.getenv('ZoteroSQLpath'):
+            self._dd = os.path.dirname(os.environ['ZoteroSQLpath'])
+
 
     def _copy_zotero_data(self):
         self._ztime = os.path.getmtime(self._z)
