@@ -855,7 +855,7 @@ class ZoteroEntries:
              'references found': len(self._e.keys()),
              'docs': str(self._d) + '\n',
              'citation template': self._cite,
-             'banned words': self._bwords,
+             'banned words': ' '.join(self._bwords),
              'excluded fields': str(self._exclude),
             }
         return r
