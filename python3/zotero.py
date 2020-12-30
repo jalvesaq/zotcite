@@ -212,7 +212,9 @@ class ZoteroEntries:
         # Title words to be ignored
         self._bwords = os.getenv('ZBannedWords')
         if self._bwords is None:
-            self._bwords = 'a an the some from on in to of do with'
+            self._bwords = ['a', 'an', 'the', 'some', 'from', 'on', 'in', 'to', 'of', 'do', 'with']
+        else:
+            self._bwords = self._bwords.split()
 
         # Path to zotero.sqlite
         self._get_zotero_prefs()
