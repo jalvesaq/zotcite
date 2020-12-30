@@ -348,7 +348,7 @@ function zotcite#GetYamlField(field)
             elseif bstr =~ '^\[.*\]$'
                 try
                     let l:bbl = eval(bstr)
-                catch *
+                catch /*/
                     call zotcite#warning('YAML line invalid for the zotcite plugin: ' . line)
                     let bibl = []
                 endtry
@@ -419,7 +419,7 @@ function zotcite#GlobalInit()
     " Get information from ZoteroEntries and set environment variables for citeref
     try
         let info = py3eval('ZotCite.Info()')
-    catch
+    catch /*/
         let g:zotcite_failed = 'Failed to create ZoteroEntries object.'
         call zotcite#warning(g:zotcite_failed)
         let s:zrunning = 0
