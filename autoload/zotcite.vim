@@ -312,7 +312,7 @@ function zotcite#GetPDFNote(key)
     if has_key(repl, 'pages') && repl['pages'] =~ '[0-9]-'
         let page1 = substitute(repl['pages'], '-.*', '', '')
     endif
-    let notes = system("pdfnotes '" . fpath . "'" . citekey . page1)
+    let notes = system("pdfnotes.py '" . fpath . "'" . citekey . page1)
     call append(line('.'), split(notes, '\n'))
 endfunction
 
@@ -393,8 +393,17 @@ endfunction
 
 function zotcite#ODTtoMarkdown(odt)
     call zotcite#SetPath()
-    let mdf = system("odt2md '" . a:odt . "'")
+    let mdf = system("odt2md.py '" . a:odt . "'")
     exe 'tabnew ' . mdf
+endfunction
+
+" TODO: Delete this function in the future (2021-04-04)
+function zotcite#FixZotrefNm()
+    let lnum = search('pandoc_args\s*:\s*\[.*[''"]zotref[''"]', 'cwn')
+    if lnum > 0
+        call setline(lnum, substitute(getline(lnum), '\([''"]\)zotref\([''"]\)', '\1zotref.py\2', ''))
+        call zotcite#warning('Command "zotref" in "pandoc_args" updated to "zotref.py"')
+    endif
 endfunction
 
 function zotcite#GlobalInit()
@@ -516,6 +525,8 @@ function zotcite#Init()
             setlocal omnifunc=zotcite#CompleteBib
         endif
         call zotcite#GetCollectionName()
+        call zotcite#FixZotrefNm()
+        autocmd BufWritePre <buffer> call zotcite#FixZotrefNm()
         autocmd BufWritePost <buffer> call zotcite#GetCollectionName()
     endif
 endfunction

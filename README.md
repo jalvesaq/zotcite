@@ -16,9 +16,9 @@ _zotcite_ you can:
 
     ![Complete reference information](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_more_info.gif "Complete reference information")
 
-  - Use the `zotref` filter to pre-process the Markdown document before it is
+  - Use the `zotref.py` filter to pre-process the Markdown document before it is
     passed to `pandoc-citeproc`, avoiding the need of `bib` files. The
-    `zotref` filter receives the Markdown document from its standard input,
+    `zotref.py` filter receives the Markdown document from its standard input,
     extracts all citation keys from the document, gets all corresponding
     references from the Zotero database, inserts all references in the YAML
     header of the document and, finally, pass the enhanced document to
