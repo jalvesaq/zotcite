@@ -317,6 +317,8 @@ class ZoteroEntries:
         # Workaround for Windows:
         if self._dd == '' and os.getenv('ZoteroSQLpath'):
             self._dd = os.path.dirname(os.environ['ZoteroSQLpath'])
+        if self._dd == '' and os.path.isdir(os.path.expanduser('~/Zotero')):
+            self._dd = os.path.expanduser('~/Zotero')
 
 
     def _copy_zotero_data(self):

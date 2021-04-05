@@ -381,8 +381,9 @@ endfunction
 
 function zotcite#SetPath()
     if has("win32")
-        if $PATH !~ escape(s:zotcite_home, '\\')
-            let $PATH = s:zotcite_home . ';' . $PATH
+        let zpath = substitute(s:zotcite_home, '/', '\\', 'g')
+        if stridx($PATH, zpath) == -1
+            let $PATH = zpath . ';' . $PATH
         endif
     else
         if $PATH !~ s:zotcite_home

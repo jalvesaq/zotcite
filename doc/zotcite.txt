@@ -72,6 +72,21 @@ header of the document (replace `pdf_document` with the desired output):
    pdf_document:
      pandoc_args: ['-F', 'zotref.py', '-F', 'pandoc-citeproc']
 <
+Note: On Windows you might have to replace `zotref.py` with its full path.
+Example:
+>
+ output:
+   pdf_document:
+     pandoc_args: ['-F', 'C:/Path/to/zotcite/python3/zotref.py', '-F', 'pandoc-citeproc']
+<
+Note: Recent versions of `pandoc` support the option `--citeproc` and no
+longer need the filter `pandoc-citeproc`. In this case, the YAML option
+becomes:
+>
+ output:
+   pdf_document:
+     pandoc_args: ['-F', 'zotref.py', '--citeproc']
+<
 In Vim's Normal mode, put the cursor over a citation key and press:
 
   - <Leader>zo to open the reference's attachment as registered in Zotero's
