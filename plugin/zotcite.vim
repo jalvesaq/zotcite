@@ -7,7 +7,7 @@ if exists(':Zinfo') == 2
 endif
 let g:zotcite_filetypes = get(g:, 'zotcite_filetypes', ['markdown', 'pandoc', 'rmd'])
 augroup zotcite
-    autocmd BufNewFile,BufRead * call zotcite#Init()
+    autocmd BufNewFile,BufRead * call timer_start(1, "zotcite#Init")
 augroup END
 command Zinfo call zotcite#info()
 command -nargs=1 -complete=file Zodt2md call zotcite#ODTtoMarkdown(<q-args>)

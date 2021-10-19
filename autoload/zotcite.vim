@@ -455,7 +455,7 @@ function zotcite#GlobalInit()
     return 1
 endfunction
 
-function zotcite#Init()
+function zotcite#Init(...)
     let ok = 0
     for ft in g:zotcite_filetypes
         if &filetype == ft
