@@ -20,9 +20,9 @@ if __name__ == "__main__":
 
     for i in range(len(llist)):
         if llist[i].find('CSL_CITATION') == 0:
-            zotid = re.sub('.*"id":([0-9]*),.*', '\\1', llist[i], flags=re.DOTALL)
+            zotid = re.sub('.*\\\\"id\\\\":([0-9]*),.*', '\\1', llist[i], flags=re.DOTALL)
             citation = z.GetCitationById(int(zotid))
-            llist[i] = re.sub('CSL_CITATION .*json"} .[^}]*}',
+            llist[i] = re.sub('CSL_CITATION .*json\\\\"} .[^}]*}',
                               '[' + citation + ']', llist[i])
 
     mdf = sys.argv[1].replace('.odt', '') + '.md'
