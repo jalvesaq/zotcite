@@ -297,13 +297,15 @@ class ZoteroEntries:
         else:
             if os.path.isfile(os.path.expanduser('~/Library/Application Support/Zotero/profiles.ini')):
                 zp = os.path.expanduser('~/Library/Application Support/Zotero/profiles.ini')
+
+        zotero_basedir = os.path.dirname(zp)
         if zp:
             with open(zp, 'r') as f:
                 lines = f.readlines()
             for line in lines:
                 if line.find('Path=') == 0:
                     zprofile = line.replace('Path=', '').replace('\n', '')
-                    zprefs = os.path.expanduser('~/.zotero/zotero/') + zprofile + '/prefs.js'
+                    zprefs = os.path.join(zotero_basedir, zprofile, "prefs.js")
                     if os.path.isfile(zprefs):
                         with open(zprefs, 'r') as f:
                             prefs = f.readlines()
