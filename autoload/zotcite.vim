@@ -437,9 +437,9 @@ function zotcite#GlobalInit()
     endtry
     let s:zrunning = 1
 
-    let $Zotcite_tmpdir = info['tmpdir']
-    let g:zotcite_data_dir = info['data dir']
-    let g:zotcite_attach_dir = info['attachments dir']
+    let $Zotcite_tmpdir = expand(info['tmpdir'])
+    let g:zotcite_data_dir = expand(info['data dir'])
+    let g:zotcite_attach_dir = expand(info['attachments dir'])
 
     call zotcite#SetPath()
     let $RmdFile = expand("%:p")
