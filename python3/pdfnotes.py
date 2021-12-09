@@ -27,9 +27,14 @@ def main():
     else:
         ypsep = os.getenv('ZYearPageSep')
 
-    total_annotations = 0
+    notes = []
+
+    # We can't always convert page labels into numbers
+    pnum = 0
+
     for i in range(doc.numPages()):
         page = doc.page(i)
+        pnum += 1
         if page.label():
             pgnum = page.label()
         else:
@@ -39,7 +44,10 @@ def main():
         if annotations:
             for a in annotations:
                 if isinstance(a, popplerqt5.Poppler.Annotation):
-                    total_annotations += 1
+                    # Get the y coordinate to be able to print the annotations
+                    # in the correct order
+                    y = a.boundary().topRight().y()
+
                     if a.contents():
                         txt = a.contents() + ' [annotation'
                         if a.author():
@@ -47,7 +55,12 @@ def main():
                         if citekey:
                             txt = txt + ' on ' + citekey
                         txt = txt + ypsep + pgnum + ']\n'
-                        print(txt)
+
+                        # Decrease the value of y to ensure that the comment
+                        # on a highlighted text will be printed before the
+                        # highlighted text
+                        notes.append([pnum, y - 0.0000001, txt])
+
                     if isinstance(a, popplerqt5.Poppler.HighlightAnnotation):
                         quads = a.highlightQuads()
                         txt = ''
@@ -69,10 +82,14 @@ def main():
                             if citekey:
                                 txt = txt + citekey
                             txt = txt + ypsep + pgnum + ']\n'
-                            print(txt)
+                            notes.append([pnum, y, txt])
 
-    if total_annotations == 0:
-        print("no annotations found")
+    if notes:
+        snotes = sorted(notes, key=lambda x: (x[0], x[1]))
+        for n in snotes:
+            print(n[2])
+    else:
+        print("NO ANNOTATIONS FOUND")
 
 if __name__ == "__main__":
     main()
