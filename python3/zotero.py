@@ -298,8 +298,8 @@ class ZoteroEntries:
             if os.path.isfile(os.path.expanduser('~/Library/Application Support/Zotero/profiles.ini')):
                 zp = os.path.expanduser('~/Library/Application Support/Zotero/profiles.ini')
 
-        zotero_basedir = os.path.dirname(zp)
         if zp:
+            zotero_basedir = os.path.dirname(zp)
             with open(zp, 'r') as f:
                 lines = f.readlines()
             for line in lines:
