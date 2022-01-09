@@ -14,14 +14,32 @@ import popplerqt5
 def main():
 
     doc = popplerqt5.Poppler.Document.load(sys.argv[1])
+    if doc is None:
+        sys.exit(33)
+
     if len(sys.argv) > 2:
         citekey = sys.argv[2]
     else:
         citekey = ''
+
+    # Sometimes, the page labels are spurious. So the priority is:
+    # 1. given page range; 2. page label; 3. given starting page.
+    page1 = 1
+    has_pg_range = False
     if len(sys.argv) > 3:
-        page1 = int(sys.argv[3])
-    else:
-        page1 = 1
+        pg = sys.argv[3]
+        if pg.find("-"):
+            has_pg_range = True
+            pIni = int(re.sub("-.*", "", pg))
+            pEnd = int(re.sub(".*-", "", pg))
+            nPgs = pEnd - pIni + 1
+
+            # Some documents have 1 or 2 extra presentation pages. Ignore them.
+            if doc.numPages() <= nPgs and (nPgs - doc.numPages()) < 2:
+                page1 = pEnd - doc.numPages() + 1
+        else:
+            page1 = int(sys.argv[3])
+
     if os.getenv('ZYearPageSep') is None:
         ypsep = ', p. '
     else:
@@ -29,16 +47,17 @@ def main():
 
     notes = []
 
-    # We can't always convert page labels into numbers
+    # Count the pages because not all page labels can be easily converted into
+    # numbers (examples: A1 and III)
     pnum = 0
 
     for i in range(doc.numPages()):
         page = doc.page(i)
         pnum += 1
-        if page.label():
+        pgnum = str(i + page1)
+        if not has_pg_range and page.label():
             pgnum = page.label()
-        else:
-            pgnum = str(i + page1)
+
         annotations = page.annotations()
         (pwidth, pheight) = (page.pageSize().width(), page.pageSize().height())
         if annotations:
@@ -58,7 +77,7 @@ def main():
 
                         # Decrease the value of y to ensure that the comment
                         # on a highlighted text will be printed before the
-                        # highlighted text
+                        # highlighted text itself
                         notes.append([pnum, y - 0.0000001, txt])
 
                     if isinstance(a, popplerqt5.Poppler.HighlightAnnotation):
@@ -71,7 +90,7 @@ def main():
                                     quad.points[2].y() * pheight)
                             bdy = PyQt5.QtCore.QRectF()
                             bdy.setCoords(*rect)
-                            txt = txt + str(page.text(bdy)) + ' '
+                            txt = txt + str(page.text(bdy)) + '\n'
 
                         txt = txt.replace('-\n', '')
                         txt = txt.replace('\n', ' ')
@@ -89,7 +108,7 @@ def main():
         for n in snotes:
             print(n[2])
     else:
-        print("NO ANNOTATIONS FOUND")
+        sys.exit(34)
 
 if __name__ == "__main__":
     main()

@@ -302,18 +302,31 @@ endfunction
 
 function zotcite#GetPDFNote(key)
     let zotkey = zotcite#FindCitationKey(a:key)
+    if zotkey == ''
+        return
+    endif
+    redraw
     let fpath = zotcite#GetPDFPath(zotkey)
     if fpath == ''
         return
     endif
     let repl = py3eval('ZotCite.GetRefData("' . zotkey . '")')
     let citekey = " '@" . zotkey . '#' . repl['citekey'] . "' "
-    let page1 = 1
+    let pg = 1
     if has_key(repl, 'pages') && repl['pages'] =~ '[0-9]-'
-        let page1 = substitute(repl['pages'], '-.*', '', '')
+        let pg = repl['pages']
     endif
-    let notes = system("pdfnotes.py '" . fpath . "'" . citekey . page1)
-    call append(line('.'), split(notes, '\n'))
+    let notes = system("pdfnotes.py '" . fpath . "'" . citekey . pg)
+    if v:shell_error == 0
+        call append(line('.'), split(notes, '\n'))
+    else
+        redraw
+        if v:shell_error == 33
+            call zotcite#warning('Failed to load "' . fpath . '" as a valid PDF document.')
+        elseif v:shell_error == 34
+            call zotcite#warning("No annotations found.")
+        endif
+    endif
 endfunction
 
 function zotcite#AddYamlRefs()

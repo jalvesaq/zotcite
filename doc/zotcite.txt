@@ -48,8 +48,9 @@ vimrc (or init.vim). Example:
  let $ZYearPageSep = ':'
 <
 Similarly, to extract notes from a PDF document, use the Vim command
-`:Zpdfnote`. The page numbers of the notes will be wrong if the PDF document
-includes a cover page unless the PDF page has labels.
+`:Zpdfnote`. The page numbers of the notes might be wrong, so always check
+them after extracting notes. You have also to manually add italics and other
+rich text formating.
 
 To insert citation keys, in Insert mode, type the `@` letter and one or more
 letters of either the last name of the first author or the reference title and
@@ -137,11 +138,8 @@ of the citation fields.
 
   2. Read the papers, highlighting important passages, and making annotations.
 
-  3. Either use Zotero's ZotFile extension (http://zotfile.com/) to extract
-     from the PDF documents the text that your have highlighted and the notes
-     that you have added or in Vim/Neovim, run the command `:Znote` to extract
-     your notes from Zotero's database and insert them into the markdown
-     document.
+  3. Run the command `:Zpdfnote` to extract your notes from the PDF document and
+     insert them into the markdown document.
 
   5. Finish editing your markdown document.
 
