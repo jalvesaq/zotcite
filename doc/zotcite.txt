@@ -47,10 +47,11 @@ vimrc (or init.vim). Example:
 >
  let $ZYearPageSep = ':'
 <
-Similarly, to extract notes from a PDF document, use the Vim command
-`:Zpdfnote`. The page numbers of the notes might be wrong, so always check
-them after extracting notes. You have also to manually add italics and other
-rich text formating.
+Similarly, to extract annotations (notes and highlighted texts) from a PDF
+document, use the Vim command `:Zpdfnote`. The page numbers of the annotations
+might be wrong, so always check them after the extraction. You have also to
+manually add italics and other rich text formating and put back hyphens
+incorrectly removed from the end of the PDF lines.
 
 To insert citation keys, in Insert mode, type the `@` letter and one or more
 letters of either the last name of the first author or the reference title and
