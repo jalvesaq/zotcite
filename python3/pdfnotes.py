@@ -63,8 +63,14 @@ def main():
         if annotations:
             for a in annotations:
                 if isinstance(a, popplerqt5.Poppler.Annotation):
-                    # Get the y coordinate to be able to print the annotations
-                    # in the correct order
+                    # Guess the annotation's column for pages with two columns
+                    if a.boundary().topRight().x() < 0.6:
+                        c = 1
+                    else:
+                        c = 2
+
+                    # Get the y coordinate to to print the annotations in the
+                    # correct order
                     y = a.boundary().topRight().y()
 
                     if a.contents():
@@ -78,7 +84,7 @@ def main():
                         # Decrease the value of y to ensure that the comment
                         # on a highlighted text will be printed before the
                         # highlighted text itself
-                        notes.append([pnum, y - 0.0000001, txt])
+                        notes.append([pnum, c, y - 0.0000001, txt])
 
                     if isinstance(a, popplerqt5.Poppler.HighlightAnnotation):
                         quads = a.highlightQuads()
@@ -101,12 +107,12 @@ def main():
                             if citekey:
                                 txt = txt + citekey
                             txt = txt + ypsep + pgnum + ']\n'
-                            notes.append([pnum, y, txt])
+                            notes.append([pnum, c, y, txt])
 
     if notes:
-        snotes = sorted(notes, key=lambda x: (x[0], x[1]))
+        snotes = sorted(notes, key=lambda x: (x[0], x[1], x[2]))
         for n in snotes:
-            print(n[2])
+            print(n[3])
     else:
         sys.exit(34)
 
