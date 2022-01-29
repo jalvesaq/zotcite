@@ -306,7 +306,7 @@ function zotcite#GetPDFNote(key)
         return
     endif
     redraw
-    let fpath = zotcite#GetPDFPath(zotkey)
+    let fpath = substitute(zotcite#GetPDFPath(zotkey), "'", "'\\\\''", "g")
     if fpath == ''
         return
     endif
