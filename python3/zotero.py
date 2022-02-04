@@ -594,6 +594,13 @@ class ZoteroEntries:
         resp = p1 + p2 + p3 + p4 + p5 + p6
         return resp
 
+    def _sanitize_yaml(self, s):
+        txt = re.sub('\\\\', '\\\\\\\\', s)
+        txt = re.sub('"', '\\\\"', txt)
+        txt = re.sub('@', '\\\\\\\\@', txt)
+        txt = re.sub('\n', '\\\\n', txt)
+        return txt
+
     def _get_yaml_ref(self, entry, citekey):
         e = copy.deepcopy(entry)
 
@@ -623,8 +630,8 @@ class ZoteroEntries:
             if aa in e:
                 ref += '    ' + aa + ':\n'
                 for last, first in e[aa]:
-                    ref += '      - family: "' + last + '"\n'
-                    ref += '        given: "' + first + '"\n'
+                    ref += '      - family: "' + self._sanitize_yaml(last) + '"\n'
+                    ref += '        given: "' + self._sanitize_yaml(first) + '"\n'
         if 'issued' in e:
             d = re.sub(' .*', '', e['issued']).split('-')
             if d[0] != '0000':
@@ -637,10 +644,7 @@ class ZoteroEntries:
                 'alastnm', 'container-author', 'year'] + self._exclude + atype
         for f in e:
             if f not in dont:
-                # Escape quotes and line breaks of all fields
-                txt = re.sub('"', '\\"', str(e[f]))
-                txt = re.sub('\n', '\\\\n', txt)
-                ref += '    ' + f + ': "' + txt + '"\n'
+                ref += '    ' + f + ': "' + self._sanitize_yaml(str(e[f])) + '"\n'
         return ref
 
     def GetYamlRefs(self, keys):
