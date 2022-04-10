@@ -52,5 +52,9 @@ if __name__ == "__main__":
         # Add the references to the original metadata:
         j['meta']['references'] = refj['meta']['references']
 
+        # Rename the bib file to avoid overwriting the original one:
+        if 'bibliography' in j['meta']:
+            j['meta']['bibliography']['c'][0]['c'] = '/tmp/zotcite_' + j['meta']['bibliography']['c'][0]['c']
+
     # Print the new json representation of the new document
     sys.stdout.write(json.dumps(j))

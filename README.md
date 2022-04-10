@@ -3,8 +3,8 @@
 _Zotcite_ is a Vim plugin that provides integration with Zotero. With
 _zotcite_ you can:
 
-  - Do omni completion of citation keys from Zotero database in both
-    Markdown and RMarkdown documents.
+  - Do omni completion of citation keys from Zotero database in
+    Markdown, RMarkdown and Quarto documents.
 
     ![Omni completion](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_completion.gif "omni completion")
 
@@ -16,13 +16,13 @@ _zotcite_ you can:
 
     ![Complete reference information](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_more_info.gif "Complete reference information")
 
-  - Use the `zotref.py` filter to pre-process the Markdown document before it is
-    passed to `pandoc-citeproc`, avoiding the need of `bib` files. The
+  - Use the `zotref.py` filter to pre-process the Markdown document before the
+    citations are processed by `pandoc`, avoiding the need of `bib` files. The
     `zotref.py` filter receives the Markdown document from its standard input,
     extracts all citation keys from the document, gets all corresponding
     references from the Zotero database, inserts all references in the YAML
-    header of the document and, finally, pass the enhanced document to
-    `pandoc-citeproc`.
+    header of the document and, finally, returns the enhanced document to
+    `pandoc`. However, see the documentation if you are editing Quarto files.
 
   - Open the PDF attachment of the reference associated with the citation key
     under cursor.
@@ -71,7 +71,5 @@ Zotcite syntax highlighting will not be enabled if the file type is `pandoc`.
 
 ## Acknowledgment
 
-Zotcite code is based on the
-[citation.vim](https://github.com/rafaqz/citation.vim) project which provides
-[Unite](https://github.com/Shougo/unite.vim) sources for insertion of Zotero
-and bibtex citation keys and has many other features.
+Zotcite code was based on the
+[citation.vim](https://github.com/rafaqz/citation.vim) project.

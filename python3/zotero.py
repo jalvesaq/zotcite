@@ -686,7 +686,7 @@ class ZoteroEntries:
         if e['etype'] == 'InCollection' and not 'editor' in e:
             e['etype'] = 'InBook'
 
-        ref = '\n@' + e['etype'] + '{' + citekey + ',\n'
+        ref = '\n@' + e['etype'] + '{' + re.sub('#.*', '', citekey) + ',\n'
         for aa in ['author', 'editor', 'contributor', 'translator',
                    'container-author']:
             if aa in e:

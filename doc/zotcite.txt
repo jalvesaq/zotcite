@@ -112,6 +112,20 @@ following:
 <
 Note: `file_name.bib` will be overwritten if it already exists.
 
+
+For Quarto documents, "bibliography" field must be defined in its YAML header,
+but, in this case, the defined bib file will be ignored and a new one will be
+created in the `/tmp` directory each time the document is saved. You have to
+add the following fields to the YAML header of your Quarto documents to make
+both `quarto preview` and `quarto render` commands work (replace `example.bib`
+with whatever name you want and adjust the `zotref.py` path):
+>
+   bibliography: example.bib
+   citeproc: true
+   filters:
+     - /path/to/zotcite/python3/zotref.py
+     - quarto
+<
 If you have an OpenDocument Text with citations inserted by the Zotero
 extension and want to convert it to Markdown, you can use the `odt2md.py`
 application from the `python3` directory to help you to convert the document.

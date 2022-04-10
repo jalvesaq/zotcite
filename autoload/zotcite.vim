@@ -46,6 +46,23 @@ function zotcite#info()
     endif
 endfunction
 
+function zotcite#WriteBib()
+    let bibf = zotcite#GetYamlField('bibliography')
+    if type(bibf) == v:t_list
+        let bibf = bibf[0]
+    endif
+    if type(bibf) != v:t_string
+        call zotcite#warning('Invalid "bibliography" field: ' . bibf)
+        sleep 1
+        return
+    endif
+    let sout = system("zotbib.py '" . expand('%:p') . "' '/tmp/zotcite_" . bibf . "'")
+    if v:shell_error
+        call zotcite#warning(sout)
+        sleep 1
+    endif
+endfunction
+
 function zotcite#CompleteBib(findstart, base)
     if a:findstart
         let line = getline(".")
@@ -482,13 +499,15 @@ function zotcite#Init(...)
     endif
 
     " Don't continue if bib file is already in use
-    let lines = getline(1, '$')
-    for line in lines
-        if line =~ '^bibliography:.*\.bib'
-            call add(s:log, 'Not enabled for "' . expand('%') . '" (' . line . ')')
-            return
-        endif
-    endfor
+    if &filetype != 'quarto'
+        let lines = getline(1, '$')
+        for line in lines
+            if line =~ '^bibliography:.*\.bib'
+                call add(s:log, 'Not enabled for "' . expand('%') . '" (' . line . ')')
+                return
+            endif
+        endfor
+    endif
 
     " Do this only once
     if !exists('s:open_cmd')
@@ -540,6 +559,9 @@ function zotcite#Init(...)
         endif
         call zotcite#GetCollectionName()
         call zotcite#FixZotrefNm()
+        if &filetype == 'quarto'
+            autocmd BufWritePre <buffer> call zotcite#WriteBib()
+        endif
         autocmd BufWritePre <buffer> call zotcite#FixZotrefNm()
         autocmd BufWritePost <buffer> call zotcite#GetCollectionName()
     endif
