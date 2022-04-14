@@ -411,8 +411,26 @@ function zotcite#ODTtoMarkdown(odt)
     exe 'tabnew ' . mdf
 endfunction
 
-" TODO: Delete this function in the future (2021-04-04)
-function zotcite#FixZotrefNm()
+function zotcite#CheckBib()
+    let bibf = zotcite#GetYamlField('bibliography')
+    if type(bibf) == v:t_list
+        if len(bibf) == 0
+            return
+        endif
+        let bibf = bibf[0]
+    endif
+    if type(bibf) != v:t_string
+        call zotcite#warning('Invalid "bibliography" field: ' . bibf)
+        sleep 1
+        return
+    endif
+
+    if bibf =~ '.*zotcite.bib$' && !filereadable(bibf)
+        " Ensure that `quarto preview` will work
+        call writefile([], bibf)
+    endif
+
+    " TODO: Delete the code below in the future (2021-04-04)
     let lnum = search('pandoc_args\s*:\s*\[.*[''"]zotref[''"]', 'cwn')
     if lnum > 0
         call setline(lnum, substitute(getline(lnum), '\([''"]\)zotref\([''"]\)', '\1zotref.py\2', ''))
@@ -481,17 +499,6 @@ function zotcite#Init(...)
         return
     endif
 
-    " Don't continue if bib file is already in use
-    if &filetype != 'quarto'
-        let lines = getline(1, '$')
-        for line in lines
-            if line =~ '^bibliography:.*\.bib'
-                call add(s:log, 'Not enabled for "' . expand('%') . '" (' . line . ')')
-                return
-            endif
-        endfor
-    endif
-
     " Do this only once
     if !exists('s:open_cmd')
         if zotcite#GlobalInit() == 0
@@ -541,8 +548,7 @@ function zotcite#Init(...)
             setlocal omnifunc=zotcite#CompleteBib
         endif
         call zotcite#GetCollectionName()
-        call zotcite#FixZotrefNm()
-        autocmd BufWritePre <buffer> call zotcite#FixZotrefNm()
+        autocmd BufWritePre <buffer> call zotcite#CheckBib()
         autocmd BufWritePost <buffer> call zotcite#GetCollectionName()
     endif
 endfunction

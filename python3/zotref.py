@@ -30,8 +30,9 @@ if __name__ == "__main__":
 
     if 'bibliography' in j['meta']:
         # Rename the bib file to avoid overwriting the original one:
-        fnm = '/tmp/zotcite_' + j['meta']['bibliography']['c'][0]['c']
-        j['meta']['bibliography']['c'][0]['c'] = fnm
+        fnm = j['meta']['bibliography']['c'][0]['c']
+        if not fnm.find('zotcite.bib') == (len(fnm) - 11):
+            j['meta']['bibliography']['c'][0]['c'] = '/tmp/zotcite_' + fnm
         r = z.GetBib(c)
         # Save the bib file
         with open(fnm, 'w') as f:

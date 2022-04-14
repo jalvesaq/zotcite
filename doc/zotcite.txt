@@ -104,23 +104,23 @@ the same that would be in an omni completion menu. Example:
 >
  :Zseek marx
 <
-The goal of Zotcite is to avoid the need for exporting bib files from Zotero,
-but if for any reason you need a bib file with your citation keys, do the
-following:
->
- :!zotbib.py file_name.md file_name.bib
-<
-Note: `file_name.bib` will be overwritten if it already exists.
+The goal of Zotcite is to avoid the need for exporting bib files from Zotero.
+The `zotref.py` filter receives the Markdown document from its standard input,
+extracts all citation keys from the document, gets all corresponding
+references from the Zotero database, inserts all references in the YAML header
+of the document and, finally, returns the enhanced document to `pandoc`. If
+there is a "bibliography" field in the YAML header it will be ignored and a
+temporary bib file will be created on the `/tmp` directory, unless the bib
+file's name ends with the "zotcite.bib" string. In this case, it will be
+overwritten.
 
-
-For Quarto documents, "bibliography" field must be defined in its YAML header,
-but, in this case, the defined bib file will be ignored and a new one will be
-created in the `/tmp` directory each time the document is saved. You have to
-add the following fields to the YAML header of your Quarto documents to make
-both `quarto preview` and `quarto render` commands work (replace `example.bib`
-with whatever name you want and adjust the `zotref.py` path):
+For Quarto documents, the "bibliography" field must be defined in its YAML
+header. You have to add the following fields to the YAML header of your Quarto
+documents to make both `quarto preview` and `quarto render` commands work
+(replace `example_zotcite.bib` with whatever name you want and adjust the
+`zotref.py` path):
 >
-   bibliography: example.bib
+   bibliography: example_zotcite.bib
    citeproc: true
    filters:
      - /path/to/zotcite/python3/zotref.py
