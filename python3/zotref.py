@@ -28,33 +28,38 @@ if __name__ == "__main__":
     cites = re.findall('"citationId":"([^"]+)","citation', i)
     c = sorted(set(cites))
 
-    # Get the references for the found citekeys formatted as the YAML and put
-    # the string into the YAML header of a dummy markdown document.
-    r = z.GetYamlRefs(c)
-    if r != '':
-        r = '---\n' + r + '...\n\ndummy text\n'
-
-    # To see the dummy markdown document created by `zotref` with the
-    # references in its YAML header, set the environment variable
-    # `DEBUG_zotref` with any value.
-    if os.getenv('DEBUG_zotref'):
-        with open('/tmp/DEBUG_zotref', 'w') as f:
-            f.write(r)
-
-    if r != '':
-        # Convert the doc into json
-        r = r.encode('utf-8')
-        p = subprocess.Popen(['pandoc', '-f', 'markdown', '-t', 'json'],
-                             stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-        refi = p.communicate(r)[0]
-        refj = json.load(io.StringIO(refi.decode()))
-
-        # Add the references to the original metadata:
-        j['meta']['references'] = refj['meta']['references']
-
+    if 'bibliography' in j['meta']:
         # Rename the bib file to avoid overwriting the original one:
-        if 'bibliography' in j['meta']:
-            j['meta']['bibliography']['c'][0]['c'] = '/tmp/zotcite_' + j['meta']['bibliography']['c'][0]['c']
+        fnm = '/tmp/zotcite_' + j['meta']['bibliography']['c'][0]['c']
+        j['meta']['bibliography']['c'][0]['c'] = fnm
+        r = z.GetBib(c)
+        # Save the bib file
+        with open(fnm, 'w') as f:
+            f.write(r)
+    else:
+        # Get the references for the found citekeys formatted as the YAML and put
+        # the string into the YAML header of a dummy markdown document.
+        r = z.GetYamlRefs(c)
+        if r != '':
+            r = '---\n' + r + '...\n\ndummy text\n'
+
+        # To see the dummy markdown document created by `zotref` with the
+        # references in its YAML header, set the environment variable
+        # `DEBUG_zotref` with any value.
+        if os.getenv('DEBUG_zotref'):
+            with open('/tmp/DEBUG_zotref', 'w') as f:
+                f.write(r)
+
+        if r != '':
+            # Convert the doc into json
+            r = r.encode('utf-8')
+            p = subprocess.Popen(['pandoc', '-f', 'markdown', '-t', 'json'],
+                    stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+            refi = p.communicate(r)[0]
+            refj = json.load(io.StringIO(refi.decode()))
+
+            # Add the references to the original metadata:
+            j['meta']['references'] = refj['meta']['references']
 
     # Print the new json representation of the new document
     sys.stdout.write(json.dumps(j))
