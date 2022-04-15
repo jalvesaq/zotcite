@@ -20,6 +20,7 @@ Author: Jakson A. Aquino <jalvesaq@gmail.com>
         Syntax highlighting of citation keys                      |zotcite_hl|
         Conceal level                                   |zotcite_conceallevel|
     4.4 File types                                         |zotcite_filetypes|
+    4.5 Quarto render options                                       |:Zrender|
  5. Troubleshooting                                  |zotcite_troubleshooting|
 
 
@@ -309,6 +310,38 @@ path to `markdown.vim`:
 >
   autocmd FileType vimwiki source /path/to/zotcite/after/syntax/markdown.vim
 <
+
+						      *zotcite_quarto_preview*
+						       *zotcite_quarto_render*
+								    *:Zrender*
+4.5 Quarto render options [NOT IMPLEMENTED YET]~
+
+If editing Quarto documents, Zotcite will automatically run `quarto preview`
+when the document is saved for the first time. Alternatively, whenever the
+document is saved, it can either run `quarto render` whithout any additional
+arguments if
+>
+ let zotcite_quarto_render = 1
+<
+or run `quarto render` with whatever arguments you choose (example):
+>
+ let zotcite_quarto_render = "--quiet"
+<
+You can also make Zotcite run `quarto preview` with arguments (example):
+>
+ let zotcite_quarto_preview = "--quiet"
+<
+To disable both `quarto preview` and `quarto render`, put in your |vimrc|:
+>
+ let zotcite_quarto_preview = 0
+ let zotcite_quarto_render = 0
+<
+Then, you can run `quarto render` manually with the command:
+>
+ :Zrender <options>
+<
+where the options, if any, will be passed to the `quarto render` command.
+
 
 ==============================================================================
 						     *zotcite_troubleshooting*
