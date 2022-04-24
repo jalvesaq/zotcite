@@ -20,6 +20,7 @@ Author: Jakson A. Aquino <jalvesaq@gmail.com>
         Syntax highlighting of citation keys                      |zotcite_hl|
         Conceal level                                   |zotcite_conceallevel|
     4.4 File types                                         |zotcite_filetypes|
+    4.5 Quarto render options                                       |:Zrender|
  5. Troubleshooting                                  |zotcite_troubleshooting|
 
 
@@ -104,14 +105,40 @@ the same that would be in an omni completion menu. Example:
 >
  :Zseek marx
 <
-The goal of Zotcite is to avoid the need for exporting bib files from Zotero,
-but if for any reason you need a bib file with your citation keys, do the
-following:
->
- :!zotbib.py file_name.md file_name.bib
-<
-Note: `file_name.bib` will be overwritten if it already exists.
+The goal of Zotcite is to avoid the need for exporting bib files from Zotero.
+The `zotref.py` filter receives the Markdown document from its standard input,
+extracts all citation keys from the document, gets all corresponding
+references from the Zotero database, inserts all references in the YAML header
+of the document and, finally, returns the enhanced document to `pandoc`. If
+there is a "bibliography" field in the YAML header, it will be used. If one of
+the bib files listed in the "bibliography" field has a name ending with the
+"zotcite.bib" string it will be overwritten. If there is a "bibliography"
+field in the YAML header, but none of the bib files listed ends in
+"zotcite.bib", a temporary one will be created.
 
+For Quarto documents, the "bibliography" field must be defined in its YAML
+header. You have to add the following fields to the YAML header of your Quarto
+documents to make both `quarto preview` and `quarto render` commands work
+(replace `example_zotcite.bib` with whatever name you want and adjust the
+`zotref.py` path):
+>
+ bibliography: example_zotcite.bib
+ filters:
+   - /path/to/zotcite/python3/zotref.py
+<
+It is possible --- but not recommended --- to mix bib files that are generated
+and overwritten by zotcite with other ones because the final document may
+include duplicated references. Anyway, if you have an old bib file and want to
+complement it with Zotero references, you can put in your YAML header:
+>
+ bibliography:
+   - old.bib
+   - new_zotcite.bib
+<
+or, simply:
+>
+ bibliography: old.bib
+<
 If you have an OpenDocument Text with citations inserted by the Zotero
 extension and want to convert it to Markdown, you can use the `odt2md.py`
 application from the `python3` directory to help you to convert the document.
@@ -283,6 +310,38 @@ path to `markdown.vim`:
 >
   autocmd FileType vimwiki source /path/to/zotcite/after/syntax/markdown.vim
 <
+
+						      *zotcite_quarto_preview*
+						       *zotcite_quarto_render*
+								    *:Zrender*
+4.5 Quarto render options [NOT IMPLEMENTED YET]~
+
+If editing Quarto documents, Zotcite will automatically run `quarto preview`
+when the document is saved for the first time. Alternatively, whenever the
+document is saved, it can either run `quarto render` whithout any additional
+arguments if
+>
+ let zotcite_quarto_render = 1
+<
+or run `quarto render` with whatever arguments you choose (example):
+>
+ let zotcite_quarto_render = "--quiet"
+<
+You can also make Zotcite run `quarto preview` with arguments (example):
+>
+ let zotcite_quarto_preview = "--quiet"
+<
+To disable both `quarto preview` and `quarto render`, put in your |vimrc|:
+>
+ let zotcite_quarto_preview = 0
+ let zotcite_quarto_render = 0
+<
+Then, you can run `quarto render` manually with the command:
+>
+ :Zrender <options>
+<
+where the options, if any, will be passed to the `quarto render` command.
+
 
 ==============================================================================
 						     *zotcite_troubleshooting*
