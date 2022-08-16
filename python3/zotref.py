@@ -42,6 +42,7 @@ if __name__ == "__main__":
                         nstr = n['c']
                 if nstr.find('zotcite.bib') == (len(nstr) - 11):
                     zbib = nstr
+                    break
             if zbib is None:
                 zbib = tempfile.gettempdir() + '/' + os.getlogin() + '_zotcite.bib'
                 zitem = {'t': 'MetaInlines', 'c': [{'t': 'Str', 'c': zbib}]}
