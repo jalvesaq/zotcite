@@ -445,12 +445,6 @@ function zotcite#GlobalInit()
         return 0
     endif
 
-    if has('win32') || system("uname") =~ "Darwin"
-        let s:open_cmd = 'open'
-    else
-        let s:open_cmd = 'xdg-open'
-    endif
-
     py3 import os
 
     " Start ZoteroEntries
@@ -474,6 +468,20 @@ function zotcite#GlobalInit()
 
     call zotcite#SetPath()
     let $RmdFile = expand("%:p")
+
+    if filereadable($Zotcite_tmpdir . "/uname")
+        let s:uname = readfile($Zotcite_tmpdir . "/uname")[0]
+    else
+        silent let s:uname = system("uname")
+        call writefile([s:uname], $Zotcite_tmpdir . "/uname")
+    endif
+
+    if has('win32') || s:uname =~ "Darwin"
+        let s:open_cmd = 'open'
+    else
+        let s:open_cmd = 'xdg-open'
+    endif
+    unlet s:uname
 
     command Zrefs call zotcite#AddYamlRefs()
     command -nargs=1 Zseek call zotcite#Seek(<q-args>)
