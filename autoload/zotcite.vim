@@ -223,8 +223,14 @@ function zotcite#GetReferenceData(type)
     endif
 endfunction
 
-function zotcite#TranslateZPath(strg)
+function zotcite#TranslateZPath(strg, zotero_uri = 0)
     let fpath = a:strg
+
+    if a:zotero_uri && a:strg =~? '\.pdf$'
+        let id = substitute(fpath, ':.*', '', '')
+        return 'zotero://open-pdf/library/items/' . id
+    endif
+
     if a:strg =~ ':attachments:'
 	" The user has set Edit / Preferences / Files and Folders / Base directory for linked attachments
 	if g:zotcite_attach_dir == ''
@@ -246,7 +252,7 @@ function zotcite#TranslateZPath(strg)
     return fpath
 endfunction
 
-function zotcite#GetPDFPath(zotkey)
+function zotcite#GetPDFPath(zotkey, zotero_uri = 0)
     let repl = py3eval('ZotCite.GetAttachment("' . a:zotkey . '")')
     if len(repl) == 0
         call zotcite#warning('Got empty list')
@@ -260,7 +266,7 @@ function zotcite#GetPDFPath(zotkey)
         call zotcite#warning('Citation key not found')
     else
         if len(repl) == 1
-            return zotcite#TranslateZPath(repl[0])
+            return zotcite#TranslateZPath(repl[0], a:zotero_uri)
         else
             let idx = 1
             for at in repl
@@ -272,7 +278,7 @@ function zotcite#GetPDFPath(zotkey)
             endfor
             let idx = input('Your choice: ')
             if idx != '' && idx >= 1 && idx <= len(repl)
-                return zotcite#TranslateZPath(repl[idx - 1])
+                return zotcite#TranslateZPath(repl[idx - 1], a:zotero_uri)
             endif
         endif
     endif
@@ -294,7 +300,7 @@ endfunction
 
 function zotcite#OpenAttachment()
     let zotkey = zotcite#GetCitationKey()
-    let fpath = zotcite#GetPDFPath(zotkey)
+    let fpath = zotcite#GetPDFPath(zotkey, g:zotcite_open_in_zotero)
     if fpath != ''
         call system(s:open_cmd . ' "' . fpath . '" &')
     endif

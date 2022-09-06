@@ -20,7 +20,8 @@ Author: Jakson A. Aquino <jalvesaq@gmail.com>
         Syntax highlighting of citation keys                      |zotcite_hl|
         Conceal level                                   |zotcite_conceallevel|
     4.4 File types                                         |zotcite_filetypes|
-    4.5 Quarto render options                                       |:Zrender|
+    4.5 Open attachment in Zotero                     |zotcite_open_in_zotero|
+    4.6 Quarto render options                                       |:Zrender|
  5. Troubleshooting                                  |zotcite_troubleshooting|
 
 
@@ -311,10 +312,26 @@ path to `markdown.vim`:
   autocmd FileType vimwiki source /path/to/zotcite/after/syntax/markdown.vim
 <
 
+						      *zotcite_open_in_zotero*
+4.5 Open attachment in Zotero~
+
+If you want <Plug>ZOpenAttachment to open PDF attachments in Zotero (as
+opposed to your system's default PDF viewer), put the following in your
+|vimrc|:
+>
+  let zotcite_open_in_zotero = 1
+<
+Note that you'll need to have Zotero configured as the default app for
+opening `zotero://` links. On Linux, assuming your Zotero installation
+included a `zotero.desktop` file, you can do the following:
+>
+  xdg-mime default zotero.desktop x-scheme-handler/zotero
+<
+
 						      *zotcite_quarto_preview*
 						       *zotcite_quarto_render*
 								    *:Zrender*
-4.5 Quarto render options [NOT IMPLEMENTED YET]~
+4.6 Quarto render options [NOT IMPLEMENTED YET]~
 
 If editing Quarto documents, Zotcite will automatically run `quarto preview`
 when the document is saved for the first time. Alternatively, whenever the
