@@ -88,5 +88,5 @@ if __name__ == "__main__":
             # Add the references to the original metadata:
             j['meta']['references'] = refj['meta']['references']
 
-    # Print the new json representation of the new document
+    # Print the json representation of the new document
     sys.stdout.write(json.dumps(j))
