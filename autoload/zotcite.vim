@@ -387,7 +387,59 @@ function zotcite#GetYamlField(field)
     return value
 endfunction
 
-function zotcite#GetCollectionName()
+if has('nvim')
+    function s:OnJobEvent(job_id, data, event)
+        if a:event == 'stdout' || a:event == 'stderr'
+            let s:quarto_output += a:data
+        else
+            if a:data != 0
+                call writefile(s:quarto_output, $Zotcite_tmpdir . '/joboutput')
+                exe "terminal cat '" . $Zotcite_tmpdir . "/joboutput' && rm '" . $Zotcite_tmpdir . "/joboutput'"
+            endif
+        endif
+    endfunction
+else
+    function s:OnJobEvent(job_id, msg)
+        let s:quarto_output += [a:msg]
+    endfunction
+    function s:OnJobExit(job_id, stts)
+    if a:stts != 0
+        call writefile(s:quarto_output, $Zotcite_tmpdir . '/joboutput')
+        exe "terminal cat " . $Zotcite_tmpdir . "/joboutput && rm " . $Zotcite_tmpdir . "/joboutput"
+    endif
+    endfunction
+endif
+
+if has('nvim')
+    let s:jobcb = {'on_stdout': function('s:OnJobEvent'),
+                \ 'on_stderr': function('s:OnJobEvent'),
+                \ 'on_exit': function('s:OnJobEvent')}
+else
+    let s:jobcb = {'out_cb': function('s:OnJobEvent'),
+                \ 'err_cb': function('s:OnJobEvent'),
+                \ 'exit_cb': function('s:OnJobExit')}
+endif
+
+function zotcite#QuartoPostWrite()
+    let s:quarto_output = []
+    if exists('g:zotcite_quarto_render')
+        if type(g:zotcite_quarto_render) == v:t_number && g:zotcite_quarto_render
+            if has('nvim')
+                call jobstart('quarto render ' . expand('%'), s:jobcb)
+            else
+                call job_start('quarto render ' . expand('%'), s:jobcb)
+            endif
+        elseif type(g:zotcite_quarto_render) == v:t_string
+            if has('nvim')
+                call jobstart('quarto render ' . expand('%') . ' ' . g:zotcite_quarto_render, s:jobcb)
+            else
+                call job_start('quarto render ' . expand('%') . ' ' . g:zotcite_quarto_render, s:jobcb)
+            endif
+        endif
+    endif
+endfunction
+
+function zotcite#GetCollectionName(run_quarto)
     let newc = zotcite#GetYamlField('collection')
     if !exists('b:zotcite_cllctn') || newc != b:zotcite_cllctn
         let b:zotcite_cllctn = newc
@@ -395,6 +447,9 @@ function zotcite#GetCollectionName()
         if repl != ''
             call zotcite#warning(repl)
         endif
+    endif
+    if &filetype == 'quarto' && a:run_quarto
+        call zotcite#QuartoPostWrite()
     endif
 endfunction
 
@@ -561,9 +616,9 @@ function zotcite#Init(...)
         if !exists('b:rplugin_non_r_omnifunc')
             setlocal omnifunc=zotcite#CompleteBib
         endif
-        call zotcite#GetCollectionName()
+        call zotcite#GetCollectionName(0)
         autocmd BufWritePre <buffer> call zotcite#CheckBib()
-        autocmd BufWritePost <buffer> call zotcite#GetCollectionName()
+        autocmd BufWritePost <buffer> call zotcite#GetCollectionName(1)
     endif
 endfunction
 
