@@ -302,7 +302,39 @@ function zotcite#OpenAttachment()
     let zotkey = zotcite#GetCitationKey()
     let fpath = zotcite#GetPDFPath(zotkey, g:zotcite_open_in_zotero)
     if fpath != ''
-        call system(s:open_cmd . ' "' . fpath . '" &')
+        let out = system(s:open_cmd . ' "' . fpath . '"')
+    endif
+    if v:shell_error
+        call zotcite#warning(substitute(out, '\n', ' ', 'g'))
+    endif
+endfunction
+
+function zotcite#ViewDocument()
+    if &filetype == 'quarto'
+        let fmt = zotcite#GetYamlField('format')
+    else
+        let fmt = zotcite#GetYamlField('output')
+    endif
+    let g:TheFormat1 = fmt
+    while len(fmt) && type(fmt) != v:t_string
+        if type(fmt) == v:t_dict
+            let fmt = keys(fmt)[0]
+        elseif type(fmt) == v:t_list
+            let fmt = fmt[0]
+        else
+            return
+        endif
+    endwhile
+    if type(fmt) == v:t_list && fmt == []
+        let fmt = 'html'
+    endif
+    if fmt == 'pdf' || fmt == 'beamer' || fmt == 'pdf_document'
+        let out = system(s:open_cmd . ' "' . expand('%:p:r') . '.pdf"')
+    elseif fmt == 'html' || fmt == 'revealjs' || fmt == 'html_document'
+        let out = system(s:open_cmd . ' "' . expand('%:p:r') . '.html"')
+    endif
+    if v:shell_error
+        call zotcite#warning(substitute(out, '\n', ' ', 'g'))
     endif
 endfunction
 
@@ -350,41 +382,22 @@ function zotcite#GetYamlField(field)
     if getline(1) != '---'
         return []
     endif
-    let value = []
     let lastl = line('$')
     let idx = 2
+    let lines = []
     while idx < lastl
         let line = getline(idx)
         if line == '...' || line == '---'
-            break
-        endif
-        if line =~ '^\s*' . a:field . '\s*:'
-            let bstr = substitute(line, '^\s*' . a:field . '\s*:\s*\(.*\)\s*', '\1', '')
-            if bstr =~ '^".*"$' || bstr =~ "^'.*'$"
-                let bib = substitute(bstr, '"', '', 'g')
-                let bib = substitute(bib, "'", '', 'g')
-                let bibl = [bib]
-            elseif bstr =~ '^\[.*\]$'
-                try
-                    let l:bbl = eval(bstr)
-                catch /*/
-                    call zotcite#warning('YAML line invalid for the zotcite plugin: ' . line)
-                    let bibl = []
-                endtry
-                if exists('l:bbl')
-                    let bibl = l:bbl
-                endif
-            else
-                let bibl = [bstr]
-            endif
-            for fn in bibl
-                call add(value, fn)
-            endfor
+            let lines = getline(2, idx - 1)
             break
         endif
         let idx += 1
     endwhile
-    return value
+    if len(lines) == 0
+        return []
+    endif
+    let value = substitute(system('getyamlfield.py ' . a:field, lines), '[\s\n]*$', '', '')
+    return eval(value)
 endfunction
 
 if has('nvim')
@@ -441,6 +454,9 @@ endfunction
 
 function zotcite#GetCollectionName(run_quarto)
     let newc = zotcite#GetYamlField('collection')
+    if type(newc) == v:t_string
+        let newc = [newc]
+    endif
     if !exists('b:zotcite_cllctn') || newc != b:zotcite_cllctn
         let b:zotcite_cllctn = newc
         let repl = py3eval('ZotCite.SetCollections("' . escape(expand("%:p"), '\\') . '", ' . string(b:zotcite_cllctn) . ')')
@@ -582,6 +598,11 @@ function zotcite#Init(...)
             exec 'nnoremap <buffer><silent> <Plug>ZOpenAttachment :call zotcite#OpenAttachment()<cr>'
         else
             nnoremap <buffer><silent> <Leader>zo :call zotcite#OpenAttachment()<cr>
+        endif
+        if hasmapto('<Plug>ZViewDocument', 'n')
+            exec 'nnoremap <buffer><silent> <Plug>ZViewDocument :call zotcite#ViewDocument()<cr>'
+        else
+            nnoremap <buffer><silent> <Leader>zv :call zotcite#ViewDocument()<cr>
         endif
         if hasmapto('<Plug>ZCitationInfo', 'n')
             exec 'nnoremap <buffer><silent> <Plug>ZCitationInfo :call zotcite#GetReferenceData("ayt")<cr>'

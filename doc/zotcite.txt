@@ -99,6 +99,9 @@ In Vim's Normal mode, put the cursor over a citation key and press:
 
   - <Leader>zy to see how the reference will be converted into YAML.
 
+  - <Leader>zv to view the (pdf or html) documment generated from the current
+    (markdown, Rmd or Quarto) document.
+
 You can also use the command `:Zseek` to see what references have either a
 last author's name or title matching the pattern that you are seeking for. The
 references displayed in the command line at the bottom of the screen will be
@@ -199,8 +202,12 @@ the example:
 >
  nmap ,Y <Plug>ZCitationCompleteInfo
 <
+To change the shortcut to view the (pdf or html) document generated from the
+current (markdown, Rmd or Quarto) document, follow the example:
+>
+ nmap ,V <Plug>ZViewDocument
+<
 
-							      *zotcite_engine*
 4.2 Zotcite engine~
 
 You can change most of Zotcite's behavior by setting some environment
