@@ -396,7 +396,12 @@ function zotcite#GetYamlField(field)
     if len(lines) == 0
         return []
     endif
-    let value = substitute(system('getyamlfield.py ' . a:field, lines), '[\s\n]*$', '', '')
+    let out = system('getyamlfield.py ' . a:field, lines)
+    if v:shell_error
+        call zotcite#warning(substitute(out, '\n', ' ', 'g'))
+        return []
+    endif
+    let value = substitute(out, '[\s\n]*$', '', '')
     return eval(value)
 endfunction
 
