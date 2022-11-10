@@ -14,7 +14,7 @@ endfor
 syn match zoteroRefAnchor /@/ contained containedin=zoteroRefLabel
 syn match zoteroRefLabel /@[[:digit:][:lower:][:upper:]\u00FF-\uFFFF\-_#]\+/ contains=zoteroRefAnchor
 
-syn region zoteroPCite start=/\[.\{-}@[A-Z0-9]\{8}#/ skip=/[^\]]/ end=/\]/ transparent keepend contains=zoteroCiteKey,zoteroCiteLocator,markdownItalic,pandocEmphasis
+syn region zoteroPCite start=/\[[^\].]\{-}@[A-Z0-9]\{8}#/ skip=/\\]/ end=/\]/ transparent keepend contains=zoteroCiteKey,zoteroCiteLocator,markdownItalic,pandocEmphasis
 syn match zoteroCiteLocator /[\[\]]/ contained containedin=zoteroPCite
 
 syn match zoteroCiteKey /-\{0,1}@[A-Z0-9]\{8}#[[:digit:][:lower:][:upper:]\u00FF-\uFFFF_]\+/ contains=zoteroVisible,zoteroHidden
