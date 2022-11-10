@@ -11,15 +11,14 @@ for phl in ['pandocPCite', 'pandocICite', 'pandocCiteKey', 'pandocCiteAnchor', '
     endif
 endfor
 
-syn match zoteroRefAnchor /@/ contained containedin=zoteroRefLabel
 syn match zoteroRefLabel /@[[:digit:][:lower:][:upper:]\u00FF-\uFFFF\-_#]\+/ contains=zoteroRefAnchor
-
-syn region zoteroPCite start=/\[[^\].]\{-}@[A-Z0-9]\{8}#/ skip=/\\]/ end=/\]/ transparent keepend contains=zoteroCiteKey,zoteroCiteLocator,markdownItalic,pandocEmphasis
-syn match zoteroCiteLocator /[\[\]]/ contained containedin=zoteroPCite
-
-syn match zoteroCiteKey /-\{0,1}@[A-Z0-9]\{8}#[[:digit:][:lower:][:upper:]\u00FF-\uFFFF_]\+/ contains=zoteroVisible,zoteroHidden
-syn match zoteroHidden  /@[A-Z0-9]\{8}#/ contained containedin=zoteroCiteKey conceal contains=@NoSpell
-syn match zoteroVisible /#[[:digit:][:lower:][:upper:]\u00FF-\uFFFF_]\+/ contained containedin=zoteroCiteKey contains=@NoSpell
+syn region zoteroPCite matchgroup=Operator start=/\[\ze[^\]]\{-}@/ skip=/\\]/ end=/\]/ keepend transparent contains=zoteroCiteKey,markdownItalic,pandocEmphasis
+syn match zoteroCiteKey /@\S*[A-Z0-9]\{8}#[:_[:digit:][:lower:][:upper:]\u00FF-\uFFFF]\+/ contains=zoteroHidden,zoteroCiteLocator
+syn match zoteroCiteKey /@{\S\{-}}/ contains=zoteroHidden,zoteroCiteLocator
+syn match zoteroHidden /[{}]/ conceal
+syn match zoteroHidden  /\zs[A-Z0-9]\{8}#/ contained containedin=zoteroCiteKey conceal contains=@NoSpell
+syn match zoteroCiteLocator /-\ze@/ contained containedin=zoteroCiteKey
+syn match zoteroRefAnchor /@/ contained conceal containedin=zoteroCiteKey
 
 if !hlexists('pandocYAMLHeader')
   syn match mdYamlFieldTtl /^\s*\zs\w*\ze:/ contained
@@ -39,4 +38,3 @@ hi default link zoteroCiteLocator Operator
 hi default link zoteroRefLabel Label
 hi default link zoteroCiteKey Identifier
 hi default link zoteroHidden Comment
-hi default link zoteroVisible Identifier
