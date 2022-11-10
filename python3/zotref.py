@@ -13,6 +13,22 @@ import re
 import json
 from zotero import ZoteroEntries
 
+cites =[]
+
+def WalkClean(x):
+    if isinstance(x, dict) and 't' in x.keys() and x['t'] == 'Cite':
+        for a in x['c'][0]:
+            a['citationId'] = re.sub('#.*', '', a['citationId'])
+            cites.append(a['citationId'])
+    else:
+        if isinstance(x, dict) and 'c' in x.keys() and isinstance(x['c'], list):
+            for y in x['c']:
+                WalkClean(y)
+        else:
+            if isinstance(x, list):
+                for y in x:
+                    WalkClean(y)
+
 if __name__ == "__main__":
     # Get all references from ~/Zotero/zotero.sqlite
     z = ZoteroEntries()
@@ -20,13 +36,12 @@ if __name__ == "__main__":
     # Get json from pandoc (stdin)
     i = sys.stdin.read()
 
-    # To avoid duplicated references, delete the visible part of the citation key
-    i = re.sub('"citationId":"([^"]+)#[^"]+"', '"citationId":"\\1"', i)
-
     j = json.load(io.StringIO(i))
 
-    # Get all citations from the markdown document
-    cites = re.findall('"citationId":"([^"]+)","citation', i)
+    # To avoid duplicated references, delete the visible part of the citation key
+    # and get all citations from the markdown document
+    WalkClean(j['blocks'])
+
     c = sorted(set(cites))
 
     if 'bibliography' in j['meta']:

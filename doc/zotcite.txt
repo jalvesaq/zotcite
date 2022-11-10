@@ -358,6 +358,9 @@ APA citations with:
 >
    let zotcite_quarto_render = "pandoc-args -F apafix.py"
 <
+For a Lua filter, see:
+https://github.com/citation-style-language/styles/issues/3748
+
 
 ==============================================================================
 						     *zotcite_troubleshooting*

@@ -12,8 +12,24 @@ import io
 import json
 import re
 
+as_str = "and"
+
+def WalkFix(x):
+    if isinstance(x, dict) and 't' in x.keys() and x['t'] == 'Cite' and x['c'][0][0]['citationMode']['t'] == 'AuthorInText':
+        for vs in x['c'][1]:
+            if vs['t'] == 'Str' and vs['c'] == '&':
+                vs['c'] = as_str
+    else:
+        if isinstance(x, dict) and 'c' in x.keys() and isinstance(x['c'], list):
+            for y in x['c']:
+                WalkFix(y)
+        else:
+            if isinstance(x, list):
+                for y in x:
+                    WalkFix(y)
+
 def TranslateAmpersand(lang):
-    lang = re.sub('_.*', '', lang)
+    lang = re.sub('[-_].*', '', lang)
     translation = {'en': 'and',
                    'de': 'und',
                    'es': 'y',
@@ -37,18 +53,8 @@ if __name__ == "__main__":
     # https://github.com/crsh/rmdfiltr/blob/master/inst/replace_ampersands.lua
     if 'lang' in j['meta'].keys():
         as_str = TranslateAmpersand(j['meta']['lang']['c'][0]['c'])
-    else:
-        as_str = 'and'
 
-    for e, ve in enumerate(j['blocks']):
-        if ve['t'] == 'Para':
-            for p, vp in enumerate(j['blocks'][e]['c']):
-                if vp['t'] == 'Cite':
-                    if j['blocks'][e]['c'][p]['c'][0][0]['citationMode']['t'] == 'AuthorInText':
-                        ultimo = 1000
-                        for s, vs in enumerate(j['blocks'][e]['c'][p]['c'][1]):
-                            if vs['t'] == 'Str' and j['blocks'][e]['c'][p]['c'][1][s]['c'] == '&':
-                                j['blocks'][e]['c'][p]['c'][1][s]['c'] = as_str
+    WalkFix(j['blocks'])
 
     # Print the json representation of the new document
     sys.stdout.write(json.dumps(j))
