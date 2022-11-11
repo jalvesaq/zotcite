@@ -410,6 +410,7 @@ if has('nvim')
         if a:event == 'stdout' || a:event == 'stderr'
             let s:quarto_output += a:data
         else
+            let s:quarto_running = 0
             if a:data != 0
                 call writefile(s:quarto_output, $Zotcite_tmpdir . '/joboutput')
                 exe "terminal cat '" . $Zotcite_tmpdir . "/joboutput' && rm '" . $Zotcite_tmpdir . "/joboutput'"
@@ -421,10 +422,11 @@ else
         let s:quarto_output += [a:msg]
     endfunction
     function s:OnJobExit(job_id, stts)
-    if a:stts != 0
-        call writefile(s:quarto_output, $Zotcite_tmpdir . '/joboutput')
-        exe "terminal cat " . $Zotcite_tmpdir . "/joboutput && rm " . $Zotcite_tmpdir . "/joboutput"
-    endif
+        let s:quarto_running = 0
+        if a:stts != 0
+            call writefile(s:quarto_output, $Zotcite_tmpdir . '/joboutput')
+            exe "terminal cat " . $Zotcite_tmpdir . "/joboutput && rm " . $Zotcite_tmpdir . "/joboutput"
+        endif
     endfunction
 endif
 
@@ -437,10 +439,31 @@ else
                 \ 'err_cb': function('s:OnJobEvent'),
                 \ 'exit_cb': function('s:OnJobExit')}
 endif
+let s:quarto_running = 0
+
+let s:systole = v:false
+function zotcite#Pulse(...)
+    if s:quarto_running
+        if s:systole
+            echon "\r-"
+        else
+            echon "\r+"
+        endif
+        let s:systole = !s:systole
+        call timer_start(500, 'zotcite#Pulse')
+    else
+        echon "\r "
+    endif
+endfunction
 
 function zotcite#QuartoPostWrite()
+    if s:quarto_running
+        call zotcite#warning('Quarto is still running')
+        return
+    endif
     let s:quarto_output = []
     if exists('g:zotcite_quarto_render')
+        let s:quarto_running = 1
         if type(g:zotcite_quarto_render) == v:t_number && g:zotcite_quarto_render
             if has('nvim')
                 call jobstart('quarto render ' . expand('%'), s:jobcb)
@@ -454,6 +477,7 @@ function zotcite#QuartoPostWrite()
                 call job_start('quarto render ' . expand('%') . ' ' . g:zotcite_quarto_render, s:jobcb)
             endif
         endif
+        call timer_start(500, 'zotcite#Pulse')
     endif
 endfunction
 
