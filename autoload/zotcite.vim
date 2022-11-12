@@ -463,19 +463,20 @@ function zotcite#QuartoPostWrite()
     endif
     let s:quarto_output = []
     if exists('g:zotcite_quarto_render')
-        let s:quarto_running = 1
-        if type(g:zotcite_quarto_render) == v:t_number && g:zotcite_quarto_render
-            if has('nvim')
-                call jobstart('quarto render ' . expand('%'), s:jobcb)
+        if type(g:zotcite_quarto_render) == v:t_number
+            if g:zotcite_quarto_render
+                let qcmd = 'quarto render ' . expand('%')
             else
-                call job_start('quarto render ' . expand('%'), s:jobcb)
+                return
             endif
         elseif type(g:zotcite_quarto_render) == v:t_string
-            if has('nvim')
-                call jobstart('quarto render ' . expand('%') . ' ' . g:zotcite_quarto_render, s:jobcb)
-            else
-                call job_start('quarto render ' . expand('%') . ' ' . g:zotcite_quarto_render, s:jobcb)
-            endif
+            let qcmd = 'quarto render ' . expand('%') . ' ' . g:zotcite_quarto_render
+        endif
+        let s:quarto_running = 1
+        if has('nvim')
+            call jobstart(qcmd, s:jobcb)
+        else
+            call job_start(qcmd, s:jobcb)
         endif
         call timer_start(500, 'zotcite#Pulse')
     endif
