@@ -38,7 +38,7 @@ on Windows.
 
 Requirements:
 
-  - Zotero 5
+  - Zotero >= 5
 
   - Python 3
 
@@ -52,7 +52,7 @@ Zotcite can be installed as any Vim plugin. It is recommended the use of a
 plugin manager, such as [Vim-Plug](https://github.com/junegunn/vim-plug).
 
 The `zotero` module does not import the `vim` module. Hence, its code could
-easily be adapted to other text editors such as Emacs or Gedit.
+easily be adapted to other text editors such as Emacs.
 
 ## Usage
 
@@ -66,5 +66,5 @@ Zotcite syntax highlighting will not be enabled if the file type is `pandoc`.
 
 ## Acknowledgment
 
-Zotcite code was based on the
+Zotcite's Python code was based on the
 [citation.vim](https://github.com/rafaqz/citation.vim) project.

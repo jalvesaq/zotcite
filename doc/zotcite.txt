@@ -304,9 +304,9 @@ different value, follow the example:
 							   *zotcite_filetypes*
 4.4 File types~
 
-Zotcite is enabled only if the file type is `markdown`, `pandoc` or `rmd`. If
-you want it enabled for other file types, you should set the value of
-`zotcite_filetypes` in your |vimrc|. Example:
+Zotcite is enabled only if the file type is `markdown`, `pandoc`, `rmd` or
+`quarto`. If you want it enabled for other file types, you should set the
+value of `zotcite_filetypes` in your |vimrc|. Example:
 >
   let zotcite_filetypes = ['markdown', 'pandoc', 'rmd', 'vimwiki']
 <
