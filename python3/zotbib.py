@@ -28,4 +28,5 @@ if __name__ == "__main__":
 
     # Save the bib file
     with open(sys.argv[2], 'w') as f:
-        f.write(r)
+        for k in r.keys():
+            f.write("\n" + "".join(r[k]))

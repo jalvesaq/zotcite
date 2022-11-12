@@ -15,6 +15,18 @@ from zotero import ZoteroEntries
 
 cites =[]
 
+def ReadBib(fnm):
+    bib = {}
+    key = None
+    with open(fnm) as f:
+        for line in f:
+            if line[0] == '@':
+                key = re.sub('^@.*{', '', re.sub(',$', '', line))
+                bib[key] = []
+            if key:
+                bib[key].append(line)
+    return bib
+
 def WalkClean(x):
     if isinstance(x, dict) and 't' in x.keys() and x['t'] == 'Cite':
         for a in x['c'][0]:
@@ -67,17 +79,25 @@ if __name__ == "__main__":
                     if j['meta']['bibliography']['t'] == 'MetaInlines':
                         j['meta']['bibliography'] = {'t': 'MetaList', 'c': [j['meta']['bibliography'], zitem]}
 
+        # Get fresh references
         r = z.GetBib(c)
 
         # Save the bib file
-        if os.getenv('QUARTO_FILTER_PARAMS'):
-            if os.path.exists(zbib):
-                sys.stderr.write('zotref (zotcite): overwriting "' + str(zbib) + '"\n')
-            else:
-                sys.stderr.write('zotref (zotcite): writing "' + str(zbib) + '"\n')
-            sys.stderr.flush()
+        if os.path.exists(zbib):
+            sys.stderr.write('zotref (zotcite): updating "' + str(zbib) + '"\n')
+            # Read old references
+            o = ReadBib(zbib)
+            # Replace old references with new ones
+            for key in r.keys():
+                o[key] = r[key]
+        else:
+            sys.stderr.write('zotref (zotcite): writing "' + str(zbib) + '"\n')
+            o = r
+        sys.stderr.flush()
+
         with open(zbib, 'w') as f:
-            f.write(r)
+            for k in o.keys():
+                f.write("\n" + "".join(o[k]))
     else:
         # Get the references for the found citekeys formatted as the YAML and put
         # the string into the YAML header of a dummy markdown document.

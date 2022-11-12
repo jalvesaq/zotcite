@@ -686,30 +686,30 @@ class ZoteroEntries:
         if e['etype'] == 'InCollection' and not 'editor' in e:
             e['etype'] = 'InBook'
 
-        ref = '\n@' + e['etype'] + '{' + re.sub('#.*', '', citekey) + ',\n'
+        ref = ['\n@' + e['etype'] + '{' + re.sub('#.*', '', citekey) + ',\n']
         for aa in ['author', 'editor', 'contributor', 'translator',
                    'container-author']:
             if aa in e:
                 names = []
-                ref += '  ' + aa + ' = {'
+                ref.append('  ' + aa + ' = {')
                 for last, first in e[aa]:
                     names.append(last + ', ' + first)
-                ref += ' and '.join(names) + '},\n'
+                ref.append(' and '.join(names) + '},\n')
         if 'issued' in e:
             d = re.sub(' .*', '', e['issued']).split('-')
             if d[0] != '0000':
-                ref += '  year = {' + e['year'] + '},\n'
+                ref.append('  year = {' + e['year'] + '},\n')
                 if d[1] != '00':
-                    ref += '  month = {' + d[1] + '},\n'
+                    ref.append('  month = {' + d[1] + '},\n')
                 if d[2] != '00':
-                    ref += '  day = {' + d[2] + '},\n'
+                    ref.append('  day = {' + d[2] + '},\n')
         dont = ['etype', 'issued', 'abstract', 'citekey', 'zotkey',
                 'collection', 'author', 'editor', 'contributor', 'translator',
                 'alastnm', 'container-author', 'year']
         for f in e:
             if f not in dont:
-                ref += '  ' + f + ' = {' + str(e[f]) + '},\n'
-        ref += '}\n'
+                ref.append('  ' + f + ' = {' + str(e[f]) + '},\n')
+        ref.append('}\n')
         return ref
 
     def GetBib(self, keys):
@@ -718,12 +718,12 @@ class ZoteroEntries:
             keys (list): List of citation keys (not Zotero keys) present in the document.
         """
 
-        ref = ''
+        ref = {}
         for e in self._e:
             for k in keys:
                 zotkey = re.sub('#.*', '', k)
                 if zotkey == self._e[e]['zotkey']:
-                    ref += self._get_bib_ref(self._e[e], k)
+                    ref[zotkey] = self._get_bib_ref(self._e[e], k)
         return ref
 
     def GetAttachment(self, zotkey):
