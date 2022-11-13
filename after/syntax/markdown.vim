@@ -21,16 +21,24 @@ syn match zoteroCiteLocator /-\ze@/ contained containedin=zoteroCiteKey
 syn match zoteroRefAnchor /@/ contained conceal containedin=zoteroCiteKey
 
 if !hlexists('pandocYAMLHeader')
-  syn match mdYamlFieldTtl /^\s*\zs\w*\ze:/ contained
-  syn match mdYamlFieldTtl /^\s*-\s*\zs\w*\ze:/ contained
-  syn region yamlFlowString matchgroup=yamlFlowStringDelimiter start='"' skip='\\"' end='"' contains=yamlEscape contained
-  syn region yamlFlowString matchgroup=yamlFlowStringDelimiter start="'" skip="''"  end="'" contains=yamlSingleEscape contained
-  syn match  yamlEscape contained '\\\%([\\"abefnrtv\^0_ NLP\n]\|x\x\x\|u\x\{4}\|U\x\{8}\)'
-  syn match  yamlSingleEscape contained "''"
-  syn region pandocYAMLHeader matchgroup=mdYamlBlockDelim start=/\%(\%^\|\_^\s*\n\)\@<=\_^-\{3}\ze\n.\+/ end=/^\([-.]\)\1\{2}$/ keepend contains=mdYamlFieldTtl,yamlFlowString
-  hi def link mdYamlBlockDelim Delimiter
-  hi def link mdYamlFieldTtl Identifier
-  hi def link yamlFlowString String
+    syn match mdYamlFieldTtl /^\s*\zs\w\%(-\|\w\)*\ze:/ contained
+    syn match mdYamlFieldTtl /^\s*-\s*\zs\w\%(-\|\w\)*\ze:/ contained
+    syn region yamlFlowString matchgroup=yamlFlowStringDelimiter start='"' skip='\\"' end='"' contains=yamlEscape contained
+    syn region yamlFlowString matchgroup=yamlFlowStringDelimiter start="'" skip="''"  end="'" contains=yamlSingleEscape contained
+    syn match  yamlEscape contained '\\\%([\\"abefnrtv\^0_ NLP\n]\|x\x\x\|u\x\{4}\|U\x\{8}\)'
+    syn match  yamlSingleEscape contained "''"
+    syn match yamlComment /#.*/ contained
+    syn match yamlColonError /:\s*[^'^"^!]*:/ contained
+    if &filetype == 'quarto'
+        syn region pandocYAMLHeader matchgroup=mdYamlBlockDelim start=/\%(\%^\|\_^\s*\n\)\@<=\_^-\{3}\ze\n.\+/ end=/^---$/ keepend contains=mdYamlFieldTtl,yamlFlowString,yamlComment,yamlColonError
+    else
+        syn region pandocYAMLHeader matchgroup=mdYamlBlockDelim start=/\%(\%^\|\_^\s*\n\)\@<=\_^-\{3}\ze\n.\+/ end=/^\([-.]\)\1\{2}$/ keepend contains=mdYamlFieldTtl,yamlFlowString,yamlComment,yamlColonError
+    endif
+    hi def link mdYamlBlockDelim Delimiter
+    hi def link mdYamlFieldTtl Identifier
+    hi def link yamlFlowString String
+    hi def link yamlComment Comment
+    hi def link yamlColonError Error
 endif
 
 hi default link zoteroRefAnchor Operator
