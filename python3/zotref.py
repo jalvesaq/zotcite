@@ -71,7 +71,7 @@ if __name__ == "__main__":
                     zbib = nstr
                     break
             if zbib == "":
-                zbib = tempfile.gettempdir() + '/' + os.getlogin() + '_zotcite.bib'
+                zbib = tempfile.gettempdir() + '/' + os.getlogin() + '-zotcite.bib'
                 zitem = {'t': 'MetaInlines', 'c': [{'t': 'Str', 'c': zbib}]}
                 if j['meta']['bibliography']['t'] == 'MetaList':
                     j['meta']['bibliography']['c'].append(zitem)

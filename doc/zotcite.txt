@@ -123,10 +123,10 @@ field in the YAML header, but none of the bib files listed ends in
 For Quarto documents, the "bibliography" field must be defined in its YAML
 header. You have to add the following fields to the YAML header of your Quarto
 documents to make both `quarto preview` and `quarto render` commands work
-(replace `example_zotcite.bib` with whatever name you want and adjust the
+(replace `example-zotcite.bib` with whatever name you want and adjust the
 `zotref.py` path):
 >
- bibliography: example_zotcite.bib
+ bibliography: example-zotcite.bib
  filters:
    - /path/to/zotcite/python3/zotref.py
 <
@@ -137,7 +137,7 @@ complement it with Zotero references, you can put in your YAML header:
 >
  bibliography:
    - old.bib
-   - new_zotcite.bib
+   - new-zotcite.bib
 <
 or, simply:
 >
