@@ -703,6 +703,10 @@ class ZoteroEntries:
                     ref.append('  month = {' + d[1] + '},\n')
                 if d[2] != '00':
                     ref.append('  day = {' + d[2] + '},\n')
+        if 'urldate' in e:
+            e['urldate'] = re.sub(' .*', '', e['urldate'])
+        if 'pages' in e:
+            e['pages'] = re.sub('([0-9])-([0-9])', '\\1--\\2', e['pages'])
         dont = ['etype', 'issued', 'abstract', 'citekey', 'zotkey',
                 'collection', 'author', 'editor', 'contributor', 'translator',
                 'alastnm', 'container-author', 'year']
