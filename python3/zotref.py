@@ -21,7 +21,7 @@ def ReadBib(fnm):
     with open(fnm) as f:
         for line in f:
             if line[0] == '@':
-                key = re.sub('^@.*{', '', re.sub(',$', '', line))
+                key = re.sub('^@.*{', '', re.sub(',\\s*$', '', line))
                 bib[key] = []
             if key:
                 bib[key].append(line)
@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     if 'bibliography' in j['meta']:
         b = j['meta']['bibliography']['c']
-        zbib = None
+        zbib = ""
         if isinstance(b, list):
             for n in b:
                 nstr = ''
@@ -70,7 +70,7 @@ if __name__ == "__main__":
                 if nstr.find('zotcite.bib') == (len(nstr) - 11):
                     zbib = nstr
                     break
-            if zbib is None:
+            if zbib == "":
                 zbib = tempfile.gettempdir() + '/' + os.getlogin() + '_zotcite.bib'
                 zitem = {'t': 'MetaInlines', 'c': [{'t': 'Str', 'c': zbib}]}
                 if j['meta']['bibliography']['t'] == 'MetaList':
