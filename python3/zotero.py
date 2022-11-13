@@ -686,6 +686,23 @@ class ZoteroEntries:
         if e['etype'] == 'InCollection' and not 'editor' in e:
             e['etype'] = 'InBook'
 
+        for aa in ['title', 'journal', 'booktitle', 'journalAbbreviation', 'address', 'publisher']:
+            if aa in e:
+                # Avoid compilation errors
+                e[aa] = re.sub('\\\\"', '\x02', e[aa])
+                e[aa] = re.sub('\\\\', '\x01', e[aa])
+                e[aa] = re.sub('([&%$#_\\[\\]\\{\\}])', '\\\\\\1', e[aa])
+                # https://www.zotero.org/support/kb/rich_text_bibliography
+                e[aa] = re.sub('<i>(.+?)</i>', '\\\\textit{\\1}', e[aa])
+                e[aa] = re.sub('<b>(.+?)</b>', '\\\\textbf{\\1}', e[aa])
+                e[aa] = re.sub('<sub>(.+?)</sub>', '$_{\\\\textrm{\\1}}$', e[aa])
+                e[aa] = re.sub('<sup>(.+?)</sup>', '$^{\\\\textrm{\\1}}$', e[aa])
+                e[aa] = re.sub('<span style=\x02font-variant:small-caps;\x02>(.+?)</span>', '\\\\textsc{\\1}', e[aa])
+                e[aa] = re.sub('<span class=\x02nocase\x02>(.+?)</span>', '{\\1}', e[aa])
+                # Avoid compilation errors
+                e[aa] = re.sub('\x02', '"', e[aa])
+                e[aa] = re.sub('\x01', '{\\\\textbackslash}', e[aa])
+
         ref = ['\n@' + e['etype'] + '{' + re.sub('#.*', '', citekey) + ',\n']
         for aa in ['author', 'editor', 'contributor', 'translator',
                    'container-author']:
