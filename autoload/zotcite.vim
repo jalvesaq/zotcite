@@ -315,7 +315,6 @@ function zotcite#ViewDocument()
     else
         let fmt = zotcite#GetYamlField('output')
     endif
-    let g:TheFormat1 = fmt
     while len(fmt) && type(fmt) != v:t_string
         if type(fmt) == v:t_dict
             let fmt = keys(fmt)[0]
@@ -396,13 +395,11 @@ function zotcite#GetYamlField(field)
     if len(lines) == 0
         return []
     endif
-    let out = system('getyamlfield.py ' . a:field, lines)
-    if v:shell_error
-        call zotcite#warning(substitute(out, '\n', ' ', 'g'))
+    let repl = py3eval('ZotCite.GetYamlField("' . a:field . '", ' . string(lines) . ')')
+    if type(repl) == v:t_number && repl == -1
         return []
     endif
-    let value = substitute(out, '[\s\n]*$', '', '')
-    return eval(value)
+    return repl
 endfunction
 
 if has('nvim')
@@ -413,6 +410,7 @@ if has('nvim')
             let s:quarto_running = 0
             if a:data != 0
                 call writefile(s:quarto_output, $Zotcite_tmpdir . '/joboutput')
+                tabnew
                 exe "terminal cat '" . $Zotcite_tmpdir . "/joboutput' && rm '" . $Zotcite_tmpdir . "/joboutput'"
             endif
         endif
@@ -484,6 +482,10 @@ endfunction
 
 function zotcite#GetCollectionName(run_quarto)
     let newc = zotcite#GetYamlField('collection')
+    let g:TheCollection = newc
+    if len(newc) == 0
+        return
+    endif
     if type(newc) == v:t_string
         let newc = [newc]
     endif

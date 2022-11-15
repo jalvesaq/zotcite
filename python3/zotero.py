@@ -4,6 +4,8 @@ import os
 import re
 import sqlite3
 import copy
+import io
+import yaml
 
 # A lot of code was either adapted or plainly copied from citation_vim,
 # written by Rafael Schouten: https://github.com/rafaqz/citation.vim
@@ -870,6 +872,26 @@ class ZoteroEntries:
 
         return notes + '\n'
 
+
+    def GetYamlField(self, key, lines):
+        l2 = []
+        for l in lines:
+            if l.find('!expr') < 0:
+                l2.append(l)
+        if len(l2) == 0:
+            return []
+        try:
+            y = yaml.load(io.StringIO("\n".join(l2)), yaml.SafeLoader)
+        except yaml.YAMLError as exc:
+            if hasattr(exc, 'problem_mark'):
+                mark = exc.problem_mark
+                self._errmsg("YAML error (line " + str(mark.line + 1) +
+                             ", column " + str(mark.column) + "): " + lines[mark.line])
+                return []
+        else:
+            if key in y.keys():
+                return y[key]
+        return []
 
     def Info(self):
         """ Return information that might be useful for users of ZoteroEntries """
