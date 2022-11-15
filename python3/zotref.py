@@ -98,6 +98,16 @@ if __name__ == "__main__":
         with open(zbib, 'w') as f:
             for k in o.keys():
                 f.write("\n" + "".join(o[k]))
+
+        if os.name == "nt":
+            enc = os.getenv('Zotero_encoding')
+            if enc is None:
+                enc = "latin1"
+            with open(zbib, encoding=enc) as f:
+                bib = f.read()
+            with open(zbib, 'w', encoding='utf8') as f:
+                f.write(bib)
+
     else:
         # Get the references for the found citekeys formatted as the YAML and put
         # the string into the YAML header of a dummy markdown document.

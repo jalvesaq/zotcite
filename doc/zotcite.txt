@@ -86,7 +86,20 @@ Example:
 Note: Old versions of `pandoc` require `-F pandoc-citeproc` instead of
 `--citeproc`.
 
-
+If editing a Quarto document, the lines to the YAML will be:
+>
+ format:
+   pdf:
+     filters:
+       - /Path/to/zotcite/python3/zotref.py
+<
+Note: On Windows, `zotref.py` will convert the bib file from "latin1" to
+"utf-8". If "latin1" is not the Zotero encoding in your region, set the
+enviroment variable `$Zotero_encoding` with the correct value in your |vimrc|.
+Example:
+>
+   let $Zotero_encoding = 'latin2'
+<
 In Vim's Normal mode, put the cursor over a citation key and press:
 
   - <Leader>zo to open the reference's attachment as registered in Zotero's
