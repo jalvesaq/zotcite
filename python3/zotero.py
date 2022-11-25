@@ -545,12 +545,12 @@ class ZoteroEntries:
     def _get_compl_line(cls, e):
         alastnm = e['alastnm']
         if alastnm == '':
-            line = e['zotkey'] + '#' + e['citekey'] + '\x09 \x09(' + e['year'] + ') ' + e['title']
+            lst = [e['zotkey'] + '#' + e['citekey'], '', '(' + e['year'] + ') ' + e['title']]
         else:
             if len(alastnm) > 40:
                 alastnm = alastnm[:40] + "…"
-            line = e['zotkey'] + '#' + e['citekey'] + '\x09' + alastnm + '\x09(' + e['year'] + ') ' + e['title']
-        return line
+            lst = [e['zotkey'] + '#' + e['citekey'], alastnm , '(' + e['year'] + ') ' + e['title']]
+        return lst
 
     def GetMatch(self, ptrn, d):
         """ Find citation key and save completion lines in temporary file

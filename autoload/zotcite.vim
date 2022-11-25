@@ -85,13 +85,16 @@ function zotcite#CompleteBib(findstart, base)
         endif
         let citeptrn = substitute(a:base, '^@', '', '')
         let resp = []
-        let lines = py3eval('ZotCite.GetMatch("'. citeptrn .'", "'. escape(expand("%:p"), '\\') .'")')
-        for line in lines
-            let tmp = split(line, "\x09")
-            call add(resp, {'word': tmp[0], 'abbr': tmp[1], 'menu': tmp[2]})
+        let itms = py3eval('ZotCite.GetMatch("'. citeptrn .'", "'. escape(expand("%:p"), '\\') .'")')
+        for it in itms
+            call add(resp, {'word': it[0], 'abbr': it[1], 'menu': it[2]})
         endfor
         return resp
     endif
+endfunction
+
+function zotcite#Py3Compl(citeptrn)
+    return py3eval('ZotCite.GetMatch("'. a:citeptrn .'", "'. escape(expand("%:p"), '\\') .'")')
 endfunction
 
 function zotcite#getmach(key)
@@ -482,7 +485,6 @@ endfunction
 
 function zotcite#GetCollectionName(run_quarto)
     let newc = zotcite#GetYamlField('collection')
-    let g:TheCollection = newc
     if len(newc) == 0
         return
     endif
