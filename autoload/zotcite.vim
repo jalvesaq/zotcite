@@ -398,6 +398,7 @@ function zotcite#GetYamlField(field)
     if len(lines) == 0
         return []
     endif
+    call map(lines, "substitute(v:val, '\\', '\\\\\\', 'g')")
     let repl = py3eval('ZotCite.GetYamlField("' . a:field . '", ' . string(lines) . ')')
     if type(repl) == v:t_number && repl == -1
         return []

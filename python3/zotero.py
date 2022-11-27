@@ -4,7 +4,6 @@ import os
 import re
 import sqlite3
 import copy
-import io
 import yaml
 
 # A lot of code was either adapted or plainly copied from citation_vim,
@@ -353,20 +352,6 @@ class ZoteroEntries:
         self._calculate_citekeys()
         self._delete_items()
         conn.close()
-
-        # Debug:
-        #ckeys = []
-        #with open('/tmp/ZData', 'w') as f:
-        #    for c in self._c:
-        #        ckeys += self._c[c]
-        #        f.write(str(c) + ':\n')
-        #        for k in self._c[c]:
-        #            f.write('  ' + str(self._e[k]) + '\n')
-        #    f.write('None:\n')
-        #    for k in self._e:
-        #        if k not in ckeys:
-        #            f.write('  ' + str(self._e[k]) + '\n')
-
 
     def _get_collections(self):
         self._c = {}
@@ -881,7 +866,7 @@ class ZoteroEntries:
         if len(l2) == 0:
             return []
         try:
-            y = yaml.load(io.StringIO("\n".join(l2)), yaml.SafeLoader)
+            y = yaml.load("\n".join(l2), yaml.SafeLoader)
         except yaml.YAMLError as exc:
             if hasattr(exc, 'problem_mark'):
                 mark = exc.problem_mark
