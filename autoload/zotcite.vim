@@ -99,20 +99,19 @@ endfunction
 
 function zotcite#getmach(key)
     let citeptrn = substitute(a:key, ' .*', '', '')
-    let lines = py3eval('ZotCite.GetMatch("'. citeptrn .'", "'. escape(expand("%:p"), '\\') .'")')
+    let refs = py3eval('ZotCite.GetMatch("'. citeptrn .'", "'. escape(expand("%:p"), '\\') .'")')
     let resp = []
-    for line in lines
-        let tmp = split(line, "\x09")
-        let item = {'key': substitute(tmp[0], '#.*', '', ''), 'author': tmp[1]}
-        if tmp[2] =~ '^([0-9][0-9][0-9][0-9]) '
-            let item['year'] = substitute(tmp[2], '^(\([0-9][0-9][0-9][0-9]\)) .*', '\1', '')
-            let item['ttl'] = substitute(tmp[2], '^([0-9][0-9][0-9][0-9]) ', '', '')
-        elseif tmp[2] =~ '^() '
+    for ref in refs
+        let item = {'key': substitute(ref[0], '#.*', '', ''), 'author': ref[1]}
+        if ref[2] =~ '^([0-9][0-9][0-9][0-9]) '
+            let item['year'] = substitute(ref[2], '^(\([0-9][0-9][0-9][0-9]\)) .*', '\1', '')
+            let item['ttl'] = substitute(ref[2], '^([0-9][0-9][0-9][0-9]) ', '', '')
+        elseif ref[2] =~ '^() '
             let item['year'] = ''
-            let item['ttl'] = substitute(tmp[2], '^() ', '', '')
+            let item['ttl'] = substitute(ref[2], '^() ', '', '')
         else
             let item['year'] = ''
-            let item['ttl'] = tmp[2]
+            let item['ttl'] = ref[2]
         endif
         call add(resp, item)
     endfor
