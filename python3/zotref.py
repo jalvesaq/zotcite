@@ -54,6 +54,9 @@ if __name__ == "__main__":
     # and get all citations from the markdown document
     WalkClean(j['blocks'])
 
+    if 'abstract' in j['meta']:
+        WalkClean(j['meta']['abstract'])
+
     c = sorted(set(cites))
 
     if 'bibliography' in j['meta']:
