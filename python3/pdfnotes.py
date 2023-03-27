@@ -8,8 +8,18 @@ https://gist.github.com/HamedMP/03440cca542ee7ae279175b78499fabf
 import sys
 import os
 import re
-import PyQt5
-import popplerqt5
+
+try:
+    import PyQt5
+except ImportError:
+    sys.stdout.write("Please, install the Python3 module PyQt5")
+    sys.exit(1)
+
+try:
+    import popplerqt5
+except ImportError:
+    sys.stdout.write("Please, install the Python3 module popplerqt5")
+    sys.exit(1)
 
 def main():
 

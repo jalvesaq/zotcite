@@ -364,6 +364,8 @@ function zotcite#GetPDFNote(key)
             call zotcite#warning('Failed to load "' . fpath . '" as a valid PDF document.')
         elseif v:shell_error == 34
             call zotcite#warning("No annotations found.")
+        else
+            call zotcite#warning(notes)
         endif
     endif
 endfunction
