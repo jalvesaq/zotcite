@@ -48,11 +48,11 @@ Requirements:
 
     `sudo apt install python3-pyqt5 python3-poppler-qt5`
 
-Zotcite can be installed as any Vim plugin. It is recommended the use of a
-plugin manager, such as [Vim-Plug](https://github.com/junegunn/vim-plug).
+Zotcite can be installed as any Vim plugin. If using Neovim, you may also want
+to install [cmp-zotcite](https://github.com/jalvesaq/cmp-zotcite).
 
-The `zotero` module does not import the `vim` module. Hence, its code could
-easily be adapted to other text editors such as Emacs.
+The Python module `zotero` does not import the `vim` module. Hence, its code
+could easily be adapted to other text editors such as Emacs.
 
 ## Usage
 

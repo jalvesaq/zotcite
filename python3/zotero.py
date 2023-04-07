@@ -766,6 +766,48 @@ class ZoteroEntries:
             return '@' + self._e[Id]['zotkey'] + '#' + self._e[Id]['citekey']
         return "IdNotFound"
 
+    def GetAnnotations(self, key):
+        """ Return user notes from a reference.
+
+            key (string): The Zotero key as it appears in the markdown document.
+        """
+        zcopy = self._copy_zotero_data()
+        conn = sqlite3.connect(zcopy)
+        cur = conn.cursor()
+
+        query = u"""
+                SELECT items.itemID, items.key
+                FROM items
+                """
+        query = u"""
+            SELECT items.key, itemAttachments.ItemID, itemAttachments.parentItemID, itemAnnotations.parentItemID, itemAnnotations.type, itemAnnotations.authorName, itemAnnotations.text, itemAnnotations.comment, itemAnnotations.pageLabel
+            FROM items, itemAttachments, itemAnnotations
+            WHERE items.key = '""" + key + """'
+            and items.itemID = itemAttachments.parentItemID
+            and itemAnnotations.parentItemID = itemAttachments.ItemID
+            """
+        cur.execute(query)
+
+        citekey = ''
+        for k in self._e:
+            if self._e[k]['zotkey'] == key:
+                citekey = self._e[k]['citekey']
+
+        if os.getenv('ZYearPageSep') is None:
+            ypsep = ', p. '
+        else:
+            ypsep = os.getenv('ZYearPageSep')
+        notes = []
+        for i in cur.fetchall():
+            if i[7]: # Comment
+                notes.append('')
+                notes.append(i[7] + ' [@' + key + '#' + citekey + ypsep + i[8] + ']')
+            if i[6]: # Highlighted text
+                notes.append('')
+                notes.append('> ' + i[6] + ' [@' + key + '#' + citekey + ypsep + i[8] + ']')
+        return notes
+
+
     def GetNotes(self, key):
         """ Return user notes from a reference.
 

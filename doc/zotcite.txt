@@ -40,24 +40,34 @@ description of its features, including screenshots at:
 							       *zotcite_usage*
 2. Usage~
 
-To extract notes from Zotero and insert them into the markdown document, use
-the Vim command `:Znote key` where is `key` is a word with one or more letters
-of authors' names or from a reference title. By default, the colon separating
-the year from the page is replaced by ", p. ". If you want to use the colon or
-any other string as the separator, set the value of `$ZYearPageSep` in your
-vimrc (or init.vim). Example:
+Zotcite can extract and insert into the markdown document (1) annotations that
+you have made using Zotero's built-in PDF viewer, (2) notes that you have
+attached to a Zotero entry, and (3) annotations inserted in a PDF by an
+external PDF viewer.
+
+To extract annotations made with Zotero's built-in PDF viewer, use the Vim
+command `:Zannotations key` where `key` is a word with one or more letters
+of authors' names or from a reference title.
+
+Similarly, to extract notes from Zotero, use the Vim command `:Znote key`
+
+By default, the colon separating the year from the page is replaced by ", p.
+". If you want to use the colon or any other string as the separator, set the
+value of `$ZYearPageSep` in your vimrc (or init.vim). Example:
 >
  let $ZYearPageSep = ':'
 <
-Similarly, to extract annotations (notes and highlighted texts) from a PDF
-document, use the Vim command `:Zpdfnote`. The page numbers of the annotations
-might be wrong, so always check them after the extraction. You have also to
-manually add italics and other rich text formating and put back hyphens
-incorrectly removed from the end of the PDF lines.
+Similarly, to extract annotations (notes and highlighted texts) that were
+inserted into a PDF document by an external PDF viewer, use the Vim command
+`:Zpdfnote`. The page numbers of the annotations might be wrong, so always
+check them after the extraction. You have also to manually add italics and
+other rich text formating and put back hyphens incorrectly removed from the
+end of the PDF lines.
 
 To insert citation keys, in Insert mode, type the `@` letter and one or more
 letters of either the last name of the first author or the reference title and
-press <C-X><C-O>. The matching of citation keys is case insensitive.
+press <C-X><C-O>. The matching of citation keys is case insensitive. (See also
+https://github.com/jalvesaq/cmp-zotcite).
 
 To convert a Markdown document with pandoc, use the `zotref.py` filter that comes
 with Zotcite. The Zotcite plugin adds the directory where `zotref.py` is to the

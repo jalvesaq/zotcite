@@ -15,7 +15,7 @@ syn match zoteroRefLabel /@[[:digit:][:lower:][:upper:]\u00FF-\uFFFF\-_#]\+/ con
 syn region zoteroPCite matchgroup=Operator start=/\[\ze[^\]]\{-}@/ skip=/\\]/ end=/\]/ keepend transparent contains=zoteroCiteKey,markdownItalic,pandocEmphasis
 syn match zoteroCiteKey /@\S*[A-Z0-9]\{8}#[:_[:digit:][:lower:][:upper:]\u00FF-\uFFFF]\+/ contains=zoteroHidden,zoteroCiteLocator
 syn match zoteroCiteKey /@{\S\{-}}/ contains=zoteroHidden,zoteroCiteLocator
-syn match zoteroHidden /[{}]/ conceal
+syn match zoteroHidden /[{}]/ conceal contained containedin=zoteroCiteKey
 syn match zoteroHidden  /\zs[A-Z0-9]\{8}#/ contained containedin=zoteroCiteKey conceal contains=@NoSpell
 syn match zoteroCiteLocator /-\ze@/ contained containedin=zoteroCiteKey
 syn match zoteroRefAnchor /@/ contained conceal containedin=zoteroCiteKey
