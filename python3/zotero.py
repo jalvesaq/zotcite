@@ -5,6 +5,7 @@ import re
 import sqlite3
 import copy
 import yaml
+import subprocess
 
 # A lot of code was either adapted or plainly copied from citation_vim,
 # written by Rafael Schouten: https://github.com/rafaqz/citation.vim
@@ -205,41 +206,47 @@ class ZoteroEntries:
                  "interviewer", "recipient", "sponsor", "inventor"]
     def __init__(self):
 
+        # Year-page separator
+        if os.getenv('ZYearPageSep') is not None:
+            self._ypsep = str(os.getenv('ZYearPageSep'))
+        else:
+            self._ypsep = ', p. '
+
         # Template for citation keys
-        self._cite = os.getenv('ZCitationTemplate')
-        if self._cite is None:
+        if os.getenv('ZCitationTemplate') is not None:
+            self._cite = str(os.getenv('ZCitationTemplate'))
+        else:
             self._cite = '{Authors}_{Year}'
 
         # Title words to be ignored
-        self._bwords = os.getenv('ZBannedWords')
-        if self._bwords is None:
-            self._bwords = ['a', 'an', 'the', 'some', 'from', 'on', 'in', 'to', 'of', 'do', 'with']
+        if os.getenv('ZBannedWords') is not None:
+            self._bwords = str(os.getenv('ZBannedWords')).split()
         else:
-            self._bwords = self._bwords.split()
+            self._bwords = ['a', 'an', 'the', 'some', 'from', 'on', 'in', 'to', 'of', 'do', 'with']
 
         # Path to zotero.sqlite
         self._get_zotero_prefs()
         if os.getenv('ZoteroSQLpath') is None:
             if os.path.isfile(os.path.expanduser('~/Zotero/zotero.sqlite')):
                 self._z = os.path.expanduser('~/Zotero/zotero.sqlite')
-            elif os.getenv('USERPROFILE') is not None and os.path.isfile(os.getenv('USERPROFILE') + '/Zotero/zotero.sqlite'):
-                self._z = os.getenv('USERPROFILE') + '/Zotero/zotero.sqlite'
+            elif os.getenv('USERPROFILE') is not None and os.path.isfile(str(os.getenv('USERPROFILE')) + '/Zotero/zotero.sqlite'):
+                self._z = str(os.getenv('USERPROFILE')) + '/Zotero/zotero.sqlite'
             else:
                 self._errmsg('The file zotero.sqlite was not found. Please, define the environment variable ZoteroSQLpath.')
                 return None
         else:
-            if os.path.isfile(os.path.expanduser(os.getenv('ZoteroSQLpath'))):
-                self._z = os.path.expanduser(os.getenv('ZoteroSQLpath'))
+            if os.path.isfile(os.path.expanduser(str(os.getenv('ZoteroSQLpath')))):
+                self._z = os.path.expanduser(str(os.getenv('ZoteroSQLpath')))
             else:
-                self._errmsg('Please, check if $ZoteroSQLpath is correct: "' + os.getenv('ZoteroSQLpath') + '" not found.')
+                self._errmsg('Please, check if $ZoteroSQLpath is correct: "' + str(os.getenv('ZoteroSQLpath')) + '" not found.')
                 return None
 
         # Temporary directory
         if os.getenv('Zotcite_tmpdir') is None:
-            if os.getenv('XDG_CACHE_HOME') and os.path.isdir(os.getenv('XDG_CACHE_HOME')):
-                self._tmpdir = os.getenv('XDG_CACHE_HOME') + '/zotcite'
-            elif os.getenv('APPDATA') and os.path.isdir(os.getenv('APPDATA')):
-                self._tmpdir = os.getenv('APPDATA') + '/zotcite'
+            if os.getenv('XDG_CACHE_HOME') and os.path.isdir(str(os.getenv('XDG_CACHE_HOME'))):
+                self._tmpdir = str(os.getenv('XDG_CACHE_HOME')) + '/zotcite'
+            elif os.getenv('APPDATA') and os.path.isdir(str(os.getenv('APPDATA'))):
+                self._tmpdir = str(os.getenv('APPDATA')) + '/zotcite'
             elif os.path.isdir(os.path.expanduser('~/.cache')):
                 self._tmpdir = os.path.expanduser('~/.cache/zotcite')
             elif os.path.isdir(os.path.expanduser('~/Library/Caches')):
@@ -247,7 +254,7 @@ class ZoteroEntries:
             else:
                 self._tmpdir = '/tmp/.zotcite'
         else:
-            self._tmpdir = os.path.expanduser(os.getenv('Zotcite_tmpdir'))
+            self._tmpdir = os.path.expanduser(str(os.getenv('Zotcite_tmpdir')))
         if not os.path.isdir(self._tmpdir):
             try:
                 os.mkdir(self._tmpdir)
@@ -262,7 +269,7 @@ class ZoteroEntries:
         if os.getenv('Zotcite_exclude') is None:
             self._exclude = []
         else:
-            self._exclude = os.getenv('Zotcite_exclude').split()
+            self._exclude = str(os.getenv('Zotcite_exclude')).split()
 
         self._c = {}
         self._e = {}
@@ -468,7 +475,7 @@ class ZoteroEntries:
             if 'title' in self._e[k]:
                 title = re.sub(ptrn, '', self._e[k]['title'].lower())
                 title = re.sub('^[a-z] ', '', title)
-                titlew = re.sub('[ ,;:\.!?].*', '', title)
+                titlew = re.sub('[ ,;:\\.!?].*', '', title)
             else:
                 self._e[k]['title'] = ''
                 titlew = ''
@@ -486,8 +493,8 @@ class ZoteroEntries:
 
             lastnames = re.sub('^_', '', lastnames)
             lastnames = re.sub('_.*_.*_.*', '_etal', lastnames)
-            lastname = re.sub('\W', '', lastname)
-            titlew = re.sub('\W', '', titlew)
+            lastname = re.sub('\\W', '', lastname)
+            titlew = re.sub('\\W', '', titlew)
             key = self._cite
             key = key.replace('{author}', lastname.lower(), 1)
             key = key.replace('{Author}', lastname.title(), 1)
@@ -767,7 +774,7 @@ class ZoteroEntries:
         return "IdNotFound"
 
     def GetAnnotations(self, key):
-        """ Return user notes from a reference.
+        """ Return user annotations made using Zotero's PDF viewer.
 
             key (string): The Zotero key as it appears in the markdown document.
         """
@@ -775,10 +782,6 @@ class ZoteroEntries:
         conn = sqlite3.connect(zcopy)
         cur = conn.cursor()
 
-        query = u"""
-                SELECT items.itemID, items.key
-                FROM items
-                """
         query = u"""
             SELECT items.key, itemAttachments.ItemID, itemAttachments.parentItemID, itemAnnotations.parentItemID, itemAnnotations.type, itemAnnotations.authorName, itemAnnotations.text, itemAnnotations.comment, itemAnnotations.pageLabel
             FROM items, itemAttachments, itemAnnotations
@@ -793,18 +796,14 @@ class ZoteroEntries:
             if self._e[k]['zotkey'] == key:
                 citekey = self._e[k]['citekey']
 
-        if os.getenv('ZYearPageSep') is None:
-            ypsep = ', p. '
-        else:
-            ypsep = os.getenv('ZYearPageSep')
         notes = []
         for i in cur.fetchall():
             if i[7]: # Comment
                 notes.append('')
-                notes.append(i[7] + ' [@' + key + '#' + citekey + ypsep + i[8] + ']')
+                notes.append(i[7] + ' [@' + key + '#' + citekey + self._ypsep + i[8] + ']')
             if i[6]: # Highlighted text
                 notes.append('')
-                notes.append('> ' + i[6] + ' [@' + key + '#' + citekey + ypsep + i[8] + ']')
+                notes.append('> ' + i[6] + ' [@' + key + '#' + citekey + self._ypsep + i[8] + ']')
         return notes
 
 
@@ -851,51 +850,43 @@ class ZoteroEntries:
         if notes == '':
             return ''
 
-        if key_id in self._e:
-            citekey = self._e[key_id]['citekey']
-        else:
-            citekey = ""
-        if os.getenv('ZYearPageSep') is None:
-            ypsep = ', p. '
-        else:
-            ypsep = os.getenv('ZYearPageSep')
+        def key2ref(k):
+            k = re.sub('\001', '', k)
+            k = re.sub('\002', '', k)
+            r = 'NotFound'
+            for i in self._e:
+                if self._e[i]['zotkey'] == k:
+                    r = self._e[i]['citekey']
+            return '\001' + k + '#' + r + '; '
+
+        def item2ref(s):
+            s = re.sub('.*?items%2F(........).*?', '\001\\1\002', s, flags=re.M)
+            s = re.sub('\001(........)\002', lambda k: key2ref(k.group()), s, flags=re.M)
+            s = re.sub('%22locator%22%3A%22(.*?)%22', self._ypsep + '\\1; %22', s, flags=re.M)
+            s = re.sub('%22.*?' + self._ypsep, self._ypsep, s, flags=re.M)
+            s = re.sub('%22.*', '', s, flags=re.M)
+            s = re.sub('; ' + self._ypsep, self._ypsep, s, flags=re.M)
+            s = re.sub('; $', '', s, flags=re.M)
+            return '\002' + s + '\003'
 
         notes = re.sub('<div .*?>', '', notes, flags=re.M)
         notes = re.sub('</div>', '', notes, flags=re.M)
-        notes = re.sub('<em>(.*?)</em>', '*\\1*', notes, flags=re.M)
-        notes = re.sub('<strong>(.*?)</strong>', '**\\1**', notes, flags=re.M)
-        notes = re.sub('<b>(.*?)</b>', '**\\1**', notes, flags=re.M)
-        notes = re.sub('<i>(.*?)</i>', '*\\1*', notes, flags=re.M)
-        notes = re.sub('<br>', '  \n', notes, flags=re.M)
-        notes = re.sub('<br />', '  \n', notes, flags=re.M)
-        notes = re.sub('<p>', '\n\n', notes, flags=re.M)
-        notes = re.sub('</p>', '', notes, flags=re.M)
-        notes = re.sub('\[', '\\[', notes, flags=re.M)
-        notes = re.sub('\]', '\\]', notes, flags=re.M)
-        notes = re.sub('_', '\\_', notes, flags=re.M)
-        notes = re.sub('#', '\\#', notes, flags=re.M)
-        notes = re.sub('&amp;', '&', notes, flags=re.M)
-        notes = re.sub('<h1>(.*?)</h1>', '\n# \\1\n', notes, flags=re.M)
-        notes = re.sub('<h2>(.*?)</h2>', '\n## \\1\n', notes, flags=re.M)
-        notes = re.sub('<h3>(.*?)</h3>', '\n### \\1\n', notes, flags=re.M)
-        notes = re.sub('<h4>(.*?)</h4>', '\n#### \\1\n', notes, flags=re.M)
-        notes = re.sub('<h5>(.*?)</h5>', '\n###### \\1\n', notes, flags=re.M)
-        if citekey == "":
-            # More than two authors:
-            notes = re.sub('\(<a href="zotero.*?">(.*?) et al ([0-9]*):([0-9]*)</a>\)', '[@' + key + '#\\1_etal_\\2' + ypsep + '\\3]', notes, flags=re.M)
-            # Two authors:
-            notes = re.sub('\(<a href="zotero.*?">(.*?) and (.*?) ([0-9]*):([0-9]*)</a>\)', '[@' + key + '#\\1_\\2_\\3' + ypsep + '\\4]', notes, flags=re.M)
-            # One author:
-            notes = re.sub('\(<a href="zotero.*?">(.*?) ([0-9]*):([0-9]*)</a>\)', '[@' + key + '#\\1_\\2' + ypsep + '\\3]', notes, flags=re.M)
-            # None of the above...
-            notes = re.sub('\(<a href="zotero.*?">(.*?)</a>\)', '[@' + key + '#\\1]', notes, flags=re.M)
-        else:
-            notes = re.sub('\(<a href="zotero.*?">(.*?) et al ([0-9]*):([0-9]*)</a>\)', '[@' + key + '#' + citekey + ypsep + '\\3]', notes, flags=re.M)
-            notes = re.sub('\(<a href="zotero.*?">(.*?) and (.*?) ([0-9]*):([0-9]*)</a>\)', '[@' + key + '#' + citekey + ypsep + '\\4]', notes, flags=re.M)
-            notes = re.sub('\(<a href="zotero.*?">(.*?) ([0-9]*):([0-9]*)</a>\)', '[@' + key + '#' + citekey + ypsep + '\\3]', notes, flags=re.M)
-            notes = re.sub('\(<a href="zotero.*?">(.*?)</a>\)', '[@' + key + '#\\1]', notes, flags=re.M)
-        notes = re.sub('<a title="(.*?)" href="(.*?)">(.*?)</a>', '[\\3](\\2 "\\1")', notes, flags=re.M)
-        notes = re.sub('<a href="(.*?)">(.*?)</a>', '[\\2](\\1)', notes, flags=re.M)
+        notes = re.sub(' rel="noopener noreferrer nofollow"', '', notes, flags=re.M)
+        notes = re.sub('\\(<span class="citation-item">.*?</span>\\)', '', notes, flags=re.M)
+        notes = re.sub('<span class="citation" data-citation=(.*?)</span>', lambda s: item2ref(s.group()), notes, flags=re.M)
+
+        p = subprocess.Popen(['pandoc', '-f', 'html', '-t', 'markdown'],
+                             stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+        notes = p.communicate(notes.encode('utf-8'))[0]
+        notes = notes.decode()
+
+        notes = re.sub('\001', '@', notes, flags=re.M)
+        notes = re.sub('\002', '[', notes, flags=re.M)
+        notes = re.sub('\003', ']', notes, flags=re.M)
+
+        notes = re.sub('\\[(.*?)\\]\\{\\.underline\\}', '<u>\\1</u>', notes, flags=re.M)
+        notes = re.sub('\\[(.*?)\\]\\{style="text-decoration: line-through"\\}', '~~\\1~~', notes, flags=re.M)
+        notes = re.sub('\\[(.*?)\\]\\{\\.highlight.*?\\}', '\\1', notes, flags=re.DOTALL)
 
         return notes + '\n'
 
@@ -911,7 +902,7 @@ class ZoteroEntries:
             y = yaml.load("\n".join(l2), yaml.SafeLoader)
         except yaml.YAMLError as exc:
             if hasattr(exc, 'problem_mark'):
-                mark = exc.problem_mark
+                mark = getattr(exc, 'problem_mark')
                 self._errmsg("YAML error (line " + str(mark.line + 1) +
                              ", column " + str(mark.column) + "): " + lines[mark.line])
                 return []
