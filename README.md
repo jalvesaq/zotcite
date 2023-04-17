@@ -42,6 +42,8 @@ Requirements:
 
   - Python 3
 
+  - Python 3 module PyYAML.
+
   - Python modules PyQt5 and popplerqt5 (only if you are going to extract
     annotations from PDF documents). On Debian based Linux distributions, you
     can install them with the command:

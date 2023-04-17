@@ -47,16 +47,23 @@ external PDF viewer.
 
 To extract annotations made with Zotero's built-in PDF viewer, use the Vim
 command `:Zannotations key` where `key` is a word with one or more letters
-of authors' names or from a reference title.
-
-Similarly, to extract notes from Zotero, use the Vim command `:Znote key`
-
+of authors' names or from a reference title. If the PDF has page labels,
+Zotero will register them as the page numbers; otherwise, Zotero will consider the
+first page of the PDF as page 1 which in most cases will be wrong. You can fix
+this by passing an integer number as a second argument to `:Zannotations`. For
+example, if the page 1 of a book is the page 10 of its PDF, you will get the
+correct page numbers if you do:
+>
+   :Zannotations key -10
+<
 By default, the colon separating the year from the page is replaced by ", p.
 ". If you want to use the colon or any other string as the separator, set the
 value of `$ZYearPageSep` in your vimrc (or init.vim). Example:
 >
  let $ZYearPageSep = ':'
 <
+To extract notes from Zotero, use the Vim command `:Znote key`
+
 Similarly, to extract annotations (notes and highlighted texts) that were
 inserted into a PDF document by an external PDF viewer, use the Vim command
 `:Zpdfnote`. The page numbers of the annotations might be wrong, so always

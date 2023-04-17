@@ -773,7 +773,7 @@ class ZoteroEntries:
             return '@' + self._e[Id]['zotkey'] + '#' + self._e[Id]['citekey']
         return "IdNotFound"
 
-    def GetAnnotations(self, key):
+    def GetAnnotations(self, key, offset):
         """ Return user annotations made using Zotero's PDF viewer.
 
             key (string): The Zotero key as it appears in the markdown document.
@@ -798,12 +798,17 @@ class ZoteroEntries:
 
         notes = []
         for i in cur.fetchall():
+            mo = re.match("^[0-9]*$", i[8])
+            if mo is not None and mo.string == i[8]:
+                page = str(int(i[8]) + offset)
+            else:
+                page = i[8]
             if i[7]: # Comment
                 notes.append('')
-                notes.append(i[7] + ' [@' + key + '#' + citekey + self._ypsep + i[8] + ']')
+                notes.append(i[7] + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
             if i[6]: # Highlighted text
                 notes.append('')
-                notes.append('> ' + i[6] + ' [@' + key + '#' + citekey + self._ypsep + i[8] + ']')
+                notes.append('> ' + i[6] + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
         return notes
 
 

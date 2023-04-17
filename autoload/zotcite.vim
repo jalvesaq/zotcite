@@ -151,10 +151,15 @@ function zotcite#Seek(key)
     call zotcite#printmatches(mtchs, 0)
 endfunction
 
-function zotcite#GetAnnotations(key)
-    let zotkey = zotcite#FindCitationKey(a:key)
+function zotcite#GetAnnotations(ko)
+    let argmt = split(a:ko)
+    let zotkey = zotcite#FindCitationKey(argmt[0])
     if zotkey != ''
-        let repl = py3eval('ZotCite.GetAnnotations("' . zotkey . '")')
+        let offset = 0
+        if len(argmt) == 2
+            let offset = str2nr(argmt[1])
+        endif
+        let repl = py3eval('ZotCite.GetAnnotations("' . zotkey . '", ' . offset . ')')
         if repl == []
             redraw
             call zotcite#warning('No annotation found.')
@@ -616,7 +621,7 @@ function zotcite#GlobalInit()
     command Zrefs call zotcite#AddYamlRefs()
     command -nargs=1 Zseek call zotcite#Seek(<q-args>)
     command -nargs=1 Znote call zotcite#GetNote(<q-args>)
-    command -nargs=1 Zannotations call zotcite#GetAnnotations(<q-args>)
+    command -nargs=+ Zannotations call zotcite#GetAnnotations(<q-args>)
     command -nargs=1 Zpdfnote call zotcite#GetPDFNote(<q-args>)
 
     " 2019-03-17:
