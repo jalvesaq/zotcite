@@ -51,7 +51,7 @@ of authors' names or from a reference title. If the PDF has page labels,
 Zotero will register them as the page numbers; otherwise, Zotero will consider the
 first page of the PDF as page 1 which in most cases will be wrong. You can fix
 this by passing an integer number as a second argument to `:Zannotations`. For
-example, if the page 1 of a book is the page 10 of its PDF, you will get the
+example, if the page 1 of a book is the page 11 of its PDF, you will get the
 correct page numbers if you do:
 >
    :Zannotations key -10
