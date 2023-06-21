@@ -544,6 +544,15 @@ class ZoteroEntries:
             lst = [e['zotkey'] + '#' + e['citekey'], alastnm , '(' + e['year'] + ') ' + e['title']]
         return lst
 
+    @staticmethod
+    def _sanitize_markdown(s):
+        s = s.replace("[", "\\[")
+        s = s.replace("]", "\\]")
+        s = s.replace("@", "\\@")
+        s = s.replace("*", "\\*")
+        s = s.replace("_", "\\_")
+        return s
+
     def GetMatch(self, ptrn, d):
         """ Find citation key and save completion lines in temporary file
 
@@ -805,10 +814,16 @@ class ZoteroEntries:
                 page = i[8]
             if i[7]: # Comment
                 notes.append('')
-                notes.append(i[7] + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                if i[7].find("\n") > -1:
+                    ss = i[7].split("\n")
+                    for s in ss:
+                        notes.append(s)
+                    notes.append(' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                else:
+                    notes.append(i[7] + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
             if i[6]: # Highlighted text
                 notes.append('')
-                notes.append('> ' + i[6] + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                notes.append('> ' + self._sanitize_markdown(i[6]) + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
         return notes
 
 
