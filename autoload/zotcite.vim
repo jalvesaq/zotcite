@@ -322,10 +322,14 @@ function zotcite#OpenAttachment()
     let zotkey = zotcite#GetCitationKey()
     let fpath = zotcite#GetPDFPath(zotkey, g:zotcite_open_in_zotero)
     if fpath != ''
-        let out = system(s:open_cmd . ' "' . fpath . '"')
-    endif
-    if v:shell_error
-        call zotcite#warning(substitute(out, '\n', ' ', 'g'))
+        if g:zotcite_wait_attachment
+            let out = system(s:open_cmd . ' "' . fpath . '"')
+            if v:shell_error
+                call zotcite#warning(substitute(out, '\n', ' ', 'g'))
+            endif
+        else
+            call system(s:open_cmd . ' "' . fpath . '" &')
+        endif
     endif
 endfunction
 
@@ -564,13 +568,6 @@ function zotcite#CheckBib()
         " Ensure that `quarto preview` will work
         call writefile([], bibf)
     endif
-
-    " TODO: Delete the code below in the future (2021-04-04)
-    let lnum = search('pandoc_args\s*:\s*\[.*[''"]zotref[''"]', 'cwn')
-    if lnum > 0
-        call setline(lnum, substitute(getline(lnum), '\([''"]\)zotref\([''"]\)', '\1zotref.py\2', ''))
-        call zotcite#warning('Command "zotref" in "pandoc_args" updated to "zotref.py"')
-    endif
 endfunction
 
 function zotcite#GlobalInit()
@@ -600,6 +597,8 @@ function zotcite#GlobalInit()
     let $Zotcite_tmpdir = expand(info['tmpdir'])
     let g:zotcite_data_dir = expand(info['data dir'])
     let g:zotcite_attach_dir = expand(info['attachments dir'])
+    let g:zotcite_wait_attachment = get(g:, 'zotcite_wait_attachment', 0)
+    let g:zotcite_open_in_zotero = get(g:, 'zotcite_open_in_zotero', 0)
 
     call zotcite#SetPath()
     let $RmdFile = expand("%:p")

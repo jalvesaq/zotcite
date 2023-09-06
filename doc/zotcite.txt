@@ -21,7 +21,8 @@ Author: Jakson A. Aquino <jalvesaq@gmail.com>
         Conceal level                                   |zotcite_conceallevel|
     4.4 File types                                         |zotcite_filetypes|
     4.5 Open attachment in Zotero                     |zotcite_open_in_zotero|
-    4.6 Quarto render options                          |zotcite_quarto_render|
+    4.6 Show errors of command to open attachment    |zotcite_wait_attachment|
+    4.7 Quarto render options                          |zotcite_quarto_render|
  5. Troubleshooting                                  |zotcite_troubleshooting|
 
 
@@ -365,8 +366,22 @@ included a `zotero.desktop` file, you can do the following:
   xdg-mime default zotero.desktop x-scheme-handler/zotero
 <
 
+						     *zotcite_wait_attachment*
+4.6 Show errors of command to open attachment~
+
+While opening an attachment using the system's default PDF viewer, zotcite
+cannot catch errors because it appends an `&` to the command. If zotcite fails
+to open an PDF attachment, you may want to put the following in your |vimrc|:
+>
+   let zotcite_wait_attachment = 1
+<
+Then, (Neo)Vim should freeze until the attachment is closed, and, if the
+default system's PDF viewer finishes with non zero status, anything output to
+the `stderr` will be dislayed as a warning message.
+
+
 						       *zotcite_quarto_render*
-4.6 Quarto render options~
+4.7 Quarto render options~
 
 If editing Quarto documents, whenever the document is saved, Zotcite can run
 `quarto render` whithout any additional arguments if
