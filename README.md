@@ -20,7 +20,7 @@ _zotcite_ you can:
     citations are processed by `pandoc`, avoiding the need of `bib` files.
 
   - Open the PDF attachment of the reference associated with the citation key
-    under cursor.
+    under the cursor.
 
   - Extract highlighted text and text notes from PDF attachments of
     references.

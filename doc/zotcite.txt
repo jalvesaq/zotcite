@@ -47,13 +47,13 @@ attached to a Zotero entry, and (3) annotations inserted in a PDF by an
 external PDF viewer.
 
 To extract annotations made with Zotero's built-in PDF viewer, use the Vim
-command `:Zannotations key` where `key` is a word with one or more letters
-of authors' names or from a reference title. If the PDF has page labels,
-Zotero will register them as the page numbers; otherwise, Zotero will consider the
+command `:Zannotations key` where `key` is a word with one or more letters of
+authors' names or from a reference title. If the PDF has page labels, Zotero
+will register them as the page numbers; otherwise, Zotero will consider the
 first page of the PDF as page 1 which in most cases will be wrong. You can fix
 this by passing an integer number as a second argument to `:Zannotations`. For
-example, if the page 1 of a book is the page 11 of its PDF, you will get the
-correct page numbers if you do:
+example, if page 1 of a book is page 11 of its PDF, you will get the correct
+page numbers if you do:
 >
    :Zannotations key -10
 <
@@ -69,12 +69,12 @@ Similarly, to extract annotations (notes and highlighted texts) that were
 inserted into a PDF document by an external PDF viewer, use the Vim command
 `:Zpdfnote`. The page numbers of the annotations might be wrong, so always
 check them after the extraction. You have also to manually add italics and
-other rich text formating and put back hyphens incorrectly removed from the
+other rich text formatting and put back hyphens incorrectly removed from the
 end of the PDF lines.
 
 To insert citation keys, in Insert mode, type the `@` letter and one or more
 letters of either the last name of the first author or the reference title and
-press <C-X><C-O>. The matching of citation keys is case insensitive. (See also
+press <C-X><C-O>. The matching of citation keys is case-insensitive. (See also
 https://github.com/jalvesaq/cmp-zotcite).
 
 To convert a Markdown document with pandoc, use the `zotref.py` filter that comes
@@ -94,7 +94,7 @@ header of the document (replace `pdf_document` with the desired output):
    pdf_document:
      pandoc_args: ['-F', 'zotref.py', '--citeproc']
 <
-Note: On Windows you might have to replace `zotref.py` with its full path.
+Note: On Windows, you might have to replace `zotref.py` with its full path.
 Example:
 >
  output:
@@ -113,8 +113,8 @@ If editing a Quarto document, the lines to the YAML will be:
 <
 Note: On Windows, `zotref.py` will convert the bib file from "latin1" to
 "utf-8". If "latin1" is not the Zotero encoding in your region, set the
-enviroment variable `$Zotero_encoding` with the correct value in your |vimrc|.
-Example:
+environment variable `$Zotero_encoding` with the correct value in your
+|vimrc|. Example:
 >
    let $Zotero_encoding = 'latin2'
 <
@@ -130,8 +130,8 @@ In Vim's Normal mode, put the cursor over a citation key and press:
 
   - <Leader>zy to see how the reference will be converted into YAML.
 
-  - <Leader>zv to view the (pdf or html) documment generated from the current
-    (markdown, Rmd or Quarto) document.
+  - <Leader>zv to view the (pdf or html) document generated from the current
+    (markdown, Rmd, or Quarto) document.
 
 You can also use the command `:Zseek` to see what references have either a
 last author's name or title matching the pattern that you are seeking for. The
@@ -144,7 +144,7 @@ The goal of Zotcite is to avoid the need for exporting bib files from Zotero.
 The `zotref.py` filter receives the Markdown document from its standard input,
 extracts all citation keys from the document, gets all corresponding
 references from the Zotero database, inserts all references in the YAML header
-of the document and, finally, returns the enhanced document to `pandoc`. If
+of the document, and, finally, returns the enhanced document to `pandoc`. If
 there is a "bibliography" field in the YAML header, it will be used. If one of
 the bib files listed in the "bibliography" field has a name ending with the
 "zotcite.bib" string it will be overwritten. If there is a "bibliography"
@@ -176,7 +176,7 @@ or, simply:
 <
 If you have an OpenDocument Text with citations inserted by the Zotero
 extension and want to convert it to Markdown, you can use the `odt2md.py`
-application from the `python3` directory to help you to convert the document.
+application from the `python3` directory to help you convert the document.
 Example:
 >
  /path/to/zotcite/python3/odt2md.py Document.odt
@@ -234,11 +234,12 @@ the example:
  nmap ,Y <Plug>ZCitationCompleteInfo
 <
 To change the shortcut to view the (pdf or html) document generated from the
-current (markdown, Rmd or Quarto) document, follow the example:
+current (markdown, Rmd, or Quarto) document, follow the example:
 >
  nmap ,V <Plug>ZViewDocument
 <
 
+							      *zotcite_engine*
 4.2 Zotcite engine~
 
 You can change most of Zotcite's behavior by setting some environment
@@ -293,7 +294,7 @@ follow the example:
 <
 							     *Zotcite_exclude*
 If you want to exclude some of Zotero's fields from the YAML references
-generated by Zotcite, set the value of `$Zotcite_exclude` to a white separated
+generated by Zotcite, set the value of `$Zotcite_exclude` to a white-separated
 list of fields to be excluded. For example, if you want to exclude the fields
 "Extra" (which appears as `note` in the YAML references) and "attachment", put
 this in your vimrc:
@@ -326,7 +327,7 @@ your vimrc:
  let zotcite_hl = 0
 <
 							*zotcite_conceallevel*
-Zotcite sets the conceallevel of the Markdown document to 2. If you want a
+Zotcite sets the 'conceallevel' of the Markdown document to 2. If you want a
 different value, follow the example:
 >
  let zotcite_conceallevel = 0
@@ -342,9 +343,9 @@ value of `zotcite_filetypes` in your |vimrc|. Example:
   let zotcite_filetypes = ['markdown', 'pandoc', 'rmd', 'vimwiki']
 <
 If you want zotcite's highlighting in file types other than `markdown` and
-`rmd`, put you will have to run an autocmd in your |vimrc| to source zotcite's
+`rmd`, you will have to run an autocmd in your |vimrc| to source zotcite's
 highlighting script. In the example below, `vimwiki` files get zotcite's
-references properly highligted (of course, you have to write the correct
+references properly highlighted (of course, you have to write the correct
 path to `markdown.vim`:
 >
   autocmd FileType vimwiki source /path/to/zotcite/after/syntax/markdown.vim
@@ -371,20 +372,20 @@ included a `zotero.desktop` file, you can do the following:
 
 While opening an attachment using the system's default PDF viewer, zotcite
 cannot catch errors because it appends an `&` to the command. If zotcite fails
-to open an PDF attachment, you may want to put the following in your |vimrc|:
+to open a PDF attachment, you may want to put the following in your |vimrc|:
 >
    let zotcite_wait_attachment = 1
 <
 Then, (Neo)Vim should freeze until the attachment is closed, and, if the
-default system's PDF viewer finishes with non zero status, anything output to
-the `stderr` will be dislayed as a warning message.
+default system's PDF viewer finishes with non-zero status, anything output to
+the `stderr` will be displayed as a warning message.
 
 
 						       *zotcite_quarto_render*
 4.7 Quarto render options~
 
 If editing Quarto documents, whenever the document is saved, Zotcite can run
-`quarto render` whithout any additional arguments if
+`quarto render` without any additional arguments if
 >
  let zotcite_quarto_render = 1
 <
@@ -397,8 +398,8 @@ may want to try:
 >
    let zotcite_quarto_render = "pandoc-args -F abntfix.py"
 <
-Whith the above options, the output will pass through the filter `abntfix.py`
-which will fix in text citations. Similarly, you can replace "&" with "and" in
+With the above options, the output will pass through the filter `abntfix.py`
+which will fix in-text citations. Similarly, you can replace "&" with "and" in
 APA citations with:
 >
    let zotcite_quarto_render = "pandoc-args -F apafix.py"
@@ -425,8 +426,8 @@ You can check the YAML references generated by Zotcite with the command
 `:Zrefs` which will insert in the document the list of references. This is
 useful if `citeproc` fails to parse the references.
 
-If you could not make the `zotref.py` script work you have to manually add the
-references to the YAML header of your documment with the command `:Zrefs` and
+If you cannot make the `zotref.py` script work you have to manually add the
+references to the YAML header of your document with the command `:Zrefs` and
 delete and add the references again each time that you either cite or remove
 the citation to a reference. Then, if there are only ASCII characters in the
 references you will have a chance of successfully compiling the document.
