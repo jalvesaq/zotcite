@@ -42,7 +42,10 @@ Requirements:
 
   - Python 3
 
-  - Python 3 module PyYAML.
+  - Python 3 modules Neovim and PyYAML:
+
+    `pip install neovim`
+    `pip install pyyaml`
 
   - Python modules PyQt5 and popplerqt5 (only if you are going to extract
     annotations from PDF documents). On Debian based Linux distributions, you

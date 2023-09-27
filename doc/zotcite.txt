@@ -55,7 +55,7 @@ this by passing an integer number as a second argument to `:Zannotations`. For
 example, if page 1 of a book is page 11 of its PDF, you will get the correct
 page numbers if you do:
 >
-   :Zannotations key -10
+ :Zannotations key -10
 <
 By default, the colon separating the year from the page is replaced by ", p.
 ". If you want to use the colon or any other string as the separator, set the
@@ -104,19 +104,12 @@ Example:
 Note: Old versions of `pandoc` require `-F pandoc-citeproc` instead of
 `--citeproc`.
 
-If editing a Quarto document, the lines to the YAML will be:
->
- format:
-   pdf:
-     filters:
-       - /Path/to/zotcite/python3/zotref.py
-<
 Note: On Windows, `zotref.py` will convert the bib file from "latin1" to
 "utf-8". If "latin1" is not the Zotero encoding in your region, set the
 environment variable `$Zotero_encoding` with the correct value in your
 |vimrc|. Example:
 >
-   let $Zotero_encoding = 'latin2'
+ let $Zotero_encoding = 'latin2'
 <
 In Vim's Normal mode, put the cursor over a citation key and press:
 
@@ -131,7 +124,7 @@ In Vim's Normal mode, put the cursor over a citation key and press:
   - <Leader>zy to see how the reference will be converted into YAML.
 
   - <Leader>zv to view the (pdf or html) document generated from the current
-    (markdown, Rmd, or Quarto) document.
+    (Markdown, Rmd, or Quarto) document.
 
 You can also use the command `:Zseek` to see what references have either a
 last author's name or title matching the pattern that you are seeking for. The
@@ -151,16 +144,6 @@ the bib files listed in the "bibliography" field has a name ending with the
 field in the YAML header, but none of the bib files listed ends in
 "zotcite.bib", a temporary one will be created.
 
-For Quarto documents, the "bibliography" field must be defined in its YAML
-header. You have to add the following fields to the YAML header of your Quarto
-documents to make both `quarto preview` and `quarto render` commands work
-(replace `example-zotcite.bib` with whatever name you want and adjust the
-`zotref.py` path):
->
- bibliography: example-zotcite.bib
- filters:
-   - /path/to/zotcite/python3/zotref.py
-<
 It is possible --- but not recommended --- to mix bib files that are generated
 and overwritten by zotcite with other ones because the final document may
 include duplicated references. Anyway, if you have an old bib file and want to
@@ -234,7 +217,7 @@ the example:
  nmap ,Y <Plug>ZCitationCompleteInfo
 <
 To change the shortcut to view the (pdf or html) document generated from the
-current (markdown, Rmd, or Quarto) document, follow the example:
+current (Markdown, Rmd, or Quarto) document, follow the example:
 >
  nmap ,V <Plug>ZViewDocument
 <
@@ -340,7 +323,7 @@ Zotcite is enabled only if the file type is `markdown`, `pandoc`, `rmd` or
 `quarto`. If you want it enabled for other file types, you should set the
 value of `zotcite_filetypes` in your |vimrc|. Example:
 >
-  let zotcite_filetypes = ['markdown', 'pandoc', 'rmd', 'vimwiki']
+ let zotcite_filetypes = ['markdown', 'pandoc', 'rmd', 'vimwiki']
 <
 If you want zotcite's highlighting in file types other than `markdown` and
 `rmd`, you will have to run an autocmd in your |vimrc| to source zotcite's
@@ -348,7 +331,7 @@ highlighting script. In the example below, `vimwiki` files get zotcite's
 references properly highlighted (of course, you have to write the correct
 path to `markdown.vim`:
 >
-  autocmd FileType vimwiki source /path/to/zotcite/after/syntax/markdown.vim
+ autocmd FileType vimwiki source /path/to/zotcite/after/syntax/markdown.vim
 <
 
 						      *zotcite_open_in_zotero*
@@ -358,13 +341,13 @@ If you want <Plug>ZOpenAttachment to open PDF attachments in Zotero (as
 opposed to your system's default PDF viewer), put the following in your
 |vimrc|:
 >
-  let zotcite_open_in_zotero = 1
+ let zotcite_open_in_zotero = 1
 <
 Note that you'll need to have Zotero configured as the default app for
 opening `zotero://` links. On Linux, assuming your Zotero installation
 included a `zotero.desktop` file, you can do the following:
 >
-  xdg-mime default zotero.desktop x-scheme-handler/zotero
+ xdg-mime default zotero.desktop x-scheme-handler/zotero
 <
 
 						     *zotcite_wait_attachment*
@@ -374,7 +357,7 @@ While opening an attachment using the system's default PDF viewer, zotcite
 cannot catch errors because it appends an `&` to the command. If zotcite fails
 to open a PDF attachment, you may want to put the following in your |vimrc|:
 >
-   let zotcite_wait_attachment = 1
+ let zotcite_wait_attachment = 1
 <
 Then, (Neo)Vim should freeze until the attachment is closed, and, if the
 default system's PDF viewer finishes with non-zero status, anything output to
@@ -383,6 +366,29 @@ the `stderr` will be displayed as a warning message.
 
 						       *zotcite_quarto_render*
 4.7 Quarto render options~
+
+If you add the `filters` field to the YAML header of a Quarto document, the
+filters will be run after the `citeproc` filter. However, the `zotref.py`
+filter must be run before `citeproc`. The best solution for this problem might
+be to create a file named `citeproc.lua` with the following contents and save
+it somewhere:
+>
+ function Pandoc (doc)
+   return pandoc.utils.citeproc(doc)
+ end
+<
+Then, do not use either the `bibliography` field or the `citeproc` field (if
+you use one of them, `citeproc` will run before `zotref.py`) and put in the
+header of your Quarto document:
+>
+ filters:
+     - /full/path/to/zotcite/python3/zotref.py
+     - /full/path/to/your/citeproc.lua
+     - /full/path/to/zotcite/python3/apafix.py
+<
+Of course, the last filter should be added only if using the APA citation style.
+It will replace "&" with "and" in in-text citations. If using the Brazilian
+citation style, you could try the `abntfix.py` filter to fix in-text citations.
 
 If editing Quarto documents, whenever the document is saved, Zotcite can run
 `quarto render` without any additional arguments if
@@ -393,20 +399,9 @@ or run `quarto render` with whatever arguments you choose (example):
 >
  let zotcite_quarto_render = "--quiet"
 <
-If you are writing an academic paper using the Brazilian citation rules, you
-may want to try:
->
-   let zotcite_quarto_render = "pandoc-args -F abntfix.py"
-<
-With the above options, the output will pass through the filter `abntfix.py`
-which will fix in-text citations. Similarly, you can replace "&" with "and" in
-APA citations with:
->
-   let zotcite_quarto_render = "pandoc-args -F apafix.py"
-<
-For a Lua filter, see:
-https://github.com/citation-style-language/styles/issues/3748
+For a Lua filter to fix the APA citation style, see:
 
+  https://github.com/citation-style-language/styles/issues/3748
 
 ==============================================================================
 						     *zotcite_troubleshooting*
