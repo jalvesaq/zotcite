@@ -32,7 +32,9 @@ function zotcite#info()
             echo 'Additional messages:'
             echohl None
         endif
-        if &omnifunc != 'zotcite#CompleteBib'
+        if &omnifunc == ''
+            echo 'No omnifunc is enabled'
+        elseif &omnifunc != 'zotcite#CompleteBib'
             echo 'There is another omnifunc enabled: ' . &omnifunc
             if &filetype == "rmd"
                 if len(glob(expand("%:p:h") . '/*.bib', 0, 1)) > 0
@@ -692,7 +694,10 @@ function zotcite#Init(...)
             let b:non_z_omnifunc = ''
         endif
         " Let Nvim-R control the omni completion (it will call zotcite#CompleteBib).
-        if !exists('b:rplugin_non_r_omnifunc')
+        if exists('b:rplugin_non_r_omnifunc') && exists('g:R_set_omnifunc') &&
+                    \ type(g:R_set_omnifunc) == v:t_list && index(g:R_set_omnifunc, &filetype) > -1
+            let s:log += ['Omni completion: Nvim-R should call zotcite#CompleteBib()']
+        else
             setlocal omnifunc=zotcite#CompleteBib
         endif
         call zotcite#GetCollectionName(0)
