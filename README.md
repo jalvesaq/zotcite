@@ -42,16 +42,17 @@ Requirements:
 
   - Python 3
 
-  - Python 3 modules Neovim and PyYAML:
-
-    `pip install neovim`
-    `pip install pyyaml`
+  - Python 3 modules pynvim (see Neovim documentation on `provider-python` for
+    details) and PyYAML.
 
   - Python modules PyQt5 and popplerqt5 (only if you are going to extract
     annotations from PDF documents). On Debian based Linux distributions, you
     can install them with the command:
 
     `sudo apt install python3-pyqt5 python3-poppler-qt5`
+
+Depending on your system, you may have to install python modules in an virtual
+environment and maybe also system-wide.
 
 Zotcite can be installed as any Vim plugin. If using Neovim, you may also want
 to install [cmp-zotcite](https://github.com/jalvesaq/cmp-zotcite).
