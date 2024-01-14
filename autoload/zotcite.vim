@@ -624,10 +624,6 @@ function zotcite#GlobalInit()
     command -nargs=1 Znote call zotcite#GetNote(<q-args>)
     command -nargs=+ Zannotations call zotcite#GetAnnotations(<q-args>)
     command -nargs=1 Zpdfnote call zotcite#GetPDFNote(<q-args>)
-
-    " 2019-03-17:
-    command ZRefs call zotcite#warning('The command :ZRefs was renamed as :Zrefs') | delcommand ZRefs
-    command -nargs=1 ZSeek call zotcite#warning('The command :ZSeek was renamed as :Zseek') | delcommand ZSeek
     return 1
 endfunction
 
