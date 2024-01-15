@@ -647,6 +647,11 @@ function zotcite#Init(...)
         endif
     endif
 
+    if has('nvim') && type(luaeval("package.loaded['nvim-treesitter']")) == v:t_dict
+        " syntax scripts are not sourced if nvim-treesitter is highlighting the buffer
+        syn match zoteroKey  /@\S*[A-Z0-9]\{8}#/ conceal
+    endif
+
     " And repeat this for every buffer
     if !exists('b:zotref_did_buffer_cmds')
         let b:zotref_did_buffer_cmds = 1
