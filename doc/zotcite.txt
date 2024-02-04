@@ -211,7 +211,7 @@ Zotcite, follow the example:
 To change the shortcut to see how the reference is converted into YAML, follow
 the example:
 >
- nmap ,Y <Plug>ZCitationCompleteInfo
+ nmap ,Y <Plug>ZCitationYamlRef
 <
 To change the shortcut to view the (pdf or html) document generated from the
 current (Markdown, Rmd, or Quarto) document, follow the example:
