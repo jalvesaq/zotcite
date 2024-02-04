@@ -45,7 +45,7 @@ Requirements:
   - Python 3 modules pynvim (see Neovim documentation on `provider-python` for
     details) and PyYAML.
 
-  - Python modules PyQt5 and popplerqt5 (only if you are going to extract
+  - Python modules PyQt5 and python-poppler-qt5 (only if you are going to extract
     annotations from PDF documents). On Debian based Linux distributions, you
     can install them with the command:
 
