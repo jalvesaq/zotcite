@@ -577,7 +577,7 @@ endfunction
 " using pandoc
 
 function zotcite#MarkdownToPDF(inputfile, outputfile)
-    let pdfname = substitute(a:inputfile, '\.md$', '.pdf', '')
+    let outputfile = substitute(a:inputfile, '\.md$', '.pdf', '')
     let cmd = 'pandoc ' . a:inputfile . ' -s -o ' . a:outputfile . ' -F zotref.py --citeproc'
     let out = system(cmd)
     if v:shell_error
