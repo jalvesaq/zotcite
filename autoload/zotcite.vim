@@ -576,16 +576,17 @@ endfunction
 " :MarkdownToPDF filename.md it will create a PDF file with the same name
 " using pandoc
 
-function zotcite#MarkdownToPDF(filename)
-    let pdfname = substitute(a:filename, '\.md$', '.pdf', '')
-    let cmd = 'pandoc ' . a:filename . ' -s -o ' . pdfname . ' -F zotref.py --citeproc'
+function zotcite#MarkdownToPDF(inputfile, outputfile)
+    let pdfname = substitute(a:inputfile, '\.md$', '.pdf', '')
+    let cmd = 'pandoc ' . a:inputfile . ' -s -o ' . a:outputfile . ' -F zotref.py --citeproc'
     let out = system(cmd)
     if v:shell_error
         call zotcite#warning(substitute(out, '\n', ' ', 'g'))
     else
-        echo 'PDF file created: ' . pdfname
+        echo 'File created: ' . outputfile
     endif
   endfunction
+
 function zotcite#GlobalInit()
     if !has('python3')
         let g:zotcite_failed = 'zotcite requires python3'
