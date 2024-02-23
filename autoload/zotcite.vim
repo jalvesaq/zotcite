@@ -572,6 +572,20 @@ function zotcite#CheckBib()
     endif
 endfunction
 
+" Create a function to convert a markdown file to PDF, when user runs
+" :MarkdownToPDF filename.md it will create a PDF file with the same name
+" using pandoc
+
+function zotcite#MarkdownToPDF(filename)
+    let pdfname = substitute(a:filename, '\.md$', '.pdf', '')
+    let cmd = 'pandoc ' . a:filename . ' -s -o ' . pdfname . ' -F zotref.py --citeproc'
+    let out = system(cmd)
+    if v:shell_error
+        call zotcite#warning(substitute(out, '\n', ' ', 'g'))
+    else
+        echo 'PDF file created: ' . pdfname
+    endif
+  endfunction
 function zotcite#GlobalInit()
     if !has('python3')
         let g:zotcite_failed = 'zotcite requires python3'
@@ -624,6 +638,7 @@ function zotcite#GlobalInit()
     command -nargs=1 Znote call zotcite#GetNote(<q-args>)
     command -nargs=+ Zannotations call zotcite#GetAnnotations(<q-args>)
     command -nargs=1 Zpdfnote call zotcite#GetPDFNote(<q-args>)
+    command -nargs=1 ZMarkdownToPDF call zotcite#MarkdownToPDF(<q-args>)
     return 1
 endfunction
 
