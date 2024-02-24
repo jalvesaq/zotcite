@@ -639,7 +639,7 @@ function zotcite#GlobalInit()
     command -nargs=1 Znote call zotcite#GetNote(<q-args>)
     command -nargs=+ Zannotations call zotcite#GetAnnotations(<q-args>)
     command -nargs=1 Zpdfnote call zotcite#GetPDFNote(<q-args>)
-    command -nargs=1 Zpandoc call zotcite#MarkdownToPDF(<q-args>)
+    command -nargs=1 -complete=file Zpandoc call zotcite#MarkdownToPDF(<q-args>)
     return 1
 endfunction
 
