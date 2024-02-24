@@ -582,7 +582,7 @@ function zotcite#ConvertFileTypes(inputfile, outputfile)
     if v:shell_error
         call zotcite#warning(substitute(out, '\n', ' ', 'g'))
     else
-        echo 'File created: ' . outputfile
+        echo 'File created: ' . a:outputfile
     endif
   endfunction
 
