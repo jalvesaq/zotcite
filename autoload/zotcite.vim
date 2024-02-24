@@ -576,7 +576,7 @@ endfunction
 " :MarkdownToPDF filename.md it will create a PDF file with the same name
 " using pandoc
 
-function zotcite#ConvertFileTypes(inputmd, outputpdf)
+function zotcite#ConvertFileTypes(inputfile, outputfile)
     let cmd = 'pandoc ' . a:inputfile . ' -s -o ' . a:outputfile . ' -F zotref.py --citeproc'
     let out = system(cmd)
     if v:shell_error
