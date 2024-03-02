@@ -507,6 +507,7 @@ class ZoteroEntries:
             key = key.replace(' ', '')
             key = key.replace('-', '')
             key = key.replace("'", '')
+            key = key.replace("’", '')
             self._e[k]['citekey'] = key
 
 
