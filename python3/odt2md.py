@@ -7,25 +7,35 @@ Pandoc filter to add references from Zotero database to the YAML header.
 import sys
 import subprocess
 import re
+import json
+from pathlib import Path
 from zotero import ZoteroEntries
 
 if __name__ == "__main__":
-    p = subprocess.Popen(['pandoc', sys.argv[1], '-t', 'markdown'],
-                         stdout=subprocess.PIPE)
-    lines = p.communicate()[0].decode()
-    lines = lines.replace('[]{#ZOTERO_ITEM ', '\x02')
-    llist = lines.split('\x02')
-
+    cmd = ['pandoc', sys.argv[1], '-t', 'markdown']
+    doc = subprocess.run(cmd, capture_output=True, text=True).stdout
     z = ZoteroEntries()
-
-    for i in range(len(llist)):
-        if llist[i].find('CSL_CITATION') == 0:
-            zotid = re.sub('.*\\\\"id\\\\":([0-9]*),.*', '\\1', llist[i], flags=re.DOTALL)
-            citation = z.GetCitationById(int(zotid))
-            llist[i] = re.sub('CSL_CITATION .*json\\\\"} .[^}]*}',
-                              '[' + citation + ']', llist[i])
-
-    mdf = sys.argv[1].replace('.odt', '') + '.md'
-    with open(mdf, 'w') as f:
-        f.writelines(''.join(llist))
-    print(mdf)
+    while True:
+        res = re.search(
+            r"\[\]{#ZOTERO_ITEM CSL_CITATION\s(.*?),\\\"schema\\\":\\\"[\w:/\.-]*?\\\"}\s\w+}\(.*?\)", doc, re.DOTALL)
+        if not res:
+            break
+        cit = res.group(1)
+        cit += "}"
+        cit = cit.replace("\\\"", "\"")
+        cit = cit.replace("\\\\", "\\")
+        try:
+            cit = json.loads(cit)
+        except Exception as e:
+            with open("debug.txt", "w") as fh:
+                fh.write(cit)
+            raise (e)
+        cit_new = "["
+        for cit_item in cit["citationItems"]:
+            cit_new += z.GetCitationById(cit_item["id"]) + ";"
+        cit_new = cit_new[:-1] + "]"
+        doc = doc[:res.start()] + cit_new + doc[res.end():]
+    inf = Path(sys.argv[1])
+    outf = inf.parent / (inf.stem+".md")
+    with open(outf, "w") as fh:
+        fh.write(doc)
