@@ -603,6 +603,14 @@ class ZoteroEntries:
         txt = re.sub('"', '\\\\"', txt)
         txt = re.sub('@', '\\\\\\\\@', txt)
         txt = re.sub('\n', '\\\\n', txt)
+        # https://www.zotero.org/support/kb/rich_text_bibliography
+        # remove html tags from yaml and replace them with markdown formatting, if possible
+        txt = re.sub('<i>(.+?)</i>', '*\\1*', txt)
+        txt = re.sub('<b>(.+?)</b>', '**\\1**', txt)
+        txt = re.sub('<sub>(.+?)</sub>', '~\\1~', txt)
+        txt = re.sub('<sup>(.+?)</sup>', '^\\1^', txt)
+        txt = re.sub('<span style="font-variant:small-caps;">(.+?)</span>', '[\\1]{.smallcaps}', txt)
+        txt = re.sub('<span class="nocase">(.+?)</span>', '\\1', txt)
         return txt
 
     def _get_yaml_ref(self, entry, citekey):
