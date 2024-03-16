@@ -6,6 +6,7 @@ import sqlite3
 import copy
 import yaml
 import subprocess
+import time
 
 # A lot of code was either adapted or plainly copied from citation_vim,
 # written by Rafael Schouten: https://github.com/rafaqz/citation.vim
@@ -204,6 +205,9 @@ class ZoteroEntries:
                  "artist", "performer", "composer", "director", "podcaster",
                  "cartographer", "programmer", "presenter", "interviewee",
                  "interviewer", "recipient", "sponsor", "inventor"]
+
+    _load_time = "0"
+
     def __init__(self):
 
         # Year-page separator
@@ -257,7 +261,7 @@ class ZoteroEntries:
             self._tmpdir = os.path.expanduser(str(os.getenv('Zotcite_tmpdir')))
         if not os.path.isdir(self._tmpdir):
             try:
-                os.mkdir(self._tmpdir)
+                os.mkdir(self._tmpdir, 0o700)
             except:
                 self._exception()
                 return None
@@ -332,6 +336,7 @@ class ZoteroEntries:
 
 
     def _copy_zotero_data(self):
+        t1 = time.time()
         self._ztime = os.path.getmtime(self._z)
         zcopy = self._tmpdir + '/copy_of_zotero.sqlite'
         if os.path.isfile(zcopy):
@@ -341,14 +346,19 @@ class ZoteroEntries:
 
         # Make a copy of zotero.sqlite to avoid locks
         if self._ztime > zcopy_time:
+            t2 = time.time()
             with open(self._z, 'rb') as f:
                 b = f.read()
+            t3 = time.time()
             with open(zcopy, 'wb') as f:
                 f.write(b)
+            t4 = time.time()
+            self._load_time = str(round(t2 - t1, 5)) + " (check) + " + str(round(t3 - t2, 5)) + " (read) + " + str(round(t4 - t3, 5)) + " (write)"
         return zcopy
 
     def _load_zotero_data(self):
         zcopy = self._copy_zotero_data()
+        t1 = time.time()
         conn = sqlite3.connect(zcopy)
         self._cur = conn.cursor()
         self._get_collections()
@@ -359,6 +369,8 @@ class ZoteroEntries:
         self._calculate_citekeys()
         self._delete_items()
         conn.close()
+        t2 = time.time()
+        self._load_time = self._load_time + " + " + str(round(t2 - t1, 5)) + " (sql)"
 
     def _get_collections(self):
         self._c = {}
@@ -953,5 +965,6 @@ class ZoteroEntries:
              'citation template': self._cite,
              'banned words': ' '.join(self._bwords),
              'excluded fields': str(self._exclude),
+             'time to load data': self._load_time,
             }
         return r
