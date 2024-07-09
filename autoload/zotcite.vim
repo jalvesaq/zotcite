@@ -327,7 +327,9 @@ function zotcite#OpenAttachment()
         if g:zotcite_wait_attachment
             let out = system(s:open_cmd . ' "' . fpath . '"')
             if v:shell_error
-                call zotcite#warning(substitute(out, '\n', ' ', 'g'))
+                call zotcite#warning("Error running `" . s:open_cmd . ' "' .
+                            \ fpath . '"' . "`: " . 
+                            \ substitute(out, '\n', ' ', 'g'))
             endif
         else
             call system(s:open_cmd . ' "' . fpath . '" &')
