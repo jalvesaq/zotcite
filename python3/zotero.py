@@ -282,14 +282,18 @@ class ZoteroEntries:
         # List of collections for each markdown document
         self._d = {}
 
-    def SetCollections(self, d, clist):
+    def SetCollections(self, d, cl = ""):
         """ Define which Zotero collections each markdown document uses
 
             d   (string): The name of the markdown document
-            clist (list): A list of collections to be searched for citation keys
-                          when seeking references for the document 'd'.
+            cl (list):    A string with the list of collections to be searched for
+                          citation keys when seeking references for the document 'd'.
         """
 
+        if cl.find("\002"):
+            clist = cl.split('\002')
+        else:
+            clist = [cl]
         self._d[d] = []
         if clist != ['']:
             for c in clist:
@@ -566,7 +570,7 @@ class ZoteroEntries:
         s = s.replace("_", "\\_")
         return s
 
-    def GetMatch(self, ptrn, d):
+    def GetMatch(self, ptrn, d, as_table = False):
         """ Find citation key and save completion lines in temporary file
 
             ptrn (string): The pattern to search for, converted to lower case.
@@ -594,19 +598,34 @@ class ZoteroEntries:
         p5 = []
         p6 = []
         ptrn = ptrn.lower()
-        for k in keys:
-            if self._e[k]['citekey'].lower().find(ptrn) == 0:
-                p1.append(self._get_compl_line(self._e[k]))
-            elif self._e[k]['alastnm'] and self._e[k]['alastnm'][0][0].lower().find(ptrn) == 0:
-                p2.append(self._get_compl_line(self._e[k]))
-            elif self._e[k]['title'].lower().find(ptrn) == 0:
-                p3.append(self._get_compl_line(self._e[k]))
-            elif self._e[k]['citekey'].lower().find(ptrn) > 0:
-                p4.append(self._get_compl_line(self._e[k]))
-            elif self._e[k]['alastnm'] and self._e[k]['alastnm'][0][0].lower().find(ptrn) > 0:
-                p5.append(self._get_compl_line(self._e[k]))
-            elif self._e[k]['title'].lower().find(ptrn) > 0:
-                p6.append(self._get_compl_line(self._e[k]))
+        if as_table:
+            for k in keys:
+                if self._e[k]['citekey'].lower().find(ptrn) == 0:
+                    p1.append(self._e[k])
+                elif self._e[k]['alastnm'] and self._e[k]['alastnm'][0][0].lower().find(ptrn) == 0:
+                    p2.append(self._e[k])
+                elif self._e[k]['title'].lower().find(ptrn) == 0:
+                    p3.append(self._e[k])
+                elif self._e[k]['citekey'].lower().find(ptrn) > 0:
+                    p4.append(self._e[k])
+                elif self._e[k]['alastnm'] and self._e[k]['alastnm'][0][0].lower().find(ptrn) > 0:
+                    p5.append(self._e[k])
+                elif self._e[k]['title'].lower().find(ptrn) > 0:
+                    p6.append(self._e[k])
+        else:
+            for k in keys:
+                if self._e[k]['citekey'].lower().find(ptrn) == 0:
+                    p1.append(self._get_compl_line(self._e[k]))
+                elif self._e[k]['alastnm'] and self._e[k]['alastnm'][0][0].lower().find(ptrn) == 0:
+                    p2.append(self._get_compl_line(self._e[k]))
+                elif self._e[k]['title'].lower().find(ptrn) == 0:
+                    p3.append(self._get_compl_line(self._e[k]))
+                elif self._e[k]['citekey'].lower().find(ptrn) > 0:
+                    p4.append(self._get_compl_line(self._e[k]))
+                elif self._e[k]['alastnm'] and self._e[k]['alastnm'][0][0].lower().find(ptrn) > 0:
+                    p5.append(self._get_compl_line(self._e[k]))
+                elif self._e[k]['title'].lower().find(ptrn) > 0:
+                    p6.append(self._get_compl_line(self._e[k]))
         resp = p1 + p2 + p3 + p4 + p5 + p6
         return resp
 
@@ -791,7 +810,7 @@ class ZoteroEntries:
         for k in self._e:
             if self._e[k]['zotkey'] == zotkey:
                 return self._e[k]
-        return {}
+        return None
 
     def GetCitationById(self, Id):
         """ Return the complete citation string.
@@ -933,24 +952,19 @@ class ZoteroEntries:
 
 
     def GetYamlField(self, key, lines):
-        l2 = []
-        for l in lines:
-            if l.find('!expr') < 0:
-                l2.append(l)
-        if len(l2) == 0:
-            return []
+        lines = re.sub('\002', '\n', lines)
         try:
-            y = yaml.load("\n".join(l2), yaml.SafeLoader)
+            y = yaml.load(lines, yaml.SafeLoader)
         except yaml.YAMLError as exc:
             if hasattr(exc, 'problem_mark'):
                 mark = getattr(exc, 'problem_mark')
                 self._errmsg("YAML error (line " + str(mark.line + 1) +
                              ", column " + str(mark.column) + "): " + lines[mark.line])
-                return []
+                return None
         else:
             if key in y.keys():
                 return y[key]
-        return []
+        return None
 
     def Info(self):
         """ Return information that might be useful for users of ZoteroEntries """

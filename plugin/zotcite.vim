@@ -1,13 +1,20 @@
-if exists('g:zotcite_failed')
+if has("nvim-0.10")
     finish
 endif
 
-if exists(':Zinfo') == 2
-    finish
-endif
-let g:zotcite_filetypes = get(g:, 'zotcite_filetypes', ['markdown', 'pandoc', 'rmd', 'quarto', 'vimwiki'])
-augroup zotcite
-    autocmd BufNewFile,BufRead * call timer_start(1, "zotcite#Init")
-augroup END
-command Zinfo call zotcite#info()
-command -nargs=1 -complete=file Zodt2md call zotcite#ODTtoMarkdown(<q-args>)
+function ZotciteVimBranchWarning(...)
+    echohl WarningMsg
+    echomsg 'The main branch of Zotcite now requires Neovim >= 0.10. Please, switch to the branch "vim".'
+    echohl None
+endfunction
+
+function CallVimBranchWarning()
+    if &filetype == "markdown" || &filetype == "quarto" || &filetype == "rmd"
+	if !exists("s:did_branch_warning")
+	    call timer_start(1000, "ZotciteVimBranchWarning")
+	    let s:did_branch_warning = 1
+	endif
+    endif
+endfunction
+
+autocmd FileType * call CallVimBranchWarning()
