@@ -351,16 +351,15 @@ included a `zotero.desktop` file, you can do the following:
 ------------------------------------------------------------------------------
 4.6 Show errors of command to open attachment        *zotcite_wait_attachment*
 
-While opening an attachment using the system's default PDF viewer, zotcite
-cannot catch errors because it doesn't wait the application to finish. If
-zotcite fails to open a PDF attachment, you may want to set the the value of
-`open_cmd` (see above) and put the following in your `config`:
+While opening an attachment, zotcite cannot catch errors because it doesn't
+wait the application to finish. If zotcite fails to open a PDF attachment, you
+may want to temporarily set `wait_attachment` as `true` in your `config`:
 >lua
  wait_attachment = true
 <
 Then, Neovim should freeze until the attachment is closed, and, if the PDF
-viewer defined with the `open_cmd` option finishes with non-zero status,
-anything output to the `stderr` will be displayed as a warning message.
+viewer finishes with non-zero status, anything output to the `stderr` will be
+displayed as a warning message.
 
 
 ------------------------------------------------------------------------------

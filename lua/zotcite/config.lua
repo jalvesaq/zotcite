@@ -3,7 +3,6 @@ local config = {
     conceallevel = 2,
     wait_attachment = false,
     open_in_zotero = false,
-    open_cmd = "xdg-open",
     filetypes = { "markdown", "pandoc", "rmd", "quarto", "vimwiki" },
     zrunning = false,
     zotcite_home = nil,
@@ -17,6 +16,16 @@ local zwarn = require("zotcite").zwarn
 local M = {}
 
 local b = {}
+
+M.show = function ()
+    local info = {}
+    for k, v in pairs(config) do
+        table.insert(info, { k, "Identifier" } )
+        table.insert(info, { " = ", "Operator" } )
+        table.insert(info, { vim.inspect(v) .. "\n" } )
+    end
+    vim.schedule(function() vim.api.nvim_echo(info, false, {}) end)
+end
 
 M.update_config = function(opts)
     for k, v in pairs(opts) do
@@ -97,9 +106,6 @@ local global_init = function()
     set_path()
     vim.env.RmdFile = vim.fn.expand("%:p")
 
-    local uname = vim.uv.os_uname().sysname
-    if vim.fn.has("win32") == 1 or uname:find("Darwin") then config.open_cmd = "open" end
-
     vim.api.nvim_create_user_command("Zrefs", require("zotcite.utils").add_yaml_refs, {})
     vim.api.nvim_create_user_command(
         "Zseek",
@@ -126,6 +132,7 @@ local global_init = function()
         function(tbl) require("zotcite").ODTtoMarkdown(tbl.args) end,
         { nargs = 1, desc = "Zotcite: convert ODT to Markdown" }
     )
+    vim.api.nvim_create_user_command("Zconfig", require("zotcite.config").show, {})
     return true
 end
 

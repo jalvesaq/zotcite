@@ -92,18 +92,18 @@ M.check_bib = function()
 end
 
 M.open = function(fpath)
-    if config.wait_attachment and config.open_cmd then
-        local obj = vim.system({ config.open_cmd, fpath }, { text = true }):wait()
+    if config.wait_attachment then
+        local obj
+        local em
+        if config.open_cmd then
+            obj = vim.system({ config.open_cmd, fpath }, { text = true }):wait()
+            em = "Error running `" .. config.open_cmd .. ' "' .. fpath .. '"' .. "`: \n"
+        else
+            obj = vim.ui.open(fpath):wait()
+            em = 'Error running `vim.ui.open("' .. fpath .. '")`: \n'
+        end
         if obj.code ~= 0 then
-            zwarn(
-                "Error running `"
-                    .. config.open_cmd
-                    .. ' "'
-                    .. fpath
-                    .. '"'
-                    .. "`: "
-                    .. obj.stderr:gsub("\n", " ")
-            )
+            zwarn(em .. obj.stderr)
         end
         return
     end

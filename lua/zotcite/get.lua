@@ -363,7 +363,7 @@ end
 M.open_attachment = function()
     local zotkey = M.citation_key()
     local apath = M.PDFPath(zotkey, finish_open_attachment)
-    if type(apath) == "string" then vim.ui.open(apath) end
+    if type(apath) == "string" then require("zotcite.utils").open(apath) end
 end
 
 return M

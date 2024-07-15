@@ -11,8 +11,8 @@ endfunction
 function CallVimBranchWarning()
     if &filetype == "markdown" || &filetype == "quarto" || &filetype == "rmd"
 	if !exists("s:did_branch_warning")
-	    call timer_start(1000, "ZotciteVimBranchWarning")
 	    let s:did_branch_warning = 1
+	    call timer_start(1000, "ZotciteVimBranchWarning")
 	endif
     endif
 endfunction
