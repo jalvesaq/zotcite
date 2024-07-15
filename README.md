@@ -6,7 +6,7 @@ _zotcite_ you can:
   - Do omni completion of citation keys from Zotero database in
     Markdown, RMarkdown and Quarto documents.
 
-    ![Omni completion](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_completion.gif "omni completion")
+    ![Omni completion](https://raw.githubusercontent.com/jalvesaq/zotcite/vim/zotcite_completion.gif "omni completion")
 
     ![Citation key highligting](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_conceal.gif "Citation key highlighting")
 
