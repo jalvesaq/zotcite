@@ -142,6 +142,7 @@ M.init = function()
 
     -- FIXME: Use treesitter
     vim.cmd([[
+    syn match zoteroCiteKey /@[A-Z0-9]\{8}#[:_[:digit:][:lower:][:upper:]\u00FF-\uFFFF]\+/ contains=zoteroHidden,zoteroVisible,@NoSpell containedin=pandocPCite
     syn match zoteroCiteKey /@[A-Z0-9]\{8}#[:_[:digit:][:lower:][:upper:]\u00FF-\uFFFF]\+/ contains=zoteroHidden,zoteroVisible,@NoSpell
     syn match zoteroHidden  /@[A-Z0-9]\{8}#/ contained containedin=zoteroCiteKey conceal
     syn match zoteroVisible /@[A-Z0-9]\{8}#\zs[:_[:digit:][:lower:][:upper:]\u00FF-\uFFFF]\+/ contained containedin=zoteroCiteKey
