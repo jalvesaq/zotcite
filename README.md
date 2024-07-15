@@ -29,7 +29,7 @@ _zotcite_ you can:
 
   - Add all cited references to the YAML header of the Markdown document.
 
-_Zotcite_ is being developed and tested on Linux and should work flawlessly on
+_Zotcite_ was developed and tested on Linux and should work flawlessly on
 other Unix systems, such as Mac OS X. It may require additional configuration
 on Windows.
 
