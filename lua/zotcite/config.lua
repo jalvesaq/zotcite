@@ -66,10 +66,7 @@ local new_buffer = function()
 end
 
 local set_path = function()
-    local p = vim.o.runtimepath
-    p = p:gsub(".*,(.*zotcite.*)", "%1")
-    p = p:gsub(",.*", "")
-    config.zotcite_home = p .. "/python3"
+    config.zotcite_home = debug.getinfo(1).short_src:gsub("/lua.*", "") .. "/python3"
     if vim.fn.has("win32") == 1 then
         local zpath = config.zotcite_home:gsub("/", "\\")
         if not vim.env.PATH:find(zpath) then
