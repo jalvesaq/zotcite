@@ -9,7 +9,7 @@ function ZotciteVimBranchWarning(...)
 endfunction
 
 function CallVimBranchWarning()
-    if &filetype == "markdown" || &filetype == "quarto" || &filetype == "rmd"
+    if &filetype == "markdown" || &filetype == "quarto" || &filetype == "rmd" || &filetype == "vimwiki"
 	if !exists("s:did_branch_warning")
 	    let s:did_branch_warning = 1
 	    call timer_start(1000, "ZotciteVimBranchWarning")
