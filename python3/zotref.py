@@ -103,7 +103,7 @@ if __name__ == "__main__":
                 f.write("\n" + "".join(o[k]))
 
         if os.name == "nt":
-            enc = os.getenv('Zotero_encoding')
+            enc = os.getenv('ZoteroEncoding')
             if enc is None:
                 enc = "latin1"
             with open(zbib, encoding=enc) as f:

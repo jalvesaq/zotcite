@@ -40,6 +40,9 @@ M.update_config = function(opts)
     if config.tmpdir then vim.env.Zotcite_tmpdir = config.tmpdir end
     if config.exclude_fields then vim.env.Zotcite_exclude = config.exclude_fields end
     if config.year_page_sep then vim.env.ZYearPageSep = config.year_page_sep end
+    if vim.env.Zotero_encoding then
+        zwarn("The environment variable `Zotero_encoding` now is a config option: `zotero_encoding`.")
+    end
     if config.zotero_encoding then vim.env.ZoteroEncoding = config.zotero_encoding end
 end
 
