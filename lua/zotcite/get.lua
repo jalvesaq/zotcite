@@ -294,7 +294,8 @@ M.yaml_field = function(field)
     local line = ""
     while i < nlines do
         if lines[i]:find("^%s*%-%-%-%s*$") then break end
-        line = string.gsub(lines[i], '"', '\\"')
+        line = lines[i]:gsub("\\", "\\\\")
+        line = string.gsub(line, '"', '\\"')
         table.insert(ylines, line)
         i = i + 1
     end
