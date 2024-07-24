@@ -57,16 +57,7 @@ M.view_document = function()
         zwarn('File "' .. doc .. '" not found.')
         return
     end
-    local cmd = { config.open_cmd, doc }
-    local out = vim.system(cmd, { text = true }):wait()
-    if out.code ~= 0 then
-        zwarn(
-            "Error running `"
-                .. table.concat(cmd, " ")
-                .. "`:"
-                .. out.stderr:gsub("\n", " ")
-        )
-    end
+    M.open(doc)
 end
 
 M.check_bib = function()
