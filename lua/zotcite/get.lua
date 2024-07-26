@@ -124,7 +124,7 @@ M.citation_key = function()
             i = i + 1
             break
         end
-        if not k:find("[A-Za-z0-9_#]") then break end
+        if not k:find("[A-Za-z0-9_#%-]") then break end
         i = i - 1
     end
     if found_i then

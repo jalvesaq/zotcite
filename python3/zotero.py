@@ -220,7 +220,7 @@ class ZoteroEntries:
         if os.getenv('ZCitationTemplate') is not None:
             self._cite = str(os.getenv('ZCitationTemplate'))
         else:
-            self._cite = '{Authors}_{Year}'
+            self._cite = '{Authors}-{Year}'
 
         # Title words to be ignored
         if os.getenv('ZBannedWords') is not None:
@@ -521,7 +521,6 @@ class ZoteroEntries:
             key = key.replace('{title}', titlew.lower(), 1)
             key = key.replace('{Title}', titlew.title(), 1)
             key = key.replace(' ', '')
-            key = key.replace('-', '')
             key = key.replace("'", '')
             key = key.replace("’", '')
             self._e[k]['citekey'] = key

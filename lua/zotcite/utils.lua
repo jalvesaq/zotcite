@@ -6,9 +6,6 @@ local zwarn = require("zotcite").zwarn
 
 M.add_yaml_refs = function()
     local bigstr = vim.fn.join(vim.fn.getline(1, "$"))
-    -- bigstr = vim.fn.substitute(bigstr, '.\{-}\(@[A-Z0-9]\{8}#[[:alnum:]à-öø-ÿÀ-ÖØ-ß_:\-]\+\).\{-}', ' \1 ', 'g')
-    -- bigstr = vim.fn.substitute(bigstr, '\(.*@[A-Z0-9]\{8}#[[:alnum:]à-öø-ÿÀ-ÖØ-ß_:\-]\+\) .*', '\1', 'g')
-    -- bigstr = vim.fn.substitute(bigstr, '@', '', 'g')
     local rlist = vim.fn.uniq(vim.fn.sort(vim.fn.split(bigstr)))
     if rlist and type(rlist) == "table" then
         local refs =
