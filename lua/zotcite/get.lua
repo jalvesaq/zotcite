@@ -176,7 +176,7 @@ M.reference_data = function(btype)
     end
 end
 
-M.PasteAbstractNote = function()
+M.abstract = function()
     local wrd = M.citation_key()
     if wrd ~= "" then
         local repl = vim.fn.py3eval('ZotCite.GetRefData("' .. wrd .. '")')

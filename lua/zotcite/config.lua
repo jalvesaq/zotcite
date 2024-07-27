@@ -214,7 +214,7 @@ M.init = function()
         create_map(
             "<Plug>ZExtractAbstract",
             "<leader>zb",
-            "<Cmd>lua require('zotcite.get').PasteAbstractNote()<CR>",
+            "<Cmd>lua require('zotcite.get').abstract()<CR>",
             "Zotcite: Paste abstract note in current buffer"
         )
         vim.o.conceallevel = config.conceallevel
