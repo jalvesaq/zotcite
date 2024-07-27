@@ -176,6 +176,22 @@ M.reference_data = function(btype)
     end
 end
 
+M.PasteAbstractNote = function()
+    local wrd = M.citation_key()
+    if wrd ~= "" then
+        local repl = vim.fn.py3eval('ZotCite.GetRefData("' .. wrd .. '")')
+        if not repl then
+            zwarn("Citation key not found")
+            return
+        end
+        if repl.abstractNote then
+            vim.api.nvim_put({ repl.abstractNote }, "l", true, true)
+        else
+            zwarn("No abstract found associated with article")
+        end
+    end
+end
+
 M.refs = function(key)
     local mtchs = getmach(key)
     local info = {}

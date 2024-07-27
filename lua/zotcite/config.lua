@@ -17,12 +17,12 @@ local M = {}
 
 local b = {}
 
-M.show = function ()
+M.show = function()
     local info = {}
     for k, v in pairs(config) do
-        table.insert(info, { k, "Identifier" } )
-        table.insert(info, { " = ", "Operator" } )
-        table.insert(info, { vim.inspect(v) .. "\n" } )
+        table.insert(info, { k, "Identifier" })
+        table.insert(info, { " = ", "Operator" })
+        table.insert(info, { vim.inspect(v) .. "\n" })
     end
     vim.schedule(function() vim.api.nvim_echo(info, false, {}) end)
 end
@@ -41,7 +41,9 @@ M.update_config = function(opts)
     if config.exclude_fields then vim.env.Zotcite_exclude = config.exclude_fields end
     if config.year_page_sep then vim.env.ZYearPageSep = config.year_page_sep end
     if vim.env.Zotero_encoding then
-        zwarn("The environment variable `Zotero_encoding` now is a config option: `zotero_encoding`.")
+        zwarn(
+            "The environment variable `Zotero_encoding` now is a config option: `zotero_encoding`."
+        )
     end
     if config.zotero_encoding then vim.env.ZoteroEncoding = config.zotero_encoding end
 end
@@ -208,6 +210,12 @@ M.init = function()
             "<Leader>zy",
             "<Cmd>lua require('zotcite.get').yaml_ref()<CR>",
             "Zotcite: show reference as YAML"
+        )
+        create_map(
+            "<Plug>ZExtractAbstract",
+            "<leader>zb",
+            "<Cmd>lua require('zotcite.get').PasteAbstractNote()<CR>",
+            "Zotcite: Paste abstract note in current buffer"
         )
         vim.o.conceallevel = config.conceallevel
         require("zotcite.get").collection_name()
