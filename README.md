@@ -1,12 +1,15 @@
 # Zotcite
 
-_Zotcite_ is a Vim plugin that provides integration with Zotero. With
+> [!Note]
+> Users of Vim and Neovim < 0.10 have to install the branch "vim".
+
+_Zotcite_ is a Neovim plugin that provides integration with Zotero. With
 _zotcite_ you can:
 
-  - Do omni completion of citation keys from Zotero database in
-    Markdown, RMarkdown and Quarto documents.
+  - Do auto-completion of citation keys from Zotero database in
+    Markdown, RMarkdown and Quarto documents (with `cmp-zotcite`).
 
-    ![Omni completion](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_completion.gif "omni completion")
+    ![Auto-completion](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_completion.gif "auto-completion")
 
     ![Citation key highligting](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_conceal.gif "Citation key highlighting")
 
@@ -25,7 +28,7 @@ _zotcite_ you can:
   - Extract highlighted text and text notes from PDF attachments of
     references.
 
-  - Extract Zotero notes from Zotero database.
+  - Extract Zotero notes and annotations from Zotero database.
 
   - Add all cited references to the YAML header of the Markdown document.
 
@@ -54,8 +57,54 @@ Requirements:
 Depending on your system, you may have to install python modules in an virtual
 environment and maybe also system-wide.
 
-Zotcite can be installed as any Vim plugin. If using Neovim, you may also want
-to install [cmp-zotcite](https://github.com/jalvesaq/cmp-zotcite).
+Zotcite can be installed as any Neovim plugin, and it depends on
+[cmp-zotcite](https://github.com/jalvesaq/cmp-zotcite) and
+[nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) as well
+as tree-sitter parser for `markdown`, `markdown_inline`, and `yaml`. Below is
+an example of how to install it with [lazy.nvim](https://github.com/folke/lazy.nvim):
+
+```lua
+    {
+        'jalvesaq/zotcite',
+        dependencies = {
+            "nvim-treesitter/nvim-treesitter",
+        }
+        config = function ()
+            require("zotcite").setup({
+                -- your options here (see doc/zotcite.txt)
+            })
+        end
+    },
+
+    {
+        "nvim-treesitter/nvim-treesitter",
+        run = ":TSUpdate",
+        config = function ()
+            require("nvim-treesitter.configs").setup({
+                sync_install = true,
+                ensure_installed = {
+                    "html",
+                    "latex",
+                    "markdown",
+                    "markdown_inline",
+                    "yaml",
+                },
+                highlight = {
+                    enable = true,
+                },
+                indent = {
+                    enable = true,
+                },
+            })
+            vim.o.foldmethod = "expr"
+            vim.o.foldexpr = "nvim_treesitter#foldexpr()"
+            vim.o.foldenable = false
+        end
+    },
+```
+
+Note: you don't need to lazy load zotcite because it already lazy loads its
+modules only for the supported file types.
 
 The Python module `zotero` does not import the `vim` module. Hence, its code
 could easily be adapted to other text editors or as a language server for
@@ -66,10 +115,6 @@ markdown and quarto.
 Please, read the plugin's
 [documentation](https://raw.githubusercontent.com/jalvesaq/zotcite/master/doc/zotcite.txt)
 for further instructions.
-
-## Known bug
-
-Zotcite syntax highlighting will not be enabled if the file type is `pandoc`.
 
 ## Acknowledgment
 

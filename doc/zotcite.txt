@@ -57,9 +57,9 @@ page numbers if you do:
 <
 By default, the colon separating the year from the page is replaced by ", p.
 ". If you want to use the colon or any other string as the separator, set the
-value of `$ZYearPageSep` in your vimrc (or init.vim). Example:
->
- let $ZYearPageSep = ':'
+value of `year_page_sep` in your `config`. Example:
+>lua
+ year_page_sep = ':'
 <
 To extract notes from Zotero, use the Vim command `:Znote key`
 
@@ -70,14 +70,17 @@ check them after the extraction. You have also to manually add italics and
 other rich text formatting and put back hyphens incorrectly removed from the
 end of the PDF lines.
 
-To insert citation keys, in Insert mode, type the `@` letter and one or more
-letters of either the last name of the first author or the reference title and
-press <C-X><C-O>. The matching of citation keys is case-insensitive. (See also
-https://github.com/jalvesaq/cmp-zotcite).
+To insert citation keys, install `cmp-zotcite`:
+
+   https://github.com/jalvesaq/cmp-zotcite
+
+Then, in Insert mode, type the `@` letter and one or more letters of either
+the last name of the first author or the reference title. The matching of
+citation keys is case-insensitive. (See also
 
 To convert a Markdown document with pandoc, use the `zotref.py` filter that comes
 with Zotcite. The Zotcite plugin adds the directory where `zotref.py` is to the
-system `$PATH`. So, from within Vim/Neovim, do:
+system `$PATH`. So, from within Neovim, do:
 >
  :!pandoc file_name.md -s -o file_name.html -F zotref.py --citeproc
 <
@@ -103,11 +106,10 @@ Note: Old versions of `pandoc` require `-F pandoc-citeproc` instead of
 `--citeproc`.
 
 Note: On Windows, `zotref.py` will convert the bib file from "latin1" to
-"utf-8". If "latin1" is not the Zotero encoding in your region, set the
-environment variable `$Zotero_encoding` with the correct value in your
-|vimrc|. Example:
+"utf-8". If "latin1" is not the Zotero encoding in your region, set
+`zotero_encoding` with the correct value in your `config`. Example:
 >
- let $Zotero_encoding = 'latin2'
+ zotero_encoding = 'latin2'
 <
 In Vim's Normal mode, put the cursor over a citation key and press:
 
@@ -162,8 +164,8 @@ Example:
 >
  /path/to/zotcite/python3/odt2md.py Document.odt
 <
-Within Vim/Neovim, you can run the command `:Zodt2md` to convert the ODT
-document and see the resulting Markdown document in a new tab:
+Within Neovim, you can run the command `:Zodt2md` to convert the ODT document
+and see the resulting Markdown document in a new tab:
 >
  :Zodt2md Document.odt
 <
@@ -194,7 +196,7 @@ of the citation fields.
 4.1 Change default maps                                     *zotcite_mappings*
 
 To change the shortcut to open reference attachment, set the value of
-<Plug>ZOpenAttachment in your vimrc as below:
+<Plug>ZOpenAttachment in your |init.lua| as below:
 >
  nmap <c-]> <Plug>ZOpenAttachment
 <
@@ -222,11 +224,7 @@ current (Markdown, Rmd, or Quarto) document, follow the example:
 ------------------------------------------------------------------------------
 4.2 Zotcite engine                                            *zotcite_engine*
 
-You can change most of Zotcite's behavior by setting some environment
-variables in your `vimrc`/`init.vim` (or in your `~/.bashrc`, if you use bash
-as your shell).
-
-							   *ZCitationTemplate*
+							   *citation_template*
 The citation keys inserted by Zotcite have the format `@ZoteroKey#Author_Year`
 where `ZoteroKey` is the key attributed by Zotero to the references stored in
 its database, `Author` is the last name of the first author, and `Year` is the
@@ -238,54 +236,54 @@ first author's last name (in either lower case `{author}` or title case
 `{Author}`), the last name of the first three authors (either `{authors}` or
 `{Authors}`), the first word of the title (`{title}` or `{Title}`) and the
 year (with either four digits `{Year}` or only two `{year}`). Examples:
->
- let $ZCitationTemplate = '{author}{year}'
- let $ZCitationTemplate = '{Authors}_{Year}_{Title}'
+>lua
+ citation_template = '{author}{year}'
+ citation_template = '{Authors}_{Year}_{Title}'
 <
-								*ZBannedWords*
+								*banned_words*
 The following words are deleted from the title before its first word is
 selected: a, an, the, some, from, on, in, to, of, do, and with. If you want to
-ban a different set of words, define `$ZBannedWords` in your vimrc as in the
+ban a different set of words, define `banned_words` in your `config` as in the
 examples:
->
- " Spanish
- let $ZBannedWords = 'el la las lo los uno una unos unas al de en no con para'
- " French
- let $ZBannedWords = 'la les l un une quelques à un de avec pour'
- " Portuguese
- let $ZBannedWords = 'o um uma uns umas à ao de da dos em na no com para'
- " Italian
- let $ZBannedWords = 'la le l gli un una alcuni alcune all alla da dei nell con per'
- " German
- let $ZBannedWords = 'der die das ein eine einer eines einem einen einige im zu mit für von'
+>lua
+ -- Spanish
+ banned_words = 'el la las lo los uno una unos unas al de en no con para'
+ -- French
+ banned_words = 'la les l un une quelques à un de avec pour'
+ -- Portuguese
+ banned_words = 'o um uma uns umas à ao de da dos em na no com para'
+ -- Italian
+ banned_words = 'la le l gli un una alcuni alcune all alla da dei nell con per'
+ -- German
+ banned_words = 'der die das ein eine einer eines einem einen einige im zu mit für von'
 <
-							       *ZoteroSQLpath*
+								    *SQL_path*
 If Zotcite cannot find the path to Zotero's database (`zotero.sqlite`), put
-the correct path in your vimrc:
->
- let $ZoteroSQLpath = '/path/to/zotero.sqlite'
+the correct path in your `config`:
+>lua
+ SQL_path = '/path/to/zotero.sqlite'
 <
-							      *Zotcite_tmpdir*
+								      *tmpdir*
 If Zotcite is trying to use a non-writable directory as its temporary and
 cache directory, or if for any reason you want to change this directory,
 follow the examples:
->
- let $Zotcite_tmpdir = '/path/to/temporary_and_cache_directory'
- let $Zotcite_tmpdir = '/dev/shm/zotcite-user_name'
+>lua
+ tmpdir = '/path/to/temporary_and_cache_directory'
+ tmpdir = '/dev/shm/zotcite-user_name'
 <
 When Zotero's SQLite3 database is updated, zotcite copies it to its temporary
 directory. While copying, the slowest operation is writing the copy of the
-file to disk. If you have enough RAM, you may want to set $Zotcite_tmpdir as a
+file to disk. If you have enough RAM, you may want to set `tmpdir` as a
 directory in a file system mounted in virtual memory, as in the second example
 above.
-							     *Zotcite_exclude*
+							      *exclude_fields*
 If you want to exclude some of Zotero's fields from the YAML references
-generated by Zotcite, set the value of `$Zotcite_exclude` to a white-separated
+generated by Zotcite, set the value of `exclude_fields` to a white-separated
 list of fields to be excluded. For example, if you want to exclude the fields
 "Extra" (which appears as `note` in the YAML references) and "attachment", put
-this in your vimrc:
->
- let $Zotcite_exclude = "note attachment"
+this in your `config`:
+>lua
+ exclude_fields = "note attachment"
 <
 							   *Zotero_collection*
 If you want to restrict the search for references to specific collections
@@ -294,11 +292,11 @@ of the Markdown document, as in the examples:
 >
  ---
  collection: ['New Paper']
- ...
+ ---
 
  ---
  collection: ['PhD Thesis', 'New Paper']
- ...
+ ---
 <
 
 ------------------------------------------------------------------------------
@@ -306,45 +304,42 @@ of the Markdown document, as in the examples:
 
 Syntax highlighting customization is done with Vim variables.
 
-								  *zotcite_hl*
+								  *hl_cite_key*
 If you want to disable Zotcite's syntax highlighting of citation keys, put in
-your vimrc:
->
- let zotcite_hl = 0
+your `config`:
+>lua
+ hl_cite_key = false
 <
 							*zotcite_conceallevel*
 Zotcite sets the 'conceallevel' of the Markdown document to 2. If you want a
 different value, follow the example:
->
- let zotcite_conceallevel = 0
+>lua
+ conceallevel = false
 <
 
 ------------------------------------------------------------------------------
 4.4 File types                                             *zotcite_filetypes*
 
-Zotcite is enabled only if the file type is `markdown`, `pandoc`, `rmd` or
-`quarto`. If you want it enabled for other file types, you should set the
-value of `zotcite_filetypes` in your |vimrc|. Example:
->
- let zotcite_filetypes = ['markdown', 'pandoc', 'rmd', 'vimwiki']
-<
-If you want zotcite's highlighting in file types other than `markdown` and
-`rmd`, you will have to run an autocmd in your |vimrc| to source zotcite's
-highlighting script. In the example below, `vimwiki` files get zotcite's
-references properly highlighted (of course, you have to write the correct
-path to `markdown.vim`:
->
- autocmd FileType vimwiki source /path/to/zotcite/after/syntax/markdown.vim
+Zotcite is enabled only if the file type is `markdown`, `pandoc`, `rmd`,
+`quarto` or `vimwiki`. If you want it enabled for other file types, you should
+set the value of `filetypes` in your `config`. Example:
+>lua
+ filetypes = { 'markdown', 'pandoc', 'rmd', 'vimwiki' }
 <
 
 ------------------------------------------------------------------------------
-4.5 Open attachment in Zotero                         *zotcite_open_in_zotero*
+4.5 Open attachment
 
+Zotcite calls `vim.ui.open()` to open attachments. But you can change the
+command in your config:
+>lua
+ open_cmd = "my_open_script"
+<
 If you want <Plug>ZOpenAttachment to open PDF attachments in Zotero (as
 opposed to your system's default PDF viewer), put the following in your
-|vimrc|:
->
- let zotcite_open_in_zotero = 1
+`config`:
+>lua
+ open_in_zotero = true
 <
 Note that you'll need to have Zotero configured as the default app for
 opening `zotero://` links. On Linux, assuming your Zotero installation
@@ -356,19 +351,19 @@ included a `zotero.desktop` file, you can do the following:
 ------------------------------------------------------------------------------
 4.6 Show errors of command to open attachment        *zotcite_wait_attachment*
 
-While opening an attachment using the system's default PDF viewer, zotcite
-cannot catch errors because it appends an `&` to the command. If zotcite fails
-to open a PDF attachment, you may want to put the following in your |vimrc|:
->
- let zotcite_wait_attachment = 1
+While opening an attachment, zotcite cannot catch errors because it doesn't
+wait the application to finish. If zotcite fails to open a PDF attachment, you
+may want to temporarily set `wait_attachment` as `true` in your `config`:
+>lua
+ wait_attachment = true
 <
-Then, (Neo)Vim should freeze until the attachment is closed, and, if the
-default system's PDF viewer finishes with non-zero status, anything output to
-the `stderr` will be displayed as a warning message.
+Then, Neovim should freeze until the attachment is closed, and, if the PDF
+viewer finishes with non-zero status, anything output to the `stderr` will be
+displayed as a warning message.
 
 
 ------------------------------------------------------------------------------
-4.7 Quarto render options                              *zotcite_quarto_render*
+4.7 Quarto render filters                              *zotcite_quarto_render*
 
 If you add the `filters` field to the YAML header of a Quarto document, the
 filters will be run after the `citeproc` filter. However, the `zotref.py`
@@ -393,15 +388,6 @@ Of course, the last filter should be added only if using the APA citation style.
 It will replace "&" with "and" in in-text citations. If using the Brazilian
 citation style, you could try the `abntfix.py` filter to fix in-text citations.
 
-If editing Quarto documents, whenever the document is saved, Zotcite can run
-`quarto render` without any additional arguments if
->
- let zotcite_quarto_render = 1
-<
-or run `quarto render` with whatever arguments you choose (example):
->
- let zotcite_quarto_render = "--quiet"
-<
 For a Lua filter to fix the APA citation style, see:
 
   https://github.com/citation-style-language/styles/issues/3748
