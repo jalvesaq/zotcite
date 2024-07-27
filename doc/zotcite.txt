@@ -121,6 +121,9 @@ In Vim's Normal mode, put the cursor over a citation key and press:
 
   - <Leader>za to see all fields of a reference as stored by Zotcite.
 
+  - <leader>zb to extract the abstract into the currently open buffer if its
+    available.
+
   - <Leader>zy to see how the reference will be converted into YAML.
 
   - <Leader>zv to view the (pdf or html) document generated from the current
@@ -214,6 +217,11 @@ To change the shortcut to see how the reference is converted into YAML, follow
 the example:
 >
  nmap ,Y <Plug>ZCitationYamlRef
+<
+To change the shortcut to extract the abstract into the current buffer from the
+abstract field in complete info:
+>
+ nmap ,Y <Plug>ZExtractAbstract 
 <
 To change the shortcut to view the (pdf or html) document generated from the
 current (Markdown, Rmd, or Quarto) document, follow the example:
