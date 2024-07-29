@@ -36,7 +36,7 @@ M.update_config = function(opts)
         vim.env.ZCitationTemplate = config.citation_template
     end
     if config.banned_words then vim.env.ZBannedWords = config.banned_words end
-    if config.zotero_SQL_path then vim.env.ZoteroSQLpath = config.SQL_path end
+    if config.zotero_SQL_path then vim.env.ZoteroSQLpath = config.zotero_SQL_path end
     if config.tmpdir then vim.env.Zotcite_tmpdir = config.tmpdir end
     if config.exclude_fields then vim.env.Zotcite_exclude = config.exclude_fields end
     if config.year_page_sep then vim.env.ZYearPageSep = config.year_page_sep end
@@ -95,8 +95,8 @@ local global_init = function()
     vim.cmd("py3 import os")
 
     -- Start ZoteroEntries
-    vim.cmd("py3 from zotero import ZoteroEntries")
-    vim.cmd("py3 ZotCite = ZoteroEntries()")
+    vim.cmd.py3("from zotero import ZoteroEntries")
+    vim.cmd.py3("ZotCite = ZoteroEntries()")
     local info = vim.fn.py3eval("ZotCite.Info()")
 
     config.zrunning = true

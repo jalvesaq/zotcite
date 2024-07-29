@@ -236,14 +236,24 @@ class ZoteroEntries:
             elif os.getenv('USERPROFILE') is not None and os.path.isfile(str(os.getenv('USERPROFILE')) + '/Zotero/zotero.sqlite'):
                 self._z = str(os.getenv('USERPROFILE')) + '/Zotero/zotero.sqlite'
             else:
-                self._errmsg('The file zotero.sqlite was not found. Please, define the environment variable ZoteroSQLpath.')
+                self._errmsg('The file zotero.sqlite was not found. Please, define the value of `zotero_SQL_path` in your zotcite config.')
                 return None
         else:
-            if os.path.isfile(os.path.expanduser(str(os.getenv('ZoteroSQLpath')))):
-                self._z = os.path.expanduser(str(os.getenv('ZoteroSQLpath')))
+            zpath = os.path.expanduser(str(os.getenv('ZoteroSQLpath')))
+            if os.path.isfile(zpath):
+                self._z = zpath
             else:
-                self._errmsg('Please, check if $ZoteroSQLpath is correct: "' + str(os.getenv('ZoteroSQLpath')) + '" not found.')
-                return None
+                zpath = re.sub("/$", "", zpath)
+                if os.path.isdir(zpath):
+                    zpath = zpath + "/zotero.sqlite"
+                    if os.path.isfile(zpath):
+                        self._z = zpath
+                    else:
+                        self._errmsg('Please, check if `zotero_SQL_path` in your zotcite config is correct: "' + zpath + '" not found.')
+                        return None
+                else:
+                    self._errmsg('Please, check if `zotero_SQL_path` in your zotcite config is correct: "' + zpath + '" not found.')
+                    return None
 
         # Temporary directory
         if os.getenv('Zotcite_tmpdir') is None:
@@ -266,7 +276,7 @@ class ZoteroEntries:
                 self._exception()
                 return None
         if not os.access(self._tmpdir, os.W_OK):
-            self._errmsg('Please, either set or fix the value of $Zotcite_tmpdir: "' + self._tmpdir + '" is not writable.')
+            self._errmsg('Please, either set or fix the value of `tmpdir` in your zotcite config: "' + self._tmpdir + '" is not writable.')
             return None
 
         # Fields that should not be added to the YAML references:
