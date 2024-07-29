@@ -242,7 +242,7 @@ class ZoteroEntries:
             if os.path.isfile(os.path.expanduser(str(os.getenv('ZoteroSQLpath')))):
                 self._z = os.path.expanduser(str(os.getenv('ZoteroSQLpath')))
             else:
-                self._errmsg('Please, check if $ZoteroSQLpath is correct: "' + str(os.getenv('ZoteroSQLpath')) + '" not found.')
+                self._errmsg('Please, check if $ZoteroSQLpath is correct: "' + str(os.getenv('ZoteroSQLpath')) + '" is not a file.')
                 return None
 
         # Temporary directory
