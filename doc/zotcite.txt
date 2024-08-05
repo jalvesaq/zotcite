@@ -61,6 +61,16 @@ value of `year_page_sep` in your `config`. Example:
 >lua
  year_page_sep = ':'
 <
+To extract annotations made with Zotero's built-in PDF viewer but would prefer
+to make a selection of the annotations that you would like to import then use
+the vim command `:Zselectannotations key` where `key` is a word with one or
+more letters of authors' names or from a reference title. In the use case, a
+second dialogue will appear in which the annotations and accompanying notes to
+those annoations will appear (if you have made notes). You can scroll through
+the annotation list and press `enter` on the annotations you'd wish to import.
+Once finished making the selection then you need to press `Esc` to escape the
+annotation selection dialogue. 
+
 To extract notes from Zotero, use the Vim command `:Znote key`
 
 Similarly, to extract annotations (notes and highlighted texts) that were
