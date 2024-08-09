@@ -220,7 +220,118 @@ local finish_annotations = function(_, idx)
     end
 end
 
-M.annotations = function(ko)
+local finish_annotations_selection = function(_, idx)
+    if not idx then return end
+
+    local k = sel_list[idx]
+    local raw_annotations =
+        vim.fn.py3eval('ZotCite.GetAnnotations("' .. k .. '", ' .. offset .. ")")
+    if #raw_annotations == 0 then
+        zwarn("No annotation found.")
+    else
+        local grouped_annotations = {}
+        local current_group = {}
+        local last_was_quote = false
+
+        for _, line in ipairs(raw_annotations) do
+            if line:sub(1, 1) == ">" then
+                if #current_group > 0 and not last_was_quote then
+                    table.insert(current_group, line)
+                    table.insert(grouped_annotations, table.concat(current_group, "\n"))
+                    current_group = {}
+                else
+                    if #current_group > 0 then
+                        table.insert(
+                            grouped_annotations,
+                            table.concat(current_group, "\n")
+                        )
+                        current_group = {}
+                    end
+                    table.insert(current_group, line)
+                end
+                last_was_quote = true
+            else
+                if last_was_quote and #current_group > 0 then
+                    table.insert(grouped_annotations, table.concat(current_group, "\n"))
+                    current_group = {}
+                end
+                table.insert(current_group, line)
+                last_was_quote = false
+            end
+        end
+
+        if #current_group > 0 then
+            table.insert(grouped_annotations, table.concat(current_group, "\n"))
+        end
+
+        local selected_indices = {}
+        local function select_annotation()
+            local opts = {}
+            for i, annotation in ipairs(grouped_annotations) do
+                if not selected_indices[i] then
+                    table.insert(opts, i .. ": " .. annotation:sub(1, 100)) -- Show first 100 chars
+                end
+            end
+
+            if #opts == 0 then
+                if #selected_indices > 0 then
+                    local selected_annotations = {}
+                    for index in pairs(selected_indices) do
+                        table.insert(selected_annotations, grouped_annotations[index])
+                    end
+                    local lnum = vim.api.nvim_win_get_cursor(0)[1]
+                    vim.api.nvim_buf_set_lines(
+                        0,
+                        lnum,
+                        lnum,
+                        true,
+                        vim.split(table.concat(selected_annotations, "\n\n"), "\n")
+                    )
+                end
+                return
+            end
+
+            vim.ui.select(
+                opts,
+                { prompt = "Select annotation (or cancel to finish)" },
+                function(choice)
+                    if choice then
+                        local index = tonumber(vim.split(choice, ":")[1])
+                        if index then
+                            selected_indices[index] = true
+                            select_annotation() -- Ask for the next selection
+                        end
+                    else
+                        if #selected_indices > 0 then
+                            local selected_annotations = {}
+                            for index in pairs(selected_indices) do
+                                table.insert(
+                                    selected_annotations,
+                                    grouped_annotations[index]
+                                )
+                            end
+                            local lnum = vim.api.nvim_win_get_cursor(0)[1]
+                            vim.api.nvim_buf_set_lines(
+                                0,
+                                lnum,
+                                lnum,
+                                true,
+                                vim.split(
+                                    table.concat(selected_annotations, "\n\n"),
+                                    "\n"
+                                )
+                            )
+                        end
+                    end
+                end
+            )
+        end
+
+        select_annotation()
+    end
+end
+
+M.annotations = function(ko, use_selection)
     local argmt
     if ko:find(" ") then
         ko = vim.fn.split(ko)
@@ -230,7 +341,11 @@ M.annotations = function(ko)
         argmt = ko
         offset = "0"
     end
-    FindCitationKey(argmt, finish_annotations)
+    if use_selection then
+        FindCitationKey(argmt, finish_annotations_selection)
+    else
+        FindCitationKey(argmt, finish_annotations)
+    end
 end
 
 local finish_note = function(_, idx)

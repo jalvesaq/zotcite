@@ -121,9 +121,15 @@ local global_init = function()
     )
     vim.api.nvim_create_user_command(
         "Zannotations",
-        function(tbl) require("zotcite.get").annotations(tbl.args) end,
+        function(tbl) require("zotcite.get").annotations(tbl.args, false) end,
         { nargs = 1, desc = "Zotcite: insert Zotero annotations" }
     )
+    vim.api.nvim_create_user_command(
+        "Zselectannotations",
+        function(tbl) require("zotcite.get").annotations(tbl.args, true) end,
+        { nargs = 1, desc = "Zotcite: insert Zotero annotations" }
+    )
+
     vim.api.nvim_create_user_command(
         "Zpdfnote",
         function(tbl) require("zotcite.get").PDFNote(tbl.args) end,
