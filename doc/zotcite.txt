@@ -58,7 +58,7 @@ page numbers if you do:
 By default, the colon separating the year from the page is replaced by ", p.
 ". If you want to use the colon or any other string as the separator, set the
 value of `year_page_sep` in your `config`. Example:
->
+>lua
  year_page_sep = ':'
 <
 To extract annotations made with Zotero's built-in PDF viewer but would prefer
