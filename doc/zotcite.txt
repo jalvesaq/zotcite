@@ -70,7 +70,9 @@ those annoations will appear (if you have made notes). You can scroll through
 the annotation list and press `enter` on the annotations you'd wish to import.
 Once finished making the selection then you need to press `Esc` to escape the
 annotation selection dialogue. 
-
+>
+  :Zselectannotations key
+<
 To extract notes from Zotero, use the Vim command `:Znote key`
 
 Similarly, to extract annotations (notes and highlighted texts) that were
