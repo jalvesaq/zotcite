@@ -1,6 +1,14 @@
 local config = require("zotcite.config").get_config()
 local zwarn = require("zotcite").zwarn
 
+local pickers = require("telescope.pickers")
+local finders = require("telescope.finders")
+local sorters = require("telescope.config").values
+local actions = require("telescope.actions")
+local action_state = require("telescope.actions.state")
+local previewers = require("telescope.previewers")
+local entry_display = require("telescope.pickers.entry_display")
+
 local sel_list = {}
 local offset = "0"
 local pdfnote_data = {}
@@ -87,6 +95,7 @@ local getmach = function(key)
             author = v.alastnm,
             year = v.year,
             ttl = v.title,
+            abstract = v.abstractNote,
         }
         table.insert(resp, item)
     end
@@ -194,19 +203,98 @@ end
 
 M.refs = function(key)
     local mtchs = getmach(key)
-    local info = {}
-    local idx = 0
+    local results = {}
+
     for _, v in pairs(mtchs) do
-        idx = idx + 1
         local room = vim.o.columns - #v.year - #v.author - 3
-        table.insert(info, { v.author .. " ", "Identifier" })
-        if #v.ttl > room then v.ttl = string.sub(v.ttl, 0, room) end
-        table.insert(info, { v.year .. " ", "Number" })
-        table.insert(info, { v.ttl .. "\n", "Title" })
+        local title = v.ttl
+        if #title > room then title = string.sub(title, 0, room) end
+        table.insert(results, {
+            display = v.author .. " " .. v.year .. " " .. title,
+            author = v.author,
+            year = v.year,
+            title = v.ttl,
+            abstract = v.abstract, -- Include the abstract in the entry
+            citation_key = v.key,
+        })
     end
-    vim.schedule(function() vim.api.nvim_echo(info, false, {}) end)
+
+    pickers
+        .new({}, {
+            prompt_title = "Zotero References",
+            finder = finders.new_table({
+                results = results,
+                entry_maker = function(entry)
+                    local displayer = entry_display.create({
+                        separator = " ",
+                        items = {
+                            { width = 40 }, -- Author
+                            { remaining = true },
+                            --{ width = 5 }, -- Year
+                            --{ remaining = true }, -- Title
+                        },
+                    })
+                    return {
+                        value = entry,
+                        display = function(e)
+                            return displayer({
+                                { e.value.author, "Identifier" },
+                                { e.value.year, "Number" },
+                                --{ e.value.title, "Title" },
+                            })
+                        end,
+                        ordinal = entry.display,
+                    }
+                end,
+            }),
+            sorter = sorters.generic_sorter({}),
+            previewer = previewers.new_buffer_previewer({
+                define_preview = function(self, entry, status)
+                    local bufnr = self.state.bufnr
+                    vim.api.nvim_set_option_value("filetype", "markdown", { buf = bufnr })
+
+                    -- Use the abstract directly from the entry
+                    local preview_text = string.format(
+                        "# %s\n\n%s\n",
+                        entry.value.title,
+                        entry.value.abstract or "No abstract available."
+                    )
+                    vim.api.nvim_buf_set_lines(
+                        bufnr,
+                        0,
+                        -1,
+                        false,
+                        vim.split(preview_text, "\n")
+                    )
+                end,
+            }),
+            attach_mappings = function(prompt_bufnr, map)
+                map("i", "<CR>", function()
+                    local selection = action_state.get_selected_entry()
+                    actions.close(prompt_bufnr)
+                    -- Handle the selected reference here
+                    print(
+                        selection.value.author
+                            .. " ("
+                            .. selection.value.year
+                            .. "): "
+                            .. selection.value.title
+                    )
+                end)
+                return true
+            end,
+        })
+        :find()
 end
 
+--  text wrapping in the preview window
+vim.api.nvim_create_autocmd("User", {
+    pattern = "TelescopePreviewerLoaded",
+    callback = function()
+        vim.wo.wrap = true
+        vim.wo.linebreak = true
+    end,
+})
 local finish_annotations = function(_, idx)
     if not idx then return end
 

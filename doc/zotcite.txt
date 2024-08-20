@@ -52,7 +52,7 @@ first page of the PDF as page 1 which in most cases will be wrong. You can fix
 this by passing an integer number as a second argument to `:Zannotations`. For
 example, if page 1 of a book is page 11 of its PDF, you will get the correct
 page numbers if you do:
->vim
+>
  :Zannotations key -10
 <
 By default, the colon separating the year from the page is replaced by ", p.
@@ -66,13 +66,11 @@ to make a selection of the annotations that you would like to import then use
 the vim command `:Zselectannotations key` where `key` is a word with one or
 more letters of authors' names or from a reference title. In the use case, a
 second dialogue will appear in which the annotations and accompanying notes to
-those annotations will appear (if you have made notes). You can scroll through
+those annoations will appear (if you have made notes). You can scroll through
 the annotation list and press `enter` on the annotations you'd wish to import.
 Once finished making the selection then you need to press `Esc` to escape the
-annotation selection dialogue.
->vim
-  :Zselectannotations key
-<
+annotation selection dialogue. 
+
 To extract notes from Zotero, use the Vim command `:Znote key`
 
 Similarly, to extract annotations (notes and highlighted texts) that were
@@ -93,7 +91,7 @@ citation keys is case-insensitive. (See also
 To convert a Markdown document with pandoc, use the `zotref.py` filter that comes
 with Zotcite. The Zotcite plugin adds the directory where `zotref.py` is to the
 system `$PATH`. So, from within Neovim, do:
->vim
+>
  :!pandoc file_name.md -s -o file_name.html -F zotref.py --citeproc
 <
 Replace `file_name` with the actual name of the markdown document being
@@ -102,14 +100,14 @@ edited, and `html` with the appropriate file extension.
 To compile an RMarkdown document with the Nvim-R plugin
 (https://github.com/jalvesaq/Nvim-R), add the following lines to the YAML
 header of the document (replace `pdf_document` with the desired output):
->yaml
+>
  output:
    pdf_document:
      pandoc_args: ['-F', 'zotref.py', '--citeproc']
 <
 Note: On Windows, you might have to replace `zotref.py` with its full path.
 Example:
->yaml
+>
  output:
    pdf_document:
      pandoc_args: ['-F', '/Path/to/zotcite/python3/zotref.py', '--citeproc']
@@ -120,7 +118,7 @@ Note: Old versions of `pandoc` require `-F pandoc-citeproc` instead of
 Note: On Windows, `zotref.py` will convert the bib file from "latin1" to
 "utf-8". If "latin1" is not the Zotero encoding in your region, set
 `zotero_encoding` with the correct value in your `config`. Example:
->lua
+>
  zotero_encoding = 'latin2'
 <
 In Vim's Normal mode, put the cursor over a citation key and press:
@@ -145,7 +143,7 @@ You can also use the command `:Zseek` to see what references have either a
 last author's name or title matching the pattern that you are seeking for. The
 references displayed in the command line at the bottom of the screen will be
 the same that would be in an omni completion menu. Example:
->vim
+>
  :Zseek marx
 <
 The goal of Zotcite is to avoid the need for exporting bib files from Zotero.
@@ -163,25 +161,25 @@ It is possible --- but not recommended --- to mix bib files that are generated
 and overwritten by zotcite with other ones because the final document may
 include duplicated references. Anyway, if you have an old bib file and want to
 complement it with Zotero references, you can put in your YAML header:
->yaml
+>
  bibliography:
    - old.bib
    - new-zotcite.bib
 <
 or, simply:
->yaml
+>
  bibliography: old.bib
 <
 If you have an OpenDocument Text with citations inserted by the Zotero
 extension and want to convert it to Markdown, you can use the `odt2md.py`
 application from the `python3` directory to help you convert the document.
 Example:
->sh
+>
  /path/to/zotcite/python3/odt2md.py Document.odt
 <
 Within Neovim, you can run the command `:Zodt2md` to convert the ODT document
 and see the resulting Markdown document in a new tab:
->vim
+>
  :Zodt2md Document.odt
 <
 Note that the conversion is not perfect because the visible text from the
@@ -212,33 +210,33 @@ of the citation fields.
 
 To change the shortcut to open reference attachment, set the value of
 <Plug>ZOpenAttachment in your |init.lua| as below:
->lua
- vim.keymap.set("n", "<c-]>", "<Plug>ZOpenAttachment")
+>
+ nmap <c-]> <Plug>ZOpenAttachment
 <
 To change the shortcut to see basic information on the reference of a citation
 key, follow the example:
->lua
- vim.keymap.set("n", "<Leader>I", "<Plug>ZCitationInfo")
+>
+ nmap ,I <Plug>ZCitationInfo
 <
 To change the shortcut to see how the reference of a citation key is stored by
 Zotcite, follow the example:
->lua
- vim.keymap.set("n", "<Leader>A", "<Plug>ZCitationCompleteInfo")
+>
+ nmap ,A <Plug>ZCitationCompleteInfo
 <
 To change the shortcut to see how the reference is converted into YAML, follow
 the example:
->lua
- vim.keymap.set("n", "<Leader>Y", "<Plug>ZCitationYamlRef")
+>
+ nmap ,Y <Plug>ZCitationYamlRef
 <
 To change the shortcut to extract the abstract into the current buffer from the
 abstract field in complete info:
->lua
- vim.keymap.set("n", "<Leader>Y", "<Plug>ZExtractAbstract")
+>
+ nmap ,Y <Plug>ZExtractAbstract 
 <
 To change the shortcut to view the (pdf or html) document generated from the
 current (Markdown, Rmd, or Quarto) document, follow the example:
->lua
- vim.keymap.set("n", "<Leader>V", "<Plug>ZViewDocument")
+>
+ nmap ,V <Plug>ZViewDocument
 <
 
 ------------------------------------------------------------------------------
@@ -364,7 +362,7 @@ opposed to your system's default PDF viewer), put the following in your
 Note that you'll need to have Zotero configured as the default app for
 opening `zotero://` links. On Linux, assuming your Zotero installation
 included a `zotero.desktop` file, you can do the following:
->sh
+>
  xdg-mime default zotero.desktop x-scheme-handler/zotero
 <
 
@@ -390,7 +388,7 @@ filters will be run after the `citeproc` filter. However, the `zotref.py`
 filter must be run before `citeproc`. The best solution for this problem might
 be to create a file named `citeproc.lua` with the following contents and save
 it somewhere:
->lua
+>
  function Pandoc (doc)
    return pandoc.utils.citeproc(doc)
  end
@@ -398,7 +396,7 @@ it somewhere:
 Then, do not use either the `bibliography` field or the `citeproc` field (if
 you use one of them, `citeproc` will run before `zotref.py`) and put in the
 header of your Quarto document:
->yaml
+>
  filters:
      - /full/path/to/zotcite/python3/zotref.py
      - /full/path/to/your/citeproc.lua
@@ -419,7 +417,7 @@ For a Lua filter to fix the APA citation style, see:
 								      *:Zinfo*
 If either the plugin does not work or you want easy access to the values of
 some internal variables, do the following command:
->vim
+>
  :Zinfo
 <
 Note that, unless you are editing Quarto documents, Zotcite will not enable
