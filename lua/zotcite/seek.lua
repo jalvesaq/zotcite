@@ -84,7 +84,7 @@ M.refs = function(key)
             }),
             sorter = sorters.generic_sorter({}),
             previewer = previewers.new_buffer_previewer({
-                define_preview = function(self, entry, status)
+                define_preview = function(self, entry, _)
                     local bufnr = self.state.bufnr
                     vim.api.nvim_set_option_value("filetype", "markdown", { buf = bufnr })
 
