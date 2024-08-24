@@ -222,8 +222,9 @@ M.refs = function(key)
     pickers
         .new({}, {
             prompt_title = "Search pattern",
+            results_title = "Zotero references",
             finder = finders.new_table({
-                references = references,
+                results = references,
                 entry_maker = function(entry)
                     local displayer = entry_display.create({
                         separator = " ",
