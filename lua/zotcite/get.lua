@@ -203,27 +203,27 @@ end
 
 M.refs = function(key)
     local mtchs = getmach(key)
-    local results = {}
+    local references = {}
 
     for _, v in pairs(mtchs) do
         local room = vim.o.columns - #v.year - #v.author - 3
         local title = v.ttl
         if #title > room then title = string.sub(title, 0, room) end
-        table.insert(results, {
+        table.insert(references, {
             display = v.author .. " " .. v.year .. " " .. title,
             author = v.author,
             year = v.year,
             title = v.ttl,
-            abstract = v.abstract, -- Include the abstract in the entry
+            abstract = v.abstract,
             citation_key = v.key,
         })
     end
 
     pickers
         .new({}, {
-            prompt_title = "Zotero References",
+            prompt_title = "Search pattern",
             finder = finders.new_table({
-                results = results,
+                references = references,
                 entry_maker = function(entry)
                     local displayer = entry_display.create({
                         separator = " ",
