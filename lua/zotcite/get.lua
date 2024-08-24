@@ -87,6 +87,7 @@ local getmach = function(key)
             author = v.alastnm,
             year = v.year,
             ttl = v.title,
+            abstract = v.abstractNote,
         }
         table.insert(resp, item)
     end
@@ -190,21 +191,6 @@ M.abstract = function()
             zwarn("No abstract found associated with article")
         end
     end
-end
-
-M.refs = function(key)
-    local mtchs = getmach(key)
-    local info = {}
-    local idx = 0
-    for _, v in pairs(mtchs) do
-        idx = idx + 1
-        local room = vim.o.columns - #v.year - #v.author - 3
-        table.insert(info, { v.author .. " ", "Identifier" })
-        if #v.ttl > room then v.ttl = string.sub(v.ttl, 0, room) end
-        table.insert(info, { v.year .. " ", "Number" })
-        table.insert(info, { v.ttl .. "\n", "Title" })
-    end
-    vim.schedule(function() vim.api.nvim_echo(info, false, {}) end)
 end
 
 local finish_annotations = function(_, idx)

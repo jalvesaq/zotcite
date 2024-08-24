@@ -111,7 +111,7 @@ local global_init = function()
     vim.api.nvim_create_user_command("Zrefs", require("zotcite.utils").add_yaml_refs, {})
     vim.api.nvim_create_user_command(
         "Zseek",
-        function(tbl) require("zotcite.get").refs(tbl.args) end,
+        function(tbl) require("zotcite.seek").refs(tbl.args) end,
         { nargs = 1, desc = "Zotcite: seek references" }
     )
     vim.api.nvim_create_user_command(

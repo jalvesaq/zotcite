@@ -6,30 +6,18 @@
 _Zotcite_ is a Neovim plugin that provides integration with Zotero. With
 _zotcite_ you can:
 
-- Do auto-completion of citation keys from Zotero database in
-  Markdown, RMarkdown and Quarto documents (with `cmp-zotcite`).
+  - Do auto-completion of citation keys from Zotero database in
+    Markdown, RMarkdown and Quarto documents (with `cmp-zotcite`).
 
-  ![Auto-completion](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_completion.gif "auto-completion")
+    ![Auto-completion](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_completion.gif "auto-completion")
 
-  ![Citation key highligting](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_conceal.gif "Citation key highlighting")
+    ![Citation key highligting](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_conceal.gif "Citation key highlighting")
 
-- Quickly see on the status bar information on the reference under the cursor.
+  - Quickly see on the status bar information on the reference under the cursor.
 
-  ![Reference brief information](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_info.gif "Reference brief information")
+    ![Reference brief information](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_info.gif "Reference brief information")
 
-  ![Complete reference information](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_more_info.gif "Complete reference information")
-
-- Extract the corresponding abstract from the article.
-
-  ![Abstract for corresponding abstract extracted](./zotcite_extract_abstract.gif)
-
-- Importing annotations can be done using `:Zannotations <key>`
-
-  ![Importing annotations from article](./zotcite_annotations.gif)
-
-- Importing specific annotations from an article `:Zselectannotations <key>`
-
-  ![Importing annotation selection](./zotcite_select_annotations.gif)
+    ![Complete reference information](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_more_info.gif "Complete reference information")
 
   - Use the `zotref.py` filter to pre-process the Markdown document before the
     citations are processed by `pandoc`, avoiding the need of `bib` files.
@@ -48,22 +36,23 @@ _Zotcite_ is being developed and tested on Linux and should work flawlessly on
 other Unix systems, such as Mac OS X. It may require additional configuration
 on Windows.
 
+
 ## Installation
 
 Requirements:
 
-- Zotero >= 5
+  - Zotero >= 5
 
-- Python 3
+  - Python 3
 
-- Python 3 modules pynvim (see Neovim documentation on `provider-python` for
-  details) and PyYAML.
+  - Python 3 modules pynvim (see Neovim documentation on `provider-python` for
+    details) and PyYAML.
 
-- Python modules PyQt5 and python-poppler-qt5 (only if you are going to extract
-  annotations from PDF documents). On Debian based Linux distributions, you
-  can install them with the command:
+  - Python modules PyQt5 and python-poppler-qt5 (only if you are going to extract
+    annotations from PDF documents). On Debian based Linux distributions, you
+    can install them with the command:
 
-  `sudo apt install python3-pyqt5 python3-poppler-qt5`
+    `sudo apt install python3-pyqt5 python3-poppler-qt5`
 
 Depending on your system, you may have to install python modules in an virtual
 environment and maybe also system-wide.
