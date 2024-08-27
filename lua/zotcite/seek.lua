@@ -7,36 +7,23 @@ local previewers = require("telescope.previewers")
 local entry_display = require("telescope.pickers.entry_display")
 
 local M = {}
-local getmach = function(key)
-    local citeptrn = key:gsub(" .*", "")
-    local refs = vim.fn.py3eval(
-        'ZotCite.GetMatch("'
-            .. citeptrn
-            .. '", "'
-            .. vim.fn.escape(vim.fn.expand("%:p"), "\\")
-            .. '", True)'
-    )
-    local resp = {}
-    for _, v in pairs(refs) do
-        local item = {
-            key = v.zotkey,
-            author = v.alastnm,
-            year = v.year,
-            ttl = v.title,
-            abstract = v.abstractNote,
-        }
-        table.insert(resp, item)
-    end
-    if #resp == 0 then
-        vim.schedule(
-            function() vim.api.nvim_echo({ { "No matches found." } }, false, {}) end
-        )
-    end
-    return resp
+
+M.print = function(ref)
+    local msg = {
+        { ref.value.author, "Identifier" },
+        { " " },
+        { ref.value.year, "Number" },
+        { " " },
+        { ref.value.title, "Title" },
+    }
+    vim.schedule(function() vim.api.nvim_echo(msg, false, {}) end)
 end
 
-M.refs = function(key)
-    local mtchs = getmach(key)
+--- Use telescope to find and select a reference
+---@param key string Pattern to search
+---@param cb function Callback function
+M.refs = function(key, cb)
+    local mtchs = require("zotcite.get").match(key)
     local references = {}
 
     for _, v in pairs(mtchs) do
@@ -108,13 +95,7 @@ M.refs = function(key)
                     local selection = action_state.get_selected_entry()
                     actions.close(prompt_bufnr)
                     -- Handle the selected reference here
-                    print(
-                        selection.value.author
-                            .. " ("
-                            .. selection.value.year
-                            .. "): "
-                            .. selection.value.title
-                    )
+                    cb(selection)
                 end)
                 return true
             end,

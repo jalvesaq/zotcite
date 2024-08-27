@@ -90,9 +90,7 @@ M.open = function(fpath)
             obj = vim.ui.open(fpath):wait()
             em = 'Error running `vim.ui.open("' .. fpath .. '")`: \n'
         end
-        if obj.code ~= 0 then
-            zwarn(em .. obj.stderr)
-        end
+        if obj.code ~= 0 then zwarn(em .. obj.stderr) end
         return
     end
     if config.open_cmd then
