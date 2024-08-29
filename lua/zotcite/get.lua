@@ -71,7 +71,7 @@ M.PDFPath = function(zotkey, cb)
     end
 end
 
-local getmach = function(key)
+M.match = function(key)
     local citeptrn = key:gsub(" .*", "")
     local refs = vim.fn.py3eval(
         'ZotCite.GetMatch("'
@@ -100,7 +100,7 @@ local getmach = function(key)
 end
 
 local FindCitationKey = function(str, cb)
-    local mtchs = getmach(str)
+    local mtchs = M.match(str)
     if #mtchs == 0 then return end
     local opts = {}
     sel_list = {}
