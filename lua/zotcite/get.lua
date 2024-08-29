@@ -1,7 +1,7 @@
 local config = require("zotcite.config").get_config()
 local zwarn = require("zotcite").zwarn
+local seek = require("zotcite.seek")
 
-local sel_list = {}
 local offset = "0"
 local pdfnote_data = {}
 
@@ -99,18 +99,6 @@ M.match = function(key)
     return resp
 end
 
-local FindCitationKey = function(str, cb)
-    local mtchs = M.match(str)
-    if #mtchs == 0 then return end
-    local opts = {}
-    sel_list = {}
-    for _, v in pairs(mtchs) do
-        table.insert(opts, v.author .. " (" .. v.year .. ") " .. v.ttl)
-        table.insert(sel_list, v.key)
-    end
-    vim.schedule(function() vim.ui.select(opts, {}, cb) end)
-end
-
 M.citation_key = function()
     local lnum = vim.api.nvim_win_get_cursor(0)[1]
     local line = vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]
@@ -196,7 +184,7 @@ end
 local finish_annotations = function(_, idx)
     if not idx then return end
 
-    local k = sel_list[idx]
+    local k = seek.sel_list[idx]
     local repl = vim.fn.py3eval('ZotCite.GetAnnotations("' .. k .. '", ' .. offset .. ")")
     if #repl == 0 then
         zwarn("No annotation found.")
@@ -209,7 +197,7 @@ end
 local finish_annotations_selection = function(_, idx)
     if not idx then return end
 
-    local k = sel_list[idx]
+    local k = seek.sel_list[idx]
     local raw_annotations =
         vim.fn.py3eval('ZotCite.GetAnnotations("' .. k .. '", ' .. offset .. ")")
     if #raw_annotations == 0 then
@@ -316,7 +304,6 @@ local finish_annotations_selection = function(_, idx)
         select_annotation()
     end
 end
-
 M.annotations = function(ko, use_selection)
     local argmt
     if ko:find(" ") then
@@ -328,9 +315,9 @@ M.annotations = function(ko, use_selection)
         offset = "0"
     end
     if use_selection then
-        FindCitationKey(argmt, finish_annotations_selection)
+        seek.FindCitationKey(argmt, finish_annotations_selection)
     else
-        FindCitationKey(argmt, finish_annotations)
+        seek.FindCitationKey(argmt, finish_annotations)
     end
 end
 
@@ -348,7 +335,7 @@ local finish_note = function(_, idx)
     end
 end
 
-M.note = function(key) FindCitationKey(key, finish_note) end
+M.note = function(key) seek.FindCitationKey(key, finish_note) end
 
 local finish_pdfnote_2 = function(_, idx)
     local fpath = sel_list[idx]
@@ -392,7 +379,7 @@ local finish_pdfnote = function(_, idx)
     end
 end
 
-M.PDFNote = function(key) FindCitationKey(key, finish_pdfnote) end
+M.PDFNote = function(key) seek.FindCitationKey(key, finish_pdfnote) end
 
 M.yaml_field = function(field)
     local node = vim.treesitter.get_node({ bufnr = 0, pos = { 0, 0 } })
