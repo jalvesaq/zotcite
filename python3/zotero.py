@@ -709,6 +709,7 @@ class ZoteroEntries:
         for e in self._e:
             for k in keys:
                 zotkey = re.sub('#.*', '', k)
+                zotkey = re.sub('@', '', zotkey)
                 if zotkey == self._e[e]['zotkey']:
                     ref += self._get_yaml_ref(self._e[e], k)
         if ref != '':

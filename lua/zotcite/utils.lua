@@ -7,12 +7,19 @@ local zwarn = require("zotcite").zwarn
 M.add_yaml_refs = function()
     local bigstr = vim.fn.join(vim.fn.getline(1, "$"))
     local rlist = vim.fn.uniq(vim.fn.sort(vim.fn.split(bigstr)))
-    if rlist and type(rlist) == "table" then
-        local refs =
-            vim.fn.py3eval("ZotCite.GetYamlRefs('" .. table.concat(rlist, "\n") .. "')")
-        local rlines = vim.fn.split(refs, "\n")
-        local lnum = vim.api.nvim_win_get_cursor(0)[1]
-        vim.api.nvim_buf_set_lines(0, lnum, lnum, true, rlines)
+    if rlist and type(rlist) == "table" and #rlist > 0 then
+        local list2 = {}
+        for _, v in pairs(rlist) do
+            if v:find("^@.*#") then table.insert(list2, v) end
+        end
+        if #list2 > 0 then
+            local refs = vim.fn.py3eval(
+                "ZotCite.GetYamlRefs(['" .. table.concat(list2, "', '") .. "'])"
+            )
+            local rlines = vim.fn.split(refs, "\n")
+            local lnum = vim.api.nvim_win_get_cursor(0)[1]
+            vim.api.nvim_buf_set_lines(0, lnum, lnum, true, rlines)
+        end
     end
 end
 
