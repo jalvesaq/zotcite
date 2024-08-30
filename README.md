@@ -58,7 +58,9 @@ Depending on your system, you may have to install python modules in an virtual
 environment and maybe also system-wide.
 
 Zotcite can be installed as any Neovim plugin, and it depends on
-[cmp-zotcite](https://github.com/jalvesaq/cmp-zotcite) and
+[cmp-zotcite](https://github.com/jalvesaq/cmp-zotcite),
+[telescope.nvim](https://github.com/nvim-telescope/telescope.nvim),
+and
 [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) as well
 as tree-sitter parser for `markdown`, `markdown_inline`, and `yaml`. Below is
 an example of how to install it with [lazy.nvim](https://github.com/folke/lazy.nvim):
@@ -75,6 +77,8 @@ an example of how to install it with [lazy.nvim](https://github.com/folke/lazy.n
             })
         end
     },
+
+    'nvim-telescope/telescope.nvim',
 
     {
         "nvim-treesitter/nvim-treesitter",
