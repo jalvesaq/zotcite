@@ -8,6 +8,34 @@ local entry_display = require("telescope.pickers.entry_display")
 
 local M = {}
 
+local get_match = function(key)
+    local citeptrn = key:gsub(" .*", "")
+    local refs = vim.fn.py3eval(
+        'ZotCite.GetMatch("'
+            .. citeptrn
+            .. '", "'
+            .. vim.fn.escape(vim.fn.expand("%:p"), "\\")
+            .. '", True)'
+    )
+    local resp = {}
+    for _, v in pairs(refs) do
+        local item = {
+            key = v.zotkey,
+            author = v.alastnm,
+            year = v.year,
+            ttl = v.title,
+            abstract = v.abstractNote,
+        }
+        table.insert(resp, item)
+    end
+    if #resp == 0 then
+        vim.schedule(
+            function() vim.api.nvim_echo({ { "No matches found." } }, false, {}) end
+        )
+    end
+    return resp
+end
+
 M.print = function(ref)
     local msg = {
         { ref.value.author, "Identifier" },
@@ -23,7 +51,7 @@ end
 ---@param key string Pattern to search
 ---@param cb function Callback function
 M.refs = function(key, cb)
-    local mtchs = require("zotcite.get").match(key)
+    local mtchs = get_match(key)
     local references = {}
 
     for _, v in pairs(mtchs) do
@@ -52,8 +80,8 @@ M.refs = function(key, cb)
                         items = {
                             { width = 40 }, -- Author
                             { remaining = true },
-                            --{ width = 5 }, -- Year
-                            --{ remaining = true }, -- Title
+                            { width = 5 }, -- Year
+                            { remaining = true }, -- Title
                         },
                     })
                     return {
@@ -62,7 +90,7 @@ M.refs = function(key, cb)
                             return displayer({
                                 { e.value.author, "Identifier" },
                                 { e.value.year, "Number" },
-                                --{ e.value.title, "Title" },
+                                { e.value.title, "Title" },
                             })
                         end,
                         ordinal = entry.display,

@@ -78,7 +78,7 @@ local set_path = function()
             vim.env.PATH = zpath .. ";" .. vim.env.PATH
         end
     else
-        if vim.env.PATH ~= config.zotcite_home then
+        if not vim.env.PATH:find(config.zotcite_home) then
             vim.env.PATH = config.zotcite_home .. ":" .. vim.env.PATH
         end
     end
