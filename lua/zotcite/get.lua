@@ -6,6 +6,11 @@ local offset = "0"
 local pdfnote_data = {}
 local sel_list = {}
 
+local citation = {
+    start_col = 0,
+    end_col = 0,
+}
+
 local M = {}
 
 local TranslateZPath = function(strg)
@@ -138,6 +143,41 @@ M.reference_data = function(btype)
     end
 end
 
+local finish_citation = function(ref)
+    local rownr = vim.api.nvim_win_get_cursor(0)[1] - 1
+    local cite = "@" .. ref.value.key .. "#" .. ref.value.cite
+    vim.api.nvim_buf_set_text(
+        0,
+        rownr,
+        citation.start_col,
+        rownr,
+        citation.end_col,
+        { cite }
+    )
+    local colnr = citation.start_col + #cite
+    vim.api.nvim_win_set_cursor(0, { rownr + 1, colnr })
+    vim.api.nvim_feedkeys("a", "n", false)
+end
+
+M.citation = function()
+    local argmt = ""
+    local line = vim.api.nvim_get_current_line()
+    local last = vim.api.nvim_win_get_cursor(0)[2]
+    citation.start_col = last
+    citation.end_col = last
+    local c = line:sub(last, last):lower()
+    if c >= "a" and c <= "z" then
+        local first = last - 1
+        while first > 0 and c >= "a" and c <= "z" do
+            first = first - 1
+            c = line:sub(first, first):lower()
+        end
+        argmt = line:sub(first + 1, last):lower()
+        citation.start_col = first
+    end
+    seek.refs(argmt, finish_citation)
+end
+
 M.abstract = function()
     local wrd = M.citation_key()
     if wrd ~= "" then
@@ -156,7 +196,7 @@ end
 
 local finish_annotations = function(sel)
     local repl = vim.fn.py3eval(
-        'ZotCite.GetAnnotations("' .. sel.value.citation_key .. '", ' .. offset .. ")"
+        'ZotCite.GetAnnotations("' .. sel.value.key .. '", ' .. offset .. ")"
     )
     if #repl == 0 then
         zwarn("No annotation found.")
@@ -168,7 +208,7 @@ end
 
 local finish_annotations_selection = function(sel)
     local raw_annotations = vim.fn.py3eval(
-        'ZotCite.GetAnnotations("' .. sel.value.citation_key .. '", ' .. offset .. ")"
+        'ZotCite.GetAnnotations("' .. sel.value.key .. '", ' .. offset .. ")"
     )
     if #raw_annotations == 0 then
         zwarn("No annotation found.")
@@ -295,7 +335,7 @@ M.annotations = function(ko, use_selection)
 end
 
 local finish_note = function(sel)
-    local repl = vim.fn.py3eval('ZotCite.GetNotes("' .. sel.value.citation_key .. '")')
+    local repl = vim.fn.py3eval('ZotCite.GetNotes("' .. sel.value.key .. '")')
     if repl == "" then
         zwarn("No note found.")
     else
@@ -333,7 +373,7 @@ local finish_pdfnote_2 = function(_, idx)
 end
 
 local finish_pdfnote = function(sel)
-    local zotkey = sel.value.citation_key
+    local zotkey = sel.value.key
     local repl = vim.fn.py3eval('ZotCite.GetRefData("' .. zotkey .. '")')
     local citekey = " '@" .. zotkey .. "#" .. repl["citekey"] .. "' "
     local pg = "1"
