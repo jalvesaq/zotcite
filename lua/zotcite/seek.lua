@@ -27,13 +27,50 @@ end
 
 M.print = function(ref)
     local msg = {
-        { ref.value.author, "Identifier" },
+        { ref.value.alastnm, "Identifier" },
         { " " },
         { ref.value.year, "Number" },
         { " " },
         { ref.value.title, "Title" },
     }
     vim.schedule(function() vim.api.nvim_echo(msg, false, {}) end)
+end
+
+local format_preview = function(v)
+    local alist = {}
+    for _, n in pairs(v.author) do
+        table.insert(alist, n[2] .. ", " .. n[1])
+    end
+    local authors = table.concat(alist, "; ")
+    local preview_text
+    if v.etype == "journalArticle" then
+        preview_text = string.format(
+            "%s (%s) %s. _%s_.\n\n%s\n",
+            authors,
+            v.year or "",
+            v.title or "",
+            v.publicationTitle or "",
+            v.abstract or "No abstract available."
+        )
+    elseif v.etype == "bookSection" then
+        preview_text = string.format(
+            "%s (%s) %s. In: _%s_.\n\n%s\n",
+            authors,
+            v.year or "",
+            v.title or "",
+            v.publicationTitle or "",
+            v.abstract or ""
+        )
+    else
+        preview_text = string.format(
+            "%s (%s) _%s_.\n\n%s\n",
+            authors,
+            v.year or "",
+            v.title or "",
+            v.abstract or ""
+        )
+    end
+    return preview_text
 end
 
 --- Use telescope to find and select a reference
@@ -51,7 +88,10 @@ M.refs = function(key, cb)
         if #v.alastnm > awidth then awidth = #v.alastnm end
         table.insert(references, {
             display = v.alastnm .. " " .. v.year .. " " .. v.title,
-            author = v.alastnm,
+            etype = v.etype,
+            publicationTitle = v.publicationTitle or v.bookTitle,
+            author = v.author,
+            alastnm = v.alastnm,
             year = v.year,
             title = v.title,
             abstract = v.abstractNote,
@@ -80,7 +120,7 @@ M.refs = function(key, cb)
                         value = entry,
                         display = function(e)
                             return displayer({
-                                { e.value.author, "Identifier" },
+                                { e.value.alastnm, "Identifier" },
                                 { e.value.year, "Number" },
                                 { e.value.title, "Title" },
                             })
@@ -95,12 +135,8 @@ M.refs = function(key, cb)
                     local bufnr = self.state.bufnr
                     vim.api.nvim_set_option_value("filetype", "markdown", { buf = bufnr })
 
-                    -- Use the abstract directly from the entry
-                    local preview_text = string.format(
-                        "# %s\n\n%s\n",
-                        entry.value.title,
-                        entry.value.abstract or "No abstract available."
-                    )
+                    local preview_text = format_preview(entry.value)
+
                     vim.api.nvim_buf_set_lines(
                         bufnr,
                         0,
