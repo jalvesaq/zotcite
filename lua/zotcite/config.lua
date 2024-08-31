@@ -113,28 +113,28 @@ local global_init = function()
     vim.api.nvim_create_user_command(
         "Zseek",
         function(tbl) s.refs(tbl.args, s.print) end,
-        { nargs = 1, desc = "Zotcite: seek references" }
+        { nargs = "?", desc = "Zotcite: seek references" }
     )
     vim.api.nvim_create_user_command(
         "Znote",
         function(tbl) require("zotcite.get").note(tbl.args) end,
-        { nargs = 1, desc = "Zotcite: insert Zotero notes" }
+        { nargs = "?", desc = "Zotcite: insert Zotero notes" }
     )
     vim.api.nvim_create_user_command(
         "Zannotations",
         function(tbl) require("zotcite.get").annotations(tbl.args, false) end,
-        { nargs = 1, desc = "Zotcite: insert Zotero annotations" }
+        { nargs = "?", desc = "Zotcite: insert Zotero annotations" }
     )
     vim.api.nvim_create_user_command(
         "Zselectannotations",
         function(tbl) require("zotcite.get").annotations(tbl.args, true) end,
-        { nargs = 1, desc = "Zotcite: insert Zotero annotations" }
+        { nargs = "?", desc = "Zotcite: insert Zotero annotations" }
     )
 
     vim.api.nvim_create_user_command(
         "Zpdfnote",
         function(tbl) require("zotcite.get").PDFNote(tbl.args) end,
-        { nargs = 1, desc = "Zotcite: insert PDF annotations" }
+        { nargs = "?", desc = "Zotcite: insert PDF annotations" }
     )
     vim.api.nvim_create_user_command(
         "Zodt2md",
