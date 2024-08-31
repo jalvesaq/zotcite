@@ -88,7 +88,11 @@ To insert citation keys, install `cmp-zotcite`:
 
 Then, in Insert mode, type the `@` letter and one or more letters of either
 the last name of the first author or the reference title. The matching of
-citation keys is case-insensitive. (See also
+citation keys is case-insensitive.
+
+You can also use Telescope to insert a citation key by pressing <C-X><C-C> in
+Insert mode. The sequence of ASCII letters (letter of the English alphabet)
+before the cursor will be used to filter the results (see `:Zseek` below).
 
 To convert a Markdown document with pandoc, use the `zotref.py` filter that comes
 with Zotcite. The Zotcite plugin adds the directory where `zotref.py` is to the
@@ -143,11 +147,22 @@ In Vim's Normal mode, put the cursor over a citation key and press:
 
 You can also use the command `:Zseek` to see what references have either a
 last author's name or title matching the pattern that you are seeking for. The
-references displayed in the command line at the bottom of the screen will be
-the same that would be in an omni completion menu. Example:
+references displayed in a Telescope picker widget will be the same that would
+be in an omni completion menu. Example:
 >vim
  :Zseek marx
 <
+Only the first word is used as the search pattern. Thus, the following command
+would give the same result as the above one:
+>vim
+ :Zseek marx anything
+<
+The Telescope picker is filled with references that include the searched
+pattern as a substring in the author's names or the work's title, but
+Telescope allows you to further fuzzy filter the results. If you want the
+Telescope picker filled with Zotero's entire database, run `:Zeek` without
+arguments.
+
 The goal of Zotcite is to avoid the need for exporting bib files from Zotero.
 The `zotref.py` filter receives the Markdown document from its standard input,
 extracts all citation keys from the document, gets all corresponding
@@ -187,7 +202,7 @@ and see the resulting Markdown document in a new tab:
 Note that the conversion is not perfect because the visible text from the
 citation fields is not deleted. You have to delete them manually, keeping what
 is needed, such as the page numbers that you have added manually. It is not
-possible to automatize this step because LibreOffice allows the manual edition
+possible to automate this step because LibreOffice allows the manual edition
 of the citation fields.
 
 
@@ -250,7 +265,7 @@ where `ZoteroKey` is the key attributed by Zotero to the references stored in
 its database, `Author` is the last name of the first author, and `Year` is the
 full year (four digits). The `@ZoteroKey#` part of the citation key is
 mandatory because `zotref.py` uses it to add the bibliographic data that is
-parsed by `citeproc`, but it will be concealed by Vim. The remaining of
+parsed by `citeproc`, but it will be concealed by Vim. The remainder of
 the key is customizable. You can define whether it will include or not the
 first author's last name (in either lower case `{author}` or title case
 `{Author}`), the last name of the first three authors (either `{authors}` or
@@ -372,8 +387,8 @@ included a `zotero.desktop` file, you can do the following:
 4.6 Show errors of command to open attachment        *zotcite_wait_attachment*
 
 While opening an attachment, zotcite cannot catch errors because it doesn't
-wait the application to finish. If zotcite fails to open a PDF attachment, you
-may want to temporarily set `wait_attachment` as `true` in your `config`:
+wait for the application to finish. If zotcite fails to open a PDF attachment,
+you may want to temporarily set `wait_attachment` as `true` in your `config`:
 >lua
  wait_attachment = true
 <
