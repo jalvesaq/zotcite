@@ -21,6 +21,7 @@ local get_match = function(key)
     for _, v in pairs(refs) do
         local item = {
             key = v.zotkey,
+            cite = v.citekey,
             author = v.alastnm,
             year = v.year,
             ttl = v.title,
@@ -66,7 +67,8 @@ M.refs = function(key, cb)
             year = v.year,
             title = v.ttl,
             abstract = v.abstract,
-            citation_key = v.key,
+            key = v.key,
+            cite = v.cite,
         })
     end
     if awidth > awlim then awidth = awlim end
