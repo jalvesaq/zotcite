@@ -197,42 +197,42 @@ M.init = function()
             "Zotcite: insert citation"
         )
         create_map(
-           "n",
+            "n",
             "<Plug>ZOpenAttachment",
             "<Leader>zo",
             "<Cmd>lua require('zotcite.get').open_attachment()<CR>",
             "Zotcite: open attachment"
         )
         create_map(
-           "n",
+            "n",
             "<Plug>ZViewDocument",
             "<Leader>zv",
             "<Cmd>lua require('zotcite.utils').view_document()<CR>",
             "Zotcite: view document"
         )
         create_map(
-           "n",
+            "n",
             "<Plug>ZCitationInfo",
             "<Leader>zi",
             "<Cmd>lua require('zotcite.get').reference_data('ayt')<CR>",
             "Zotcite: show reference info (short)"
         )
         create_map(
-           "n",
+            "n",
             "<Plug>ZCitationCompleteInfo",
             "<Leader>za",
             "<Cmd>lua require('zotcite.get').reference_data('raw')<CR>",
             "Zotcite: show reference info (complete)"
         )
         create_map(
-           "n",
+            "n",
             "<Plug>ZCitationYamlRef",
             "<Leader>zy",
             "<Cmd>lua require('zotcite.get').yaml_ref()<CR>",
             "Zotcite: show reference as YAML"
         )
         create_map(
-           "n",
+            "n",
             "<Plug>ZExtractAbstract",
             "<leader>zb",
             "<Cmd>lua require('zotcite.get').abstract()<CR>",
