@@ -17,24 +17,12 @@ local get_match = function(key)
             .. vim.fn.escape(vim.fn.expand("%:p"), "\\")
             .. '", True)'
     )
-    local resp = {}
-    for _, v in pairs(refs) do
-        local item = {
-            key = v.zotkey,
-            cite = v.citekey,
-            author = v.alastnm,
-            year = v.year,
-            ttl = v.title,
-            abstract = v.abstractNote,
-        }
-        table.insert(resp, item)
-    end
-    if #resp == 0 then
+    if #refs == 0 then
         vim.schedule(
             function() vim.api.nvim_echo({ { "No matches found." } }, false, {}) end
         )
     end
-    return resp
+    return refs
 end
 
 M.print = function(ref)
@@ -60,15 +48,15 @@ M.refs = function(key, cb)
     if awlim < 20 then awlim = 20 end
     if awlim > 60 then awlim = 60 end
     for _, v in pairs(mtchs) do
-        if #v.author > awidth then awidth = #v.author end
+        if #v.alastnm > awidth then awidth = #v.alastnm end
         table.insert(references, {
-            display = v.author .. " " .. v.year .. " " .. v.ttl,
-            author = v.author,
+            display = v.alastnm .. " " .. v.year .. " " .. v.title,
+            author = v.alastnm,
             year = v.year,
-            title = v.ttl,
-            abstract = v.abstract,
-            key = v.key,
-            cite = v.cite,
+            title = v.title,
+            abstract = v.abstractNote,
+            key = v.zotkey,
+            cite = v.citekey,
         })
     end
     if awidth > awlim then awidth = awlim end
