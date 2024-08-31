@@ -54,12 +54,14 @@ M.refs = function(key, cb)
     local mtchs = get_match(key)
     local references = {}
 
+    local awidth = 2
+    local awlim = vim.o.columns - 140
+    if awlim < 20 then awlim = 20 end
+    if awlim > 60 then awlim = 60 end
     for _, v in pairs(mtchs) do
-        local room = vim.o.columns - #v.year - #v.author - 3
-        local title = v.ttl
-        if #title > room then title = string.sub(title, 0, room) end
+        if #v.author > awidth then awidth = #v.author end
         table.insert(references, {
-            display = v.author .. " " .. v.year .. " " .. title,
+            display = v.author .. " " .. v.year .. " " .. v.ttl,
             author = v.author,
             year = v.year,
             title = v.ttl,
@@ -67,6 +69,7 @@ M.refs = function(key, cb)
             citation_key = v.key,
         })
     end
+    if awidth > awlim then awidth = awlim end
 
     pickers
         .new({}, {
@@ -78,9 +81,8 @@ M.refs = function(key, cb)
                     local displayer = entry_display.create({
                         separator = " ",
                         items = {
-                            { width = 40 }, -- Author
-                            { remaining = true },
-                            { width = 5 }, -- Year
+                            { width = awidth }, -- Author
+                            { width = 4 }, -- Year
                             { remaining = true }, -- Title
                         },
                     })
