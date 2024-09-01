@@ -40,10 +40,14 @@ local format_preview = function(v)
     local alist = {}
     local authors
     if v.author then
-        for _, n in pairs(v.author) do
-            table.insert(alist, n[1] .. ", " .. n[2])
+        if #v.author > 5 then
+            authors = v.author[1][1] .. ", " .. v.author[1][2] .. " and others"
+        else
+            for _, n in pairs(v.author) do
+                table.insert(alist, n[1] .. ", " .. n[2])
+            end
+            authors = table.concat(alist, "; ")
         end
-        authors = table.concat(alist, "; ")
     else
         authors = "?"
     end
