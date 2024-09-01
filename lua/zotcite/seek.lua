@@ -94,11 +94,23 @@ M.refs = function(key, cb)
         table.insert(references, {
             display = v.alastnm .. " " .. v.year .. " " .. v.title,
             etype = v.etype,
-            publicationTitle = v.publicationTitle or v.bookTitle,
+            publicationTitle = v.publicationTitle
+                or v.bookTitle
+                or v.proceedingsTitle
+                or v.conferenceName
+                or v.programTitle
+                or v.blogTitle
+                or v.code
+                or v.dictionaryTitle
+                or v.encyclopediaTitle
+                or v.forumTitle
+                or v.websiteTitle
+                or v.seriesTitle,
             author = v.author
                 or v.artist
                 or v.performer
                 or v.director
+                or v.composer
                 or v.sponsor
                 or v.contributor
                 or v.interviewee
@@ -106,7 +118,11 @@ M.refs = function(key, cb)
                 or v.inventor
                 or v.podcaster
                 or v.presenter
-                or v.programmer,
+                or v.programmer
+                or v.recipient
+                or v.editor
+                or v.seriesEditor
+                or v.translator,
             alastnm = v.alastnm,
             year = v.year,
             title = v.title,
