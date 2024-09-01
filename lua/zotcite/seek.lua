@@ -38,10 +38,15 @@ end
 
 local format_preview = function(v)
     local alist = {}
-    for _, n in pairs(v.author) do
-        table.insert(alist, n[1] .. ", " .. n[2])
+    local authors
+    if v.author then
+        for _, n in pairs(v.author) do
+            table.insert(alist, n[1] .. ", " .. n[2])
+        end
+        authors = table.concat(alist, "; ")
+    else
+        authors = "?"
     end
-    local authors = table.concat(alist, "; ")
     local preview_text
     if v.etype == "journalArticle" then
         preview_text = string.format(
@@ -90,7 +95,18 @@ M.refs = function(key, cb)
             display = v.alastnm .. " " .. v.year .. " " .. v.title,
             etype = v.etype,
             publicationTitle = v.publicationTitle or v.bookTitle,
-            author = v.author,
+            author = v.author
+                or v.artist
+                or v.performer
+                or v.director
+                or v.sponsor
+                or v.contributor
+                or v.interviewee
+                or v.cartographer
+                or v.inventor
+                or v.podcaster
+                or v.presenter
+                or v.programmer,
             alastnm = v.alastnm,
             year = v.year,
             title = v.title,
