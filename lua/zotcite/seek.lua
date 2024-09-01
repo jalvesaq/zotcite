@@ -39,13 +39,13 @@ end
 local format_preview = function(v)
     local alist = {}
     for _, n in pairs(v.author) do
-        table.insert(alist, n[2] .. ", " .. n[1])
+        table.insert(alist, n[1] .. ", " .. n[2])
     end
     local authors = table.concat(alist, "; ")
     local preview_text
     if v.etype == "journalArticle" then
         preview_text = string.format(
-            "%s (%s) %s. _%s_.\n\n%s\n",
+            "{{%s}} {[%s]} {(%s)}. {<%s>}.\n\n%s\n",
             authors,
             v.year or "",
             v.title or "",
@@ -54,7 +54,7 @@ local format_preview = function(v)
         )
     elseif v.etype == "bookSection" then
         preview_text = string.format(
-            "%s (%s) %s. In: _%s_.\n\n%s\n",
+            "{{%s}} {[%s]} {(%s)}. In: {<%s>}.\n\n%s\n",
             authors,
             v.year or "",
             v.title or "",
@@ -63,7 +63,7 @@ local format_preview = function(v)
         )
     else
         preview_text = string.format(
-            "%s (%s) _%s_.\n\n%s\n",
+            "{{%s}} {[%s]} {(%s)}.\n\n%s\n",
             authors,
             v.year or "",
             v.title or "",
@@ -133,7 +133,11 @@ M.refs = function(key, cb)
             previewer = previewers.new_buffer_previewer({
                 define_preview = function(self, entry, _)
                     local bufnr = self.state.bufnr
-                    vim.api.nvim_set_option_value("filetype", "markdown", { buf = bufnr })
+                    vim.api.nvim_set_option_value(
+                        "syntax",
+                        "zoteropreview",
+                        { buf = bufnr }
+                    )
 
                     local preview_text = format_preview(entry.value)
 
