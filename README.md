@@ -58,18 +58,20 @@ Depending on your system, you may have to install python modules in an virtual
 environment and maybe also system-wide.
 
 Zotcite can be installed as any Neovim plugin, and it depends on
-[cmp-zotcite](https://github.com/jalvesaq/cmp-zotcite),
-[telescope.nvim](https://github.com/nvim-telescope/telescope.nvim),
-and
+[telescope.nvim](https://github.com/nvim-telescope/telescope.nvim), and
 [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) as well
-as tree-sitter parser for `markdown`, `markdown_inline`, and `yaml`. Below is
-an example of how to install it with [lazy.nvim](https://github.com/folke/lazy.nvim):
+as tree-sitter parsers for `markdown`, `markdown_inline`, and `yaml`.
+Optionally, you can also use
+[cmp-zotcite](https://github.com/jalvesaq/cmp-zotcite), for auto-completing
+the citations keys. Below is an example of how to install `zotcite` with
+[lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
     {
         'jalvesaq/zotcite',
         dependencies = {
             "nvim-treesitter/nvim-treesitter",
+            'nvim-telescope/telescope.nvim',
         }
         config = function ()
             require("zotcite").setup({
@@ -108,7 +110,8 @@ an example of how to install it with [lazy.nvim](https://github.com/folke/lazy.n
 ```
 
 Note: you don't need to lazy load zotcite because it already lazy loads its
-modules only for the supported file types.
+modules only for the supported file types, but you do need to call zotcite's
+setup function.
 
 The Python module `zotero` does not import the `vim` module. Hence, its code
 could easily be adapted to other text editors or as a language server for
