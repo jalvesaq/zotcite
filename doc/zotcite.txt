@@ -90,7 +90,7 @@ Then, in Insert mode, type the `@` letter and one or more letters of either
 the last name of the first author or the reference title. The matching of
 citation keys is case-insensitive.
 
-You can also use Telescope to insert a citation key by pressing <C-X><C-C> in
+You can also use Telescope to insert a citation key by pressing <C-X><C-B> in
 Insert mode. The sequence of ASCII letters (letter of the English alphabet)
 before the cursor will be used to filter the results (see `:Zseek` below).
 

@@ -192,7 +192,7 @@ M.init = function()
         create_map(
             "i",
             "<Plug>ZCite",
-            "<C-X><C-C>",
+            "<C-X><C-B>",
             "<Cmd>lua require('zotcite.get').citation()<CR>",
             "Zotcite: insert citation"
         )
