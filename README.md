@@ -70,7 +70,7 @@ an example of how to install it with [lazy.nvim](https://github.com/folke/lazy.n
         'jalvesaq/zotcite',
         dependencies = {
             "nvim-treesitter/nvim-treesitter",
-        }
+        },
         config = function ()
             require("zotcite").setup({
                 -- your options here (see doc/zotcite.txt)
