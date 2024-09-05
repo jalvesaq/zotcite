@@ -68,19 +68,17 @@ the citations keys. Below is an example of how to install `zotcite` with
 
 ```lua
     {
-        'jalvesaq/zotcite',
+        "jalvesaq/zotcite",
         dependencies = {
             "nvim-treesitter/nvim-treesitter",
-            'nvim-telescope/telescope.nvim',
-        }
+            "nvim-telescope/telescope.nvim",
+        },
         config = function ()
             require("zotcite").setup({
                 -- your options here (see doc/zotcite.txt)
             })
         end
     },
-
-    'nvim-telescope/telescope.nvim',
 
     {
         "nvim-treesitter/nvim-treesitter",
