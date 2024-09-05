@@ -166,9 +166,9 @@ M.citation = function()
     citation.start_col = last
     citation.end_col = last
     local c = line:sub(last, last):lower()
-    if c >= "a" and c <= "z" then
+    if (c >= "a" and c <= "z") or c > "\127" then
         local first = last - 1
-        while first > 0 and c >= "a" and c <= "z" do
+        while first > 0 and ((c >= "a" and c <= "z") or c > "\127") do
             first = first - 1
             c = line:sub(first, first):lower()
         end
