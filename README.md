@@ -110,7 +110,7 @@ the citations keys. Below is an example of how to install `zotcite` with
 ```
 
 Note: you don't need to lazy load zotcite because it already lazy loads its
-modules only for the supported file types, but you do need to call zotcite's
+modules only for the supported file types, and you do need to call zotcite's
 setup function.
 
 The Python module `zotero` does not import the `vim` module. Hence, its code
