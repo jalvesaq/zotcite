@@ -12,7 +12,7 @@ Author: Jakson A. Aquino <jalvesaq@gmail.com>
     2.4. Suggested workflow                                 |zotcite_workflow|
     2.5. Alternative workflows                       |zotcite_other_workflows|
  3. Customization                                      |zotcite_customization|
-    3.1. Change default maps                                |zotcite_mappings|
+    3.1. Change default maps                         |zotcite_change_mappings|
     3.2. Zotcite engine                                       |zotcite_engine|
         Citation template                                  |ZCitationTemplate|
         Ban words from citation template                        |ZBannedWords|
@@ -262,7 +262,7 @@ of the citation fields.
 3. Customization                                       *zotcite_customization*
 
 ------------------------------------------------------------------------------
-3.1. Change default maps                                     *zotcite_mappings*
+3.1. Change default maps                             *zotcite_change_mappings*
 
 To change the shortcut to open reference attachment, set the value of
 <Plug>ZOpenAttachment in your |init.lua| as below:
