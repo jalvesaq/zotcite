@@ -113,28 +113,28 @@ local global_init = function()
     vim.api.nvim_create_user_command(
         "Zseek",
         function(tbl) s.refs(tbl.args, s.print) end,
-        { nargs = 1, desc = "Zotcite: seek references" }
+        { nargs = "?", desc = "Zotcite: seek references" }
     )
     vim.api.nvim_create_user_command(
         "Znote",
         function(tbl) require("zotcite.get").note(tbl.args) end,
-        { nargs = 1, desc = "Zotcite: insert Zotero notes" }
+        { nargs = "?", desc = "Zotcite: insert Zotero notes" }
     )
     vim.api.nvim_create_user_command(
         "Zannotations",
         function(tbl) require("zotcite.get").annotations(tbl.args, false) end,
-        { nargs = 1, desc = "Zotcite: insert Zotero annotations" }
+        { nargs = "?", desc = "Zotcite: insert Zotero annotations" }
     )
     vim.api.nvim_create_user_command(
         "Zselectannotations",
         function(tbl) require("zotcite.get").annotations(tbl.args, true) end,
-        { nargs = 1, desc = "Zotcite: insert Zotero annotations" }
+        { nargs = "?", desc = "Zotcite: insert Zotero annotations" }
     )
 
     vim.api.nvim_create_user_command(
         "Zpdfnote",
         function(tbl) require("zotcite.get").PDFNote(tbl.args) end,
-        { nargs = 1, desc = "Zotcite: insert PDF annotations" }
+        { nargs = "?", desc = "Zotcite: insert PDF annotations" }
     )
     vim.api.nvim_create_user_command(
         "Zodt2md",
@@ -180,46 +180,59 @@ M.init = function()
     if not M.has_buffer(vim.api.nvim_get_current_buf()) then
         new_buffer()
 
-        local create_map = function(p, s, c, d)
+        local create_map = function(m, p, s, c, d)
             local opts = { silent = true, noremap = true, expr = false, desc = d }
-            if vim.fn.hasmapto(p, "n") == 1 then
-                vim.api.nvim_buf_set_keymap(0, "n", p, c, opts)
+            if vim.fn.hasmapto(p, m) == 1 then
+                vim.api.nvim_buf_set_keymap(0, m, p, c, opts)
             else
-                vim.api.nvim_buf_set_keymap(0, "n", s, c, opts)
+                vim.api.nvim_buf_set_keymap(0, m, s, c, opts)
             end
         end
 
         create_map(
+            "i",
+            "<Plug>ZCite",
+            "<C-X><C-B>",
+            "<Cmd>lua require('zotcite.get').citation()<CR>",
+            "Zotcite: insert citation"
+        )
+        create_map(
+            "n",
             "<Plug>ZOpenAttachment",
             "<Leader>zo",
             "<Cmd>lua require('zotcite.get').open_attachment()<CR>",
             "Zotcite: open attachment"
         )
         create_map(
+            "n",
             "<Plug>ZViewDocument",
             "<Leader>zv",
             "<Cmd>lua require('zotcite.utils').view_document()<CR>",
             "Zotcite: view document"
         )
         create_map(
+            "n",
             "<Plug>ZCitationInfo",
             "<Leader>zi",
             "<Cmd>lua require('zotcite.get').reference_data('ayt')<CR>",
             "Zotcite: show reference info (short)"
         )
         create_map(
+            "n",
             "<Plug>ZCitationCompleteInfo",
             "<Leader>za",
             "<Cmd>lua require('zotcite.get').reference_data('raw')<CR>",
             "Zotcite: show reference info (complete)"
         )
         create_map(
+            "n",
             "<Plug>ZCitationYamlRef",
             "<Leader>zy",
             "<Cmd>lua require('zotcite.get').yaml_ref()<CR>",
             "Zotcite: show reference as YAML"
         )
         create_map(
+            "n",
             "<Plug>ZExtractAbstract",
             "<leader>zb",
             "<Cmd>lua require('zotcite.get').abstract()<CR>",
