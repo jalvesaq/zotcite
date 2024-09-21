@@ -92,12 +92,17 @@ M.open = function(fpath)
         local em
         if config.open_cmd then
             obj = vim.system({ config.open_cmd, fpath }, { text = true }):wait()
-            em = "Error running `" .. config.open_cmd .. ' "' .. fpath .. '"' .. "`: \n"
+            em = "Error running `" .. config.open_cmd .. ' "' .. fpath .. '"' .. "`"
         else
             obj = vim.ui.open(fpath):wait()
-            em = 'Error running `vim.ui.open("' .. fpath .. '")`: \n'
+            em = 'Error running `vim.ui.open("' .. fpath .. '")`'
         end
-        if obj.code ~= 0 then zwarn(em .. obj.stderr) end
+        if obj.code ~= 0 then
+            em = em .. ":\n  exit code: " .. tostring(obj.code)
+            if obj.stdout and obj.stdout ~= "" then em = em .. "\n  " .. obj.stdout end
+            if obj.stderr and obj.stderr ~= "" then em = em .. "\n  " .. obj.stderr end
+            zwarn(em)
+        end
         return
     end
     if config.open_cmd then
