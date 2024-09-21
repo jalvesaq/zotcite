@@ -16,7 +16,10 @@ local M = {}
 local TranslateZPath = function(strg)
     local fpath = strg
 
-    if config.open_in_zotero and string.lower(strg):find("%.pdf$") then
+    if
+        config.open_in_zotero
+        and (string.lower(strg):find("%.pdf$") or string.lower(strg):find("%.html$"))
+    then
         local id = fpath:gsub(":.*", "")
         return "zotero://open-pdf/library/items/" .. id
     end
