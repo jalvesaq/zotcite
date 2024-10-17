@@ -1,8 +1,5 @@
-*zotcite.txt*                                                          *zotcite*
-				   zotcite
-			   Integration with Zotero
+*zotcite.txt*                                          Integration with Zotero
 
-Author: Jakson A. Aquino <jalvesaq@gmail.com>
 
  1. Overview                                                |zotcite_overview|
  2. Usage                                                      |zotcite_usage|
@@ -388,7 +385,7 @@ your `config`:
 Zotcite sets the 'conceallevel' of the Markdown document to 2. If you want a
 different value, follow the example:
 >lua
- conceallevel = false
+ conceallevel = 0
 
 
 ------------------------------------------------------------------------------
