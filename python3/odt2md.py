@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Pandoc filter to add references from Zotero database to the YAML header.
+Convert an ODT file in Markdown, converting citations in zotcite format.
 """
 
 import sys
