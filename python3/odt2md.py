@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Convert an ODT file in Markdown, converting citations in zotcite format.
+Convert an ODT file into Markdown, converting citations into zotcite format.
 """
 
 import sys
