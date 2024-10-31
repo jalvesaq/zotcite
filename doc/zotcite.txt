@@ -21,9 +21,8 @@
         Syntax highlighting of citation keys                      |zotcite_hl|
         Conceal level                                   |zotcite_conceallevel|
     3.4. File types                                        |zotcite_filetypes|
-    3.5. Open attachment in Zotero                    |zotcite_open_in_zotero|
+    3.5. Open attachment                              |zotcite_open_in_zotero|
     3.6. Show errors of command to open attachment   |zotcite_wait_attachment|
-    3.7. Quarto render options                         |zotcite_quarto_render|
  4. Troubleshooting                                  |zotcite_troubleshooting|
 
 
