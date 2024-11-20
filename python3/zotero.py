@@ -883,7 +883,7 @@ class ZoteroEntries:
                     notes.append(i[7] + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
             if i[6] and page is None: # Highlighted text, web snapshots
                 notes.append('')
-                notes.append('> ' + self._sanitize_markdown(i[6]) + ' [@' + key + '#' + citekey + ']')
+                notes.append('> ' + self._sanitize_markdown(i[6].replace("\n"," ")) + ' [@' + key + '#' + citekey + ']')
             elif i[6]: # Highlighted text
                 notes.append('')
                 notes.append('> ' + self._sanitize_markdown(i[6]) + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
