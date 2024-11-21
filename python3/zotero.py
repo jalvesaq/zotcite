@@ -857,21 +857,34 @@ class ZoteroEntries:
 
         notes = []
         for i in cur.fetchall():
-            mo = re.match("^[0-9]*$", i[8])
+            if i[8] is not None:
+                mo = re.match("^[0-9]*$", i[8])
+            else: # web snapshots
+                mo = None
             if mo is not None and mo.string == i[8]:
                 page = str(int(i[8]) + offset)
-            else:
+            elif i[8] is not None: 
                 page = i[8]
+            else: # web snapshots
+                page = None
             if i[7]: # Comment
                 notes.append('')
                 if i[7].find("\n") > -1:
                     ss = i[7].split("\n")
                     for s in ss:
                         notes.append(s)
-                    notes.append(' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                    if page is None: # web snapshots
+                        notes.append(' [@' + key + '#' + citekey + ']')
+                    else:
+                        notes.append(' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                elif page is None: # web snapshots
+                    notes.append(i[7] + ' [@' + key + '#' + citekey + ']')
                 else:
                     notes.append(i[7] + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
-            if i[6]: # Highlighted text
+            if i[6] and page is None: # Highlighted text, web snapshots
+                notes.append('')
+                notes.append('> ' + self._sanitize_markdown(i[6].replace("\n"," ")) + ' [@' + key + '#' + citekey + ']')
+            elif i[6]: # Highlighted text
                 notes.append('')
                 notes.append('> ' + self._sanitize_markdown(i[6]) + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
         return notes
