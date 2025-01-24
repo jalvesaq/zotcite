@@ -239,11 +239,13 @@ M.init = function()
             "Zotcite: Paste abstract note in current buffer"
         )
         vim.o.conceallevel = config.conceallevel
-        require("zotcite.get").collection_name()
         vim.cmd("autocmd BufWritePre <buffer> lua require('zotcite.utils').check_bib()")
         vim.cmd(
             "autocmd BufWritePost <buffer> lua require('zotcite.get').collection_name()"
         )
+        vim.schedule(function()
+            require("zotcite.get").collection_name()
+        end)
     end
 end
 

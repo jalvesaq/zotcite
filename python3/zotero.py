@@ -863,7 +863,7 @@ class ZoteroEntries:
                 mo = None
             if mo is not None and mo.string == i[8]:
                 page = str(int(i[8]) + offset)
-            elif i[8] is not None: 
+            elif i[8] is not None:
                 page = i[8]
             else: # web snapshots
                 page = None
