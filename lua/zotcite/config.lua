@@ -98,6 +98,10 @@ local global_init = function()
     vim.cmd.py3("from zotero import ZoteroEntries")
     vim.cmd.py3("ZotCite = ZoteroEntries()")
     local info = vim.fn.py3eval("ZotCite.Info()")
+    if info == vim.NIL then
+        zwarn("Failed to run the Python command `ZotCite.Info()`")
+        return false
+    end
 
     config.zrunning = true
 
@@ -250,5 +254,7 @@ M.init = function()
 end
 
 M.get_config = function() return config end
+
+M.inited = function() return did_global_init end
 
 return M
