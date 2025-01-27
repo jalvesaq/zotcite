@@ -37,9 +37,9 @@ M.view_document = function()
     local ext = "html"
     local fmt
     if vim.o.filetype == "quarto" then
-        fmt = require("zotcite.get").yaml_field("format")
+        fmt = require("zotcite.get").yaml_field("format", vim.api.nvim_get_current_buf())
     else
-        fmt = require("zotcite.get").yaml_field("output")
+        fmt = require("zotcite.get").yaml_field("output", vim.api.nvim_get_current_buf())
     end
     if type(fmt) == "table" then
         for k, _ in pairs(fmt) do
@@ -65,7 +65,8 @@ M.view_document = function()
 end
 
 M.check_bib = function()
-    local bib = require("zotcite.get").yaml_field("bibliography")
+    local bib =
+        require("zotcite.get").yaml_field("bibliography", vim.api.nvim_get_current_buf())
     if not bib then return end
 
     local bibf = nil

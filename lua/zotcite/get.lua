@@ -392,8 +392,8 @@ end
 
 M.PDFNote = function(key) seek.refs(key, finish_pdfnote) end
 
-M.yaml_field = function(field)
-    local node = vim.treesitter.get_node({ bufnr = 0, pos = { 0, 0 } })
+M.yaml_field = function(field, bn)
+    local node = vim.treesitter.get_node({ bufnr = bn, pos = { 0, 0 } })
     if not node then
         zwarn("Error: Is treesitter enabled?")
         return nil
@@ -402,7 +402,7 @@ M.yaml_field = function(field)
 
     -- FIXME: use treesitter to avoid dependence on PyYAML
 
-    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+    local lines = vim.api.nvim_buf_get_lines(bn, 0, -1, true)
     local nlines = #lines
     local ylines = {}
     local i = 2
@@ -428,13 +428,14 @@ M.yaml_field = function(field)
     return value
 end
 
-M.collection_name = function()
-    local newc = M.yaml_field("collection")
+M.collection_name = function(bn)
+    if bn == -1 then bn = vim.api.nvim_get_current_buf() end
+    local newc = M.yaml_field("collection", bn)
     if not newc then return end
 
     if type(newc) == "table" then newc = table.concat(newc, "\002") end
 
-    local buf = require("zotcite.config").has_buffer(vim.api.nvim_get_current_buf())
+    local buf = require("zotcite.config").has_buffer(bn)
     if buf then
         if
             not buf.zotcite_cllctn

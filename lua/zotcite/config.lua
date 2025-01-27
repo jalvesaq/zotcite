@@ -245,11 +245,10 @@ M.init = function()
         vim.o.conceallevel = config.conceallevel
         vim.cmd("autocmd BufWritePre <buffer> lua require('zotcite.utils').check_bib()")
         vim.cmd(
-            "autocmd BufWritePost <buffer> lua require('zotcite.get').collection_name()"
+            "autocmd BufWritePost <buffer> lua require('zotcite.get').collection_name(-1)"
         )
-        vim.schedule(function()
-            require("zotcite.get").collection_name()
-        end)
+        local bn = vim.api.nvim_get_current_buf()
+        vim.schedule(function() require("zotcite.get").collection_name(bn) end)
     end
 end
 
