@@ -407,14 +407,17 @@ M.yaml_field = function(field, bn)
     local ylines = {}
     local i = 2
     local line = ""
+    local has_field = false
     while i < nlines do
         if lines[i]:find("^%s*%-%-%-%s*$") then break end
+        if lines[i]:find(field .. ":") then has_field = true end
         line = lines[i]:gsub("\\", "\\\\")
         line = string.gsub(line, '"', '\\"')
         table.insert(ylines, line)
         i = i + 1
     end
     if #ylines == 0 then return nil end
+    if not has_field then return nil end
 
     local value = vim.fn.py3eval(
         'ZotCite.GetYamlField("'
