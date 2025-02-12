@@ -51,5 +51,8 @@ for m in ms:
     bbtid = zotid2citkey(zotid)
     outs += "@" + bbtid
 
+# Insert last part
+outs += inf[last_m.end():]
+
 with open(sys.argv[2], "w") as fh:
     fh.write(outs)
