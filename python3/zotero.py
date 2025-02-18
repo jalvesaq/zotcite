@@ -410,7 +410,8 @@ class ZoteroEntries:
 
     def _add_most_fields(self):
         query = u"""
-            SELECT items.itemID, items.key, fields.fieldName, itemDataValues.value
+            SELECT items.itemID, items.key, items.dateModified,
+            fields.fieldName, itemDataValues.value
             FROM items, itemData, fields, itemDataValues
             WHERE
                 items.itemID = itemData.itemID
@@ -419,10 +420,11 @@ class ZoteroEntries:
             """
         self._e = {}
         self._cur.execute(query)
-        for item_id, item_key, field, value in self._cur.fetchall():
+        for item_id, item_key, dateModified, field, value in self._cur.fetchall():
             if item_id not in self._e:
                 self._e[item_id] = {'zotkey': item_key, 'alastnm': ''}
             self._e[item_id][field] = value
+            self._e[item_id]["dateModified"] = dateModified
 
     def _add_authors(self):
         query = u"""

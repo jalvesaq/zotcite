@@ -11,15 +11,7 @@
  3. Customization                                      |zotcite_customization|
     3.1. Change default maps                         |zotcite_change_mappings|
     3.2. Zotcite engine                                       |zotcite_engine|
-        Citation template                                  |ZCitationTemplate|
-        Ban words from citation template                        |ZBannedWords|
-        Path to Zotero database                                |ZoteroSQLpath|
-        Temporary directory path                              |Zotcite_tmpdir|
-        Fields to exclude from references                    |Zotcite_exclude|
-        Zotero collection to use                           |Zotero_collection|
     3.3. Syntax highlighting                            |zotcite_highlighting|
-        Syntax highlighting of citation keys                      |zotcite_hl|
-        Conceal level                                   |zotcite_conceallevel|
     3.4. File types                                        |zotcite_filetypes|
     3.5. Open attachment                              |zotcite_open_in_zotero|
     3.6. Show errors of command to open attachment   |zotcite_wait_attachment|
@@ -309,7 +301,7 @@ year (with either four digits `{Year}` or only two `{year}`). Examples:
 >lua
  citation_template = '{author}{year}'
  citation_template = '{Authors}_{Year}_{Title}'
-
+<
 								*banned_words*
 The following words are deleted from the title before its first word is
 selected: a, an, the, some, from, on, in, to, of, do, and with. If you want to
@@ -326,13 +318,13 @@ examples:
  banned_words = 'la le l gli un una alcuni alcune all alla da dei nell con per'
  -- German
  banned_words = 'der die das ein eine einer eines einem einen einige im zu mit für von'
-
+<
 								    *SQL_path*
 If Zotcite cannot find the path to Zotero's database (`zotero.sqlite`), put
 the correct path in your `config`:
 >lua
  SQL_path = '/path/to/zotero.sqlite'
-
+<
 								      *tmpdir*
 If Zotcite is trying to use a non-writable directory as its temporary and
 cache directory, or if for any reason you want to change this directory,
@@ -354,7 +346,15 @@ list of fields to be excluded. For example, if you want to exclude the fields
 this in your `config`:
 >lua
  exclude_fields = "note attachment"
-
+<
+								    *sort_key*
+By default, zotcite uses the field "dateModified" to sort the results
+displayed by `:Zseek`. You can use a different field, such as "date", "title",
+"alastnm" or other fields whose values are strings or numbers (do
+`<Leader>za` over some citation keys to see the available fields):
+>lua
+ sort_key = "date"
+<
 							   *Zotero_collection*
 If you want to restrict the search for references to specific collections
 while completing citation keys, set the value `collection` in the YAML header
@@ -379,7 +379,7 @@ If you want to disable Zotcite's syntax highlighting of citation keys, put in
 your `config`:
 >lua
  hl_cite_key = false
-
+<
 							*zotcite_conceallevel*
 Zotcite sets the 'conceallevel' of the Markdown document to 2. If you want a
 different value, follow the example:
@@ -398,7 +398,7 @@ set the value of `filetypes` in your `config`. Example:
 
 
 ------------------------------------------------------------------------------
-3.5. Open attachment
+3.5. Open attachment                                  *zotcite_open_in_zotero*
 
 Zotcite calls `vim.ui.open()` to open attachments. But you can change the
 command in your config:
