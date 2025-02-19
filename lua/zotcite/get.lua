@@ -480,8 +480,10 @@ local finish_open_attachment = function(_, idx)
     if idx then require("zotcite.utils").open(sel_list[idx]) end
 end
 
-M.open_attachment = function()
-    local zotkey = M.citation_key()
+M.open_attachment = function(zotkey)
+    if not zotkey then 
+        zotkey = M.citation_key()
+    end
     local apath = M.PDFPath(zotkey, finish_open_attachment)
     if type(apath) == "string" then require("zotcite.utils").open(apath) end
 end

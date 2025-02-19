@@ -189,13 +189,18 @@ M.refs = function(key, cb)
                 end,
             }),
             attach_mappings = function(prompt_bufnr, map)
-                map("i", "<CR>", function()
-                    local selection = action_state.get_selected_entry()
-                    actions.close(prompt_bufnr)
-                    -- Handle the selected reference here
-                    cb(selection)
-                end)
-                return true
+            map("i", "<C-o>", function()
+                local selection = action_state.get_selected_entry()
+                actions.close(prompt_bufnr)
+                -- Handle the selected reference here
+                cb(selection)
+            end)
+            map("i", "<CR>", function()
+                local selection = action_state.get_selected_entry()
+                -- actions.close(prompt_bufnr)
+                require("zotcite.get").open_attachment(selection.value.key)
+            end)
+            return true
             end,
         })
         :find()
