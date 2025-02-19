@@ -98,6 +98,7 @@ M.refs = function(key, cb)
         table.insert(references, {
             display = v.alastnm .. " " .. v.year .. " " .. v.title,
             etype = v.etype,
+            adate = v.accessDate or v.date or "0000-00-00 000",
             publicationTitle = v.publicationTitle
                 or v.bookTitle
                 or v.proceedingsTitle
@@ -136,6 +137,7 @@ M.refs = function(key, cb)
         })
     end
     if awidth > awlim then awidth = awlim end
+    table.sort(references, function(a, b) return (a.adate > b.adate) end)
 
     pickers
         .new({}, {
