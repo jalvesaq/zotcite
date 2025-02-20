@@ -1,5 +1,6 @@
 local config = {
     hl_cite_key = true,
+    sort_key = "dateModified",
     conceallevel = 2,
     wait_attachment = false,
     open_in_zotero = false,

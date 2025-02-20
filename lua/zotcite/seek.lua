@@ -5,6 +5,7 @@ local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
 local previewers = require("telescope.previewers")
 local entry_display = require("telescope.pickers.entry_display")
+local config = require("zotcite.config").get_config()
 
 local M = {}
 
@@ -98,6 +99,7 @@ M.refs = function(key, cb)
         table.insert(references, {
             display = v.alastnm .. " " .. v.year .. " " .. v.title,
             etype = v.etype,
+            sort_key = v[config.sort_key] or "0000-00-00 0000",
             publicationTitle = v.publicationTitle
                 or v.bookTitle
                 or v.proceedingsTitle
@@ -136,6 +138,7 @@ M.refs = function(key, cb)
         })
     end
     if awidth > awlim then awidth = awlim end
+    table.sort(references, function(a, b) return (a.sort_key > b.sort_key) end)
 
     pickers
         .new({}, {
