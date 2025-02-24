@@ -393,6 +393,9 @@ end
 M.PDFNote = function(key) seek.refs(key, finish_pdfnote) end
 
 M.yaml_field = function(field, bn)
+	if vim.o.filetype == "tex" then
+		return 
+	end
     local node = vim.treesitter.get_node({ bufnr = bn, pos = { 0, 0 } })
     if not node then
         zwarn("Error: Is treesitter enabled?")
