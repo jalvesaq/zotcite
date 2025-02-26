@@ -84,8 +84,9 @@ M.citation_key = function()
     local bbt = bbt or true -- assume by default that bbt is used, fix, TODO : read value from config
     if bbt then
         local word = vim.fn.expand("<cWORD>")
-        if word:match("^@(%w+)") then  -- usually bbt citekeys are ath2009 (authYear) type (word + digits)
-            return word:sub(2)
+		local ma  = word:match("%[?@(%w+)%]?")
+        if ma then  -- usually bbt citekeys are ath2009 (authYear) type (word + digits)
+            return ma
         end
     else
         local lnum = vim.api.nvim_win_get_cursor(0)[1]
