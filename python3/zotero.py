@@ -287,6 +287,7 @@ class ZoteroEntries:
 
         self._c = {}
         self._e = {}
+        self._cimap = {}
         self._load_zotero_data()
 
         # List of collections for each markdown document
@@ -349,10 +350,11 @@ class ZoteroEntries:
             self._dd = os.path.expanduser('~/Zotero')
 
 
-    def _copy_zotero_data(self):
+    def _copy_zotero_data(self, dbpath, dbname):
         t1 = time.time()
-        self._ztime = os.path.getmtime(self._z)
-        zcopy = self._tmpdir + '/copy_of_zotero.sqlite'
+        # self._ztime = os.path.getmtime(self._z)
+        self._ztime = os.path.getmtime(dbpath)
+        zcopy = self._tmpdir + f"/copy_of_{dbname}.sqlite"
         if os.path.isfile(zcopy):
             zcopy_time = os.path.getmtime(zcopy)
         else:
@@ -371,17 +373,33 @@ class ZoteroEntries:
         return zcopy
 
     def _load_zotero_data(self):
-        zcopy = self._copy_zotero_data()
+        self._bbt = True # read this from config, TODO
+        zcopy = self._copy_zotero_data(self._z, "zotero")
         t1 = time.time()
         conn = sqlite3.connect(zcopy)
         self._cur = conn.cursor()
+        # if self._bbt:
+            # read / get path, hardcoded now, TODO
+        zbcopy = self._copy_zotero_data("/Users/anand.kumar/Zotero/better-bibtex.sqlite", "bbt")
+        print(zbcopy)
+        queryA = f"ATTACH DATABASE '{zbcopy}' AS bbt"
+        self._cur.execute(queryA)
+        print("BBT Tables:", self._cur.execute("SELECT name FROM bbt.sqlite_master WHERE type='table';").fetchall())
+
+
         self._get_collections()
         self._add_most_fields()
+
+
         self._add_authors()
         self._add_type()
         self._add_attachments()
-        self._calculate_citekeys()
+        self._calculate_citekeys() # bbt=True by default
         self._delete_items()
+        
+        print("a sample entry post loading zotero data")
+        print(self._e[list(self._e.keys())[4]])
+
         conn.close()
         t2 = time.time()
         self._load_time = self._load_time + " + " + str(round(t2 - t1, 5)) + " (sql)"
@@ -498,42 +516,49 @@ class ZoteroEntries:
                 else:
                     year = ''
             self._e[k]['year'] = year
-            if 'title' in self._e[k]:
-                title = re.sub(ptrn, '', self._e[k]['title'].lower())
-                title = re.sub('^[a-z] ', '', title)
-                titlew = re.sub('[ ,;:\\.!?].*', '', title)
-            else:
-                self._e[k]['title'] = ''
-                titlew = ''
-            lastname = 'No_author'
-            lastnames = ''
-            creators = ['author'] + self._creators
-            for c in creators:
-                if c in self._e[k]:
-                    lastname = self._e[k][c][0][0]
-                    for ln in self._e[k][c]:
-                        lastnames = lastnames + '_' + ln[0]
-                    break
-            if lastnames == '':
-                lastnames = 'No_author'
 
-            lastnames = re.sub('^_', '', lastnames)
-            lastnames = re.sub('_.*_.*_.*', '_etal', lastnames)
-            lastname = re.sub('\\W', '', lastname)
-            titlew = re.sub('\\W', '', titlew)
-            key = self._cite
-            key = key.replace('{author}', lastname.lower(), 1)
-            key = key.replace('{Author}', lastname.title(), 1)
-            key = key.replace('{authors}', lastnames.lower(), 1)
-            key = key.replace('{Authors}', lastnames.title(), 1)
-            key = key.replace('{year}', re.sub('^[0-9][0-9]', '', year), 1)
-            key = key.replace('{Year}', year, 1)
-            key = key.replace('{title}', titlew.lower(), 1)
-            key = key.replace('{Title}', titlew.title(), 1)
-            key = key.replace(' ', '')
-            key = key.replace("'", '')
-            key = key.replace("’", '')
-            self._e[k]['citekey'] = key
+        if self._bbt:
+            citekeys = self._cur.execute("select itemID, itemKey, citationKey from citationkey").fetchall()
+            for id, ik, ck in citekeys:
+                self._e[id]['citekey'] = ck     # citekey is usually available for all valid keys 
+                self._cimap[ck] = id            # hold reverse map in dictionary for quick lookup
+        else:
+            for k in self._e:
+                if 'title' in self._e[k]:
+                    title = re.sub(ptrn, '', self._e[k]['title'].lower())
+                    title = re.sub('^[a-z] ', '', title)
+                    titlew = re.sub('[ ,;:\\.!?].*', '', title)
+                else:
+                    self._e[k]['title'] = ''
+                    titlew = ''
+                lastname = 'No_author'
+                lastnames = ''
+                creators = ['author'] + self._creators
+                for c in creators:
+                    if c in self._e[k]:
+                        lastname = self._e[k][c][0][0]
+                        for ln in self._e[k][c]:
+                            lastnames = lastnames + '_' + ln[0]
+                        break
+                if lastnames == '':
+                    lastnames = 'No_author'
+                lastnames = re.sub('^_', '', lastnames)
+                lastnames = re.sub('_.*_.*_.*', '_etal', lastnames)
+                lastname = re.sub('\\W', '', lastname)
+                titlew = re.sub('\\W', '', titlew)
+                key = self._cite
+                key = key.replace('{author}', lastname.lower(), 1)
+                key = key.replace('{Author}', lastname.title(), 1)
+                key = key.replace('{authors}', lastnames.lower(), 1)
+                key = key.replace('{Authors}', lastnames.title(), 1)
+                key = key.replace('{year}', re.sub('^[0-9][0-9]', '', year), 1)
+                key = key.replace('{Year}', year, 1)
+                key = key.replace('{title}', titlew.lower(), 1)
+                key = key.replace('{Title}', titlew.title(), 1)
+                key = key.replace(' ', '')
+                key = key.replace("'", '')
+                key = key.replace("’", '')
+                self._e[k]['citekey'] = key
 
 
     def _delete_items(self):
@@ -563,11 +588,11 @@ class ZoteroEntries:
     def _get_compl_line(cls, e):
         alastnm = e['alastnm']
         if alastnm == '':
-            lst = [e['zotkey'] + '#' + e['citekey'], '', '(' + e['year'] + ') ' + e['title']]
+            lst = [e['citekey'], '', '(' + e['year'] + ') ' + e['title']]
         else:
             if len(alastnm) > 40:
                 alastnm = alastnm[:40] + "…"
-            lst = [e['zotkey'] + '#' + e['citekey'], alastnm , '(' + e['year'] + ') ' + e['title']]
+            lst = [e['citekey'], alastnm , '(' + e['year'] + ') ' + e['title']]
         return lst
 
     @staticmethod
@@ -803,12 +828,14 @@ class ZoteroEntries:
 
             zotkey  (string): The Zotero key as it appears in the markdown document.
         """
-
-        for k in self._e:
-            if self._e[k]['zotkey'] == zotkey:
-                if 'attachment' in self._e[k]:
-                    return self._e[k]['attachment']
-                return ["nOaTtAChMeNt"]
+        if self._bbt: #zotkey is citekey   
+            return self._e[self._cimap[zotkey]]['attachment']
+        else:
+            for k in self._e:
+                if self._e[k]['zotkey'] == zotkey:
+                    if 'attachment' in self._e[k]:
+                        return self._e[k]['attachment']
+                    return ["nOaTtAChMeNt"]
         return ["nOcItEkEy"]
 
     def GetRefData(self, zotkey):
@@ -817,9 +844,12 @@ class ZoteroEntries:
             zotkey  (string): The Zotero key as it appears in the markdown document.
         """
 
-        for k in self._e:
-            if self._e[k]['zotkey'] == zotkey:
-                return self._e[k]
+        if self._bbt :
+            return self._e[self._cimap[zotkey]]
+        else :
+            for k in self._e:
+                if self._e[k]['zotkey'] == zotkey:
+                    return self._e[k]
         return None
 
     def GetCitationById(self, Id):

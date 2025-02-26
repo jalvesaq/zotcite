@@ -45,8 +45,8 @@ local TranslateZPath = function(strg)
     return fpath
 end
 
-M.PDFPath = function(zotkey, cb)
-    local repl = vim.fn.py3eval('ZotCite.GetAttachment("' .. zotkey .. '")')
+M.PDFPath = function(citekey, cb)
+    local repl = vim.fn.py3eval('ZotCite.GetAttachment("' .. citekey .. '")')
     if #repl == 0 then
         zwarn("Got empty list")
         return
@@ -81,28 +81,36 @@ M.PDFPath = function(zotkey, cb)
 end
 
 M.citation_key = function()
-    local lnum = vim.api.nvim_win_get_cursor(0)[1]
-    local line = vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]
-    local pos = vim.api.nvim_win_get_cursor(0)[2]
-    local found_i = false
-    local i = pos + 1
-    local k
-    while i > 0 do
-        k = line:sub(i, i)
-        if k:find("@") then
-            found_i = true
-            i = i + 1
-            break
+    local bbt = bbt or true -- assume by default that bbt is used, fix, TODO : read value from config
+    if bbt then
+        local word = vim.fn.expand("<cWORD>")
+        if word:match("^@(%w+)") then  -- usually bbt citekeys are ath2009 (authYear) type (word + digits)
+            return word:sub(2)
         end
-        if not k:find("[A-Za-z0-9_#%-]") then break end
-        i = i - 1
-    end
-    if found_i then
-        local j = i + 8
-        k = line:sub(j, j)
-        if k == "#" then
-            local key = line:sub(i, j - 1)
-            return key
+    else
+        local lnum = vim.api.nvim_win_get_cursor(0)[1]
+        local line = vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]
+        local pos = vim.api.nvim_win_get_cursor(0)[2]
+        local found_i = false
+        local i = pos + 1
+        local k
+        while i > 0 do
+            k = line:sub(i, i)
+            if k:find("@") then
+                found_i = true
+                i = i + 1
+                break
+            end
+            if not k:find("[A-Za-z0-9_#%-]") then break end
+            i = i - 1
+        end
+        if found_i then
+            local j = i + 8
+            k = line:sub(j, j)
+            if k == "#" then
+                local key = line:sub(i, j - 1)
+                return key
+            end
         end
     end
     return ""
