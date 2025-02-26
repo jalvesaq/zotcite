@@ -285,6 +285,9 @@ class ZoteroEntries:
         else:
             self._exclude = str(os.getenv('Zotcite_exclude')).split()
 
+        self._zcopy = "zotero"
+        self._bcopy = "bbt"
+        self._bpath = "/Users/anand.kumar/Zotero/better-bibtex.sqlite"
         self._c = {}
         self._e = {}
         self._cimap = {}
@@ -375,16 +378,16 @@ class ZoteroEntries:
 
     def _load_zotero_data(self):
         self._bbt = True # read this from config, TODO
-        zcopy = self._copy_zotero_data(self._z, "zotero")
+        zcopy = self._copy_zotero_data(self._z, self._zcopy)
         print(zcopy)
         t1 = time.time()
         conn = sqlite3.connect(zcopy)
         self._cur = conn.cursor()
-        # if self._bbt:
-            # read / get path, hardcoded now, TODO
-        zbcopy = self._copy_zotero_data("/Users/anand.kumar/Zotero/better-bibtex.sqlite", "bbt")
-        queryA = f"ATTACH DATABASE '{zbcopy}' AS bbt"
-        self._cur.execute(queryA)
+        if self._bbt:
+            #read / get path, hardcoded now, TODO
+            zbcopy = self._copy_zotero_data(self._bpath, self._bcopy)
+            queryA = f"ATTACH DATABASE '{zbcopy}' AS bbt"
+            self._cur.execute(queryA)
 
         self._get_collections()
         self._add_most_fields()
@@ -863,25 +866,18 @@ class ZoteroEntries:
 
             key (string): The Zotero key as it appears in the markdown document.
         """
-        zcopy = self._copy_zotero_data()
+        zcopy = self._copy_zotero_data(self._z, self._zcopy)
         conn = sqlite3.connect(zcopy)
         cur = conn.cursor()
         itemID = self._cimap[citekey]
-        query = u"""
+        query = f"""
             SELECT items.key, itemAttachments.ItemID, itemAttachments.parentItemID, itemAnnotations.parentItemID, itemAnnotations.type, itemAnnotations.authorName, itemAnnotations.text, itemAnnotations.comment, itemAnnotations.pageLabel
             FROM items, itemAttachments, itemAnnotations
-            WHERE items.itemID = '""" + itemID + """'
+            WHERE items.itemID = {itemID}
             and items.itemID = itemAttachments.parentItemID
             and itemAnnotations.parentItemID = itemAttachments.ItemID
             """
         cur.execute(query)
-
-        # citekey = ''
-        # for k in self._e:
-        #     if self._e[k]['zotkey'] == key:
-        #         citekey = self._e[k]['citekey']
-
-        print(cur.fetchall)
 
         notes = []
         for i in cur.fetchall():
