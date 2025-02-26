@@ -156,7 +156,7 @@ end
 
 local finish_citation = function(ref)
     local rownr = vim.api.nvim_win_get_cursor(0)[1] - 1
-    local cite = "@" .. ref.value.key .. "#" .. ref.value.cite
+    local cite = "@" .. ref.value.cite
     vim.api.nvim_buf_set_text(
         0,
         rownr,
@@ -207,7 +207,7 @@ end
 
 local finish_annotations = function(sel)
     local repl = vim.fn.py3eval(
-        'ZotCite.GetAnnotations("' .. sel.value.key .. '", ' .. offset .. ")"
+        'ZotCite.GetAnnotations("' .. sel.value.cite .. '", ' .. offset .. ")"
     )
     if #repl == 0 then
         zwarn("No annotation found.")
@@ -219,7 +219,7 @@ end
 
 local finish_annotations_selection = function(sel)
     local raw_annotations = vim.fn.py3eval(
-        'ZotCite.GetAnnotations("' .. sel.value.key .. '", ' .. offset .. ")"
+        'ZotCite.GetAnnotations("' .. sel.value.cite .. '", ' .. offset .. ")"
     )
     if #raw_annotations == 0 then
         zwarn("No annotation found.")
@@ -346,7 +346,7 @@ M.annotations = function(ko, use_selection)
 end
 
 local finish_note = function(sel)
-    local repl = vim.fn.py3eval('ZotCite.GetNotes("' .. sel.value.key .. '")')
+    local repl = vim.fn.py3eval('ZotCite.GetNotes("' .. sel.value.cite .. '")')
     if repl == "" then
         zwarn("No note found.")
     else
@@ -384,7 +384,7 @@ local finish_pdfnote_2 = function(_, idx)
 end
 
 local finish_pdfnote = function(sel)
-    local zotkey = sel.value.key
+    local zotkey = sel.value.cite
     local repl = vim.fn.py3eval('ZotCite.GetRefData("' .. zotkey .. '")')
     local citekey = " '@" .. zotkey .. "#" .. repl["citekey"] .. "' "
     local pg = "1"
@@ -491,11 +491,12 @@ local finish_open_attachment = function(_, idx)
     if idx then require("zotcite.utils").open(sel_list[idx]) end
 end
 
-M.open_attachment = function(zotkey)
-    if not zotkey then 
-        zotkey = M.citation_key()
+M.open_attachment = function(citekey)
+    if not citekey then 
+        citekey = M.citation_key()
     end
-    local apath = M.PDFPath(zotkey, finish_open_attachment)
+    vim.notify('Opening PDF: @' .. citekey)
+    local apath = M.PDFPath(citekey, finish_open_attachment)
     if type(apath) == "string" then require("zotcite.utils").open(apath) end
 end
 

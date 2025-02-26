@@ -355,6 +355,7 @@ class ZoteroEntries:
         # self._ztime = os.path.getmtime(self._z)
         self._ztime = os.path.getmtime(dbpath)
         zcopy = self._tmpdir + f"/copy_of_{dbname}.sqlite"
+
         if os.path.isfile(zcopy):
             zcopy_time = os.path.getmtime(zcopy)
         else:
@@ -363,7 +364,7 @@ class ZoteroEntries:
         # Make a copy of zotero.sqlite to avoid locks
         if self._ztime > zcopy_time:
             t2 = time.time()
-            with open(self._z, 'rb') as f:
+            with open(dbpath, 'rb') as f:
                 b = f.read()
             t3 = time.time()
             with open(zcopy, 'wb') as f:
@@ -375,30 +376,24 @@ class ZoteroEntries:
     def _load_zotero_data(self):
         self._bbt = True # read this from config, TODO
         zcopy = self._copy_zotero_data(self._z, "zotero")
+        print(zcopy)
         t1 = time.time()
         conn = sqlite3.connect(zcopy)
         self._cur = conn.cursor()
         # if self._bbt:
             # read / get path, hardcoded now, TODO
         zbcopy = self._copy_zotero_data("/Users/anand.kumar/Zotero/better-bibtex.sqlite", "bbt")
-        print(zbcopy)
         queryA = f"ATTACH DATABASE '{zbcopy}' AS bbt"
         self._cur.execute(queryA)
-        print("BBT Tables:", self._cur.execute("SELECT name FROM bbt.sqlite_master WHERE type='table';").fetchall())
-
 
         self._get_collections()
         self._add_most_fields()
-
 
         self._add_authors()
         self._add_type()
         self._add_attachments()
         self._calculate_citekeys() # bbt=True by default
         self._delete_items()
-        
-        print("a sample entry post loading zotero data")
-        print(self._e[list(self._e.keys())[4]])
 
         conn.close()
         t2 = time.time()
@@ -829,7 +824,8 @@ class ZoteroEntries:
             zotkey  (string): The Zotero key as it appears in the markdown document.
         """
         if self._bbt: #zotkey is citekey   
-            return self._e[self._cimap[zotkey]]['attachment']
+            citekey = zotkey 
+            return self._e[self._cimap[citekey]]['attachment']
         else:
             for k in self._e:
                 if self._e[k]['zotkey'] == zotkey:
@@ -845,7 +841,7 @@ class ZoteroEntries:
         """
 
         if self._bbt :
-            return self._e[self._cimap[zotkey]]
+            return self._e[self._cimap[zotkey]] # getting citekey
         else :
             for k in self._e:
                 if self._e[k]['zotkey'] == zotkey:
@@ -862,7 +858,7 @@ class ZoteroEntries:
             return '@' + self._e[Id]['zotkey'] + '#' + self._e[Id]['citekey']
         return "IdNotFound"
 
-    def GetAnnotations(self, key, offset):
+    def GetAnnotations(self, citekey, offset):
         """ Return user annotations made using Zotero's PDF viewer.
 
             key (string): The Zotero key as it appears in the markdown document.
@@ -870,20 +866,22 @@ class ZoteroEntries:
         zcopy = self._copy_zotero_data()
         conn = sqlite3.connect(zcopy)
         cur = conn.cursor()
-
+        itemID = self._cimap[citekey]
         query = u"""
             SELECT items.key, itemAttachments.ItemID, itemAttachments.parentItemID, itemAnnotations.parentItemID, itemAnnotations.type, itemAnnotations.authorName, itemAnnotations.text, itemAnnotations.comment, itemAnnotations.pageLabel
             FROM items, itemAttachments, itemAnnotations
-            WHERE items.key = '""" + key + """'
+            WHERE items.itemID = '""" + itemID + """'
             and items.itemID = itemAttachments.parentItemID
             and itemAnnotations.parentItemID = itemAttachments.ItemID
             """
         cur.execute(query)
 
-        citekey = ''
-        for k in self._e:
-            if self._e[k]['zotkey'] == key:
-                citekey = self._e[k]['citekey']
+        # citekey = ''
+        # for k in self._e:
+        #     if self._e[k]['zotkey'] == key:
+        #         citekey = self._e[k]['citekey']
+
+        print(cur.fetchall)
 
         notes = []
         for i in cur.fetchall():
@@ -904,19 +902,19 @@ class ZoteroEntries:
                     for s in ss:
                         notes.append(s)
                     if page is None: # web snapshots
-                        notes.append(' [@' + key + '#' + citekey + ']')
+                        notes.append(' [@' + citekey + ']')
                     else:
-                        notes.append(' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                        notes.append(' [@' + citekey + self._ypsep + page + ']')
                 elif page is None: # web snapshots
-                    notes.append(i[7] + ' [@' + key + '#' + citekey + ']')
+                    notes.append(i[7] + ' [@' + citekey + ']')
                 else:
-                    notes.append(i[7] + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                    notes.append(i[7] + ' [@' + citekey + self._ypsep + page + ']')
             if i[6] and page is None: # Highlighted text, web snapshots
                 notes.append('')
-                notes.append('> ' + self._sanitize_markdown(i[6].replace("\n"," ")) + ' [@' + key + '#' + citekey + ']')
+                notes.append('> ' + self._sanitize_markdown(i[6].replace("\n"," ")) + ' [@' + citekey + ']')
             elif i[6]: # Highlighted text
                 notes.append('')
-                notes.append('> ' + self._sanitize_markdown(i[6]) + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                notes.append('> ' + self._sanitize_markdown(i[6]) + ' [@' + citekey + self._ypsep + page + ']')
         return notes
 
 

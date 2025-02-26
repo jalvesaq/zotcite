@@ -54,29 +54,32 @@ local format_preview = function(v)
     local preview_text
     if v.etype == "journalArticle" then
         preview_text = string.format(
-            "{{%s}} {[%s]} {(%s)}. {<%s>}.\n\n%s\n",
+            "{(%s)}\n{{%s}} {[%s]}. {<%s>}.\n\n%s\n\n{[%s]} {<%s>}",
+            v.title or "",
             authors,
             v.year or "",
-            v.title or "",
             v.publicationTitle or "",
-            v.abstract or "No abstract available."
+            v.abstract or "No abstract available.", 
+            v.etype, v.cite
         )
     elseif v.etype == "bookSection" then
         preview_text = string.format(
-            "{{%s}} {[%s]} {(%s)}. In: {<%s>}.\n\n%s\n",
+            "{(%s)}\n{{%s}} {[%s]}. In: {<%s>}.\n\n%s\n\n{[%s]} {<%s>}",             
+            v.title or "",
             authors,
             v.year or "",
-            v.title or "",
             v.publicationTitle or "",
-            v.abstract or ""
+            v.abstract or "", 
+            v.etype, v.cite
         )
     else
         preview_text = string.format(
-            "{{%s}} {[%s]} {(%s)}.\n\n%s\n",
+            "{(%s)}\n{{%s}} {[%s]}.\n\n%s\n\n{[%s]} {<%s>}",
+            v.title or "",
             authors,
             v.year or "",
-            v.title or "",
-            v.abstract or ""
+            v.abstract or "", 
+            v.etype, v.cite
         )
     end
     return preview_text
@@ -198,7 +201,8 @@ M.refs = function(key, cb)
             map("i", "<CR>", function()
                 local selection = action_state.get_selected_entry()
                 -- actions.close(prompt_bufnr)
-                require("zotcite.get").open_attachment(selection.value.key)
+                print(selection.value)
+                require("zotcite.get").open_attachment(selection.value.cite)
             end)
             return true
             end,
