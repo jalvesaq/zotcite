@@ -360,8 +360,12 @@ local finish_pdfnote_2 = function(_, idx)
         zwarn('File not readable: "' .. fpath .. '"')
         return
     end
+    
+    -- Determine which PDF extractor to use
+    local pdf_extractor = config.pdf_extractor or "pdfnotes.py"
+    
     local notes = vim.system(
-        { config.zotcite_home .. "/pdfnotes.py", fpath, key, p },
+        { config.zotcite_home .. "/" .. pdf_extractor, fpath, key, p },
         { text = true }
     ):wait()
     if notes.code == 0 then

@@ -7,6 +7,7 @@ local config = {
     filetypes = { "markdown", "pandoc", "rmd", "quarto", "vimwiki" },
     zrunning = false,
     zotcite_home = nil,
+    pdf_extractor = "pdfnotes.py", -- Default: "pdfnotes.py", alternative: "pdfnotes2.py"
     log = {},
 }
 
