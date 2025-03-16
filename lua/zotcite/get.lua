@@ -382,7 +382,7 @@ end
 local finish_pdfnote = function(sel)
     local zotkey = sel.value.key
     local repl = vim.fn.py3eval('ZotCite.GetRefData("' .. zotkey .. '")')
-    local citekey = " '@" .. zotkey .. "#" .. repl["citekey"] .. "' "
+    local citekey = "@" .. zotkey .. "#" .. repl["citekey"]
     local pg = "1"
     if repl.pages and repl.pages:find("[0-9]-") then pg = repl.pages end
     pdfnote_data = { citekey = citekey, pg = pg }
