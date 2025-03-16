@@ -7,13 +7,11 @@ PDF annotation extraction tool for zotcite using PyMuPDF (fitz)
 import sys
 import os
 import re
-import json
-from datetime import datetime
 
 try:
     import fitz  # PyMuPDF
 except ImportError:
-    sys.stdout.write("Please install the Python3 module pymupdf: pip install pymupdf")
+    sys.stderr.write("Please install the Python3 module pymupdf: pip install pymupdf")
     sys.exit(1)
 
 def main():
@@ -21,7 +19,7 @@ def main():
     if len(sys.argv) < 2:
         sys.stderr.write("Usage: pdfnotes.py PDF_FILE [CITEKEY] [PAGE_OFFSET]\n")
         sys.exit(1)
-        
+
     # Load the PDF file
     try:
         doc = fitz.open(sys.argv[1])
@@ -76,10 +74,10 @@ def main():
     for page_idx in range(doc.page_count):
         page = doc[page_idx]
         pnum = page_idx + 1
-        
+
         # Handle page numbering
         pgnum = str(page_idx + page1)
-        
+
         # Try to use page labels if available and not using a range
         if not has_pg_range:
             try:
@@ -97,26 +95,26 @@ def main():
             continue
 
         # Page dimensions for positioning
-        pwidth, pheight = page.rect.width, page.rect.height
-        
+        pwidth, _ = page.rect.width, page.rect.height
+
         # Process annotations on this page
         for annot in annots:
             # Get annotation type
             annot_type = annot.type[1]
-            
+
             # Get coordinates for sorting (top of annotation)
             rect = annot.rect
             x, y = rect.x0, rect.y0
-            
+
             # Guess column (for dual-column documents)
             c = 1 if x < (pwidth / 2) else 2
-            
+
             # Get contents (annotation text)
             contents = annot.info.get("content", "")
-            
+
             # Get author if available
             author = annot.info.get("title", "")
-            
+
             # Process text comments/notes
             if contents and annot_type in ["Text", "FreeText", "Note"]:
                 txt = contents + ' [annotation'
@@ -125,25 +123,25 @@ def main():
                 if citekey:
                     txt += ' on ' + citekey
                 txt += ypsep + pgnum + ']\n'
-                
+
                 # Add to notes list (with slight y-offset to ensure comments come before highlights)
                 notes.append([pnum, c, y - 0.0000001, txt])
-            
+
             # Process highlighted text
             if annot_type in ["Highlight", "Underline"]:
                 # Extract text from the highlighted region
                 text = ""
-                
+
                 # Try multiple methods to extract text
                 try:
                     # Method 1: Get text using get_text with clip (most reliable method)
                     text = page.get_text("text", clip=rect)
-                except Exception as e1:
+                except Exception:
                     try:
                         # Method 2: Use get_textbox if available (older versions)
                         if hasattr(page, "get_textbox"):
                             text = page.get_textbox(rect)
-                    except Exception as e2:
+                    except Exception:
                         try:
                             # Method 3: Extract words individually and combine
                             words = page.get_text("words")
@@ -152,16 +150,16 @@ def main():
                                     word_rect = fitz.Rect(word[:4])
                                     if rect.intersects(word_rect):
                                         text += word[4] + " "
-                        except Exception as e3:
+                        except Exception:
                             # Method 4: Last resort - get all text and note we couldn't extract properly
                             try:
                                 all_text = page.get_text("text")
                                 if all_text:
                                     text = "[Highlighted text could not be extracted precisely]"
-                            except Exception as e4:
+                            except Exception:
                                 # Unable to extract any text
                                 pass
-                
+
                 # Clean up the text
                 if text:
                     text = text.replace('-\n', '')
@@ -169,23 +167,23 @@ def main():
                     text = re.sub(r'^\s*', '', text)
                     text = re.sub(r'\s*$', '', text)
                     text = re.sub(r'\s+', ' ', text)
-                    
+
                     if text.strip():
                         txt = '> ' + text + ' ['
                         if citekey:
                             txt += citekey
                         txt += ypsep + pgnum + ']\n'
                         notes.append([pnum, c, y, txt])
-    
+
     # Close the document
     doc.close()
-    
+
     # Check if we found any notes
     if notes:
         # Sort notes by page, column, and y-position
         snotes = sorted(notes, key=lambda x: (x[0], x[1], x[2]))
         for n in snotes:
-            print(n[3], end='')
+            print(n[3], end='\n')
     else:
         sys.stderr.write(f"No annotations found in the PDF: {sys.argv[1]}\n")
         sys.exit(34)
