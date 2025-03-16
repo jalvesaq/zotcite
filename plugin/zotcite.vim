@@ -1,10 +1,10 @@
-if has("nvim-0.10")
+if has("nvim-0.10.4")
     finish
 endif
 
 function ZotciteVimBranchWarning(...)
     echohl WarningMsg
-    echomsg 'The main branch of Zotcite now requires Neovim >= 0.10. Please, switch to the branch "vim".'
+    echomsg 'The main branch of Zotcite now requires Neovim >= 0.10.4. Please, switch to the branch "vim".'
     echohl None
 endfunction
 

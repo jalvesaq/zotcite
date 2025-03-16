@@ -1,7 +1,7 @@
 # Zotcite
 
 > [!Note]
-> Users of Vim and Neovim < 0.10 have to install the branch "vim".
+> Users of Vim and Neovim < 0.10.4 have to switch to the "vim" branch.
 
 _Zotcite_ is a Neovim plugin that provides integration with Zotero. With
 _zotcite_ you can:

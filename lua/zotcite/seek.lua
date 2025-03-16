@@ -6,6 +6,7 @@ local action_state = require("telescope.actions.state")
 local previewers = require("telescope.previewers")
 local entry_display = require("telescope.pickers.entry_display")
 local config = require("zotcite.config").get_config()
+local ns = vim.api.nvim_create_namespace("ZSeekPreview")
 
 local M = {}
 
@@ -52,35 +53,37 @@ local format_preview = function(v)
     else
         authors = "?"
     end
-    local preview_text
+    local year = v.year or "????"
+    local title = v.title or "????"
+    local ptitle = v.publicationTitle or "????"
+    local txt
+    local hl = { { g = "Identifier", s = 0, e = #authors } }
+    table.insert(hl, { g = "Number", s = hl[1].e + 1, e = hl[1].e + 1 + #year })
+    table.insert(hl, { g = "Title", s = hl[2].e + 1, e = hl[2].e + 1 + #title })
     if v.etype == "journalArticle" then
-        preview_text = string.format(
-            "{{%s}} {[%s]} {(%s)}. {<%s>}.\n\n%s\n",
+        txt = string.format(
+            "%s %s %s. %s.\n\n%s\n",
             authors,
-            v.year or "",
-            v.title or "",
-            v.publicationTitle or "",
+            year,
+            title,
+            ptitle,
             v.abstract or "No abstract available."
         )
+        table.insert(hl, { g = "Include", s = hl[3].e + 2, e = hl[3].e + 2 + #ptitle })
     elseif v.etype == "bookSection" then
-        preview_text = string.format(
-            "{{%s}} {[%s]} {(%s)}. In: {<%s>}.\n\n%s\n",
+        txt = string.format(
+            "%s %s %s. In: %s.\n\n%s\n",
             authors,
-            v.year or "",
-            v.title or "",
-            v.publicationTitle or "",
+            year,
+            title,
+            ptitle,
             v.abstract or ""
         )
+        table.insert(hl, { g = "Include", s = hl[3].e + 6, e = hl[3].e + 6 + #ptitle })
     else
-        preview_text = string.format(
-            "{{%s}} {[%s]} {(%s)}.\n\n%s\n",
-            authors,
-            v.year or "",
-            v.title or "",
-            v.abstract or ""
-        )
+        txt = string.format("%s %s %s.\n\n%s\n", authors, year, title, v.abstract or "")
     end
-    return preview_text
+    return txt, hl
 end
 
 --- Use telescope to find and select a reference
@@ -172,14 +175,7 @@ M.refs = function(key, cb)
             previewer = previewers.new_buffer_previewer({
                 define_preview = function(self, entry, _)
                     local bufnr = self.state.bufnr
-                    vim.api.nvim_set_option_value(
-                        "syntax",
-                        "zoteropreview",
-                        { buf = bufnr }
-                    )
-
-                    local preview_text = format_preview(entry.value)
-
+                    local preview_text, hl = format_preview(entry.value)
                     vim.api.nvim_buf_set_lines(
                         bufnr,
                         0,
@@ -187,6 +183,13 @@ M.refs = function(key, cb)
                         false,
                         vim.split(preview_text, "\n")
                     )
+                    for _, h in pairs(hl) do
+                        if vim.fn.has("nvim-0.11") == 1 then
+                            vim.hl.range(bufnr, ns, h.g, { 0, h.s }, { 0, h.e }, {})
+                        else
+                            vim.api.nvim_buf_add_highlight(bufnr, -1, h.g, 0, h.s, h.e)
+                        end
+                    end
                 end,
             }),
             attach_mappings = function(prompt_bufnr, map)
