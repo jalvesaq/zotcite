@@ -10,11 +10,12 @@
     2.5. Alternative workflows                       |zotcite_other_workflows|
  3. Customization                                      |zotcite_customization|
     3.1. Change default maps                         |zotcite_change_mappings|
-    3.2. Zotcite engine                                       |zotcite_engine|
-    3.3. Syntax highlighting                            |zotcite_highlighting|
-    3.4. File types                                        |zotcite_filetypes|
-    3.5. Open attachment                              |zotcite_open_in_zotero|
-    3.6. Show errors of command to open attachment   |zotcite_wait_attachment|
+    3.2. Change default maps                         |zotcite_change_mappings|
+    3.3. Zotcite engine                                       |zotcite_engine|
+    3.4. Syntax highlighting                            |zotcite_highlighting|
+    3.5. File types                                        |zotcite_filetypes|
+    3.6. Open attachment                              |zotcite_open_in_zotero|
+    3.7. Show errors of command to open attachment   |zotcite_wait_attachment|
  4. Troubleshooting                                  |zotcite_troubleshooting|
 
 
@@ -250,7 +251,19 @@ of the citation fields.
 3. Customization                                       *zotcite_customization*
 
 ------------------------------------------------------------------------------
-3.1. Change default maps                             *zotcite_change_mappings*
+3.1. Python path                                         *zotcite_python_path*
+
+Zotcite runs "python3" when extracting notes from PDF documents annotated by
+PDF viewers other than Zotero (`:Zpdfnote`) and when converting ODT to
+Markdown (`:Zodt2md`). If "python3" is not in your path or if you are running
+Python from a virtual environment, you should set the correct path in your
+zotcite config. Example:
+>lua
+ python_path = "/home/user_name/.py3env/bin/python3"
+<
+
+------------------------------------------------------------------------------
+3.2. Change default maps                             *zotcite_change_mappings*
 
 To change the shortcut to open reference attachment, set the value of
 <Plug>ZOpenAttachment in your |init.lua| as below:
@@ -284,7 +297,7 @@ current (Markdown, Rmd, or Quarto) document, follow the example:
 
 
 ------------------------------------------------------------------------------
-3.2. Zotcite engine                                            *zotcite_engine*
+3.3. Zotcite engine                                            *zotcite_engine*
 
 							   *citation_template*
 The citation keys inserted by Zotcite have the format `@ZoteroKey#Author_Year`
@@ -370,7 +383,7 @@ of the Markdown document, as in the examples:
 
 
 ------------------------------------------------------------------------------
-3.3. Syntax Highlighting                                 *zotcite_highlighting*
+3.4. Syntax Highlighting                                 *zotcite_highlighting*
 
 Syntax highlighting customization is done with Vim variables.
 
@@ -388,7 +401,7 @@ different value, follow the example:
 
 
 ------------------------------------------------------------------------------
-3.4. File types                                             *zotcite_filetypes*
+3.5. File types                                             *zotcite_filetypes*
 
 Zotcite is enabled only if the file type is `markdown`, `pandoc`, `rmd`,
 `quarto` or `vimwiki`. If you want it enabled for other file types, you should
@@ -398,7 +411,7 @@ set the value of `filetypes` in your `config`. Example:
 
 
 ------------------------------------------------------------------------------
-3.5. Open attachment                                  *zotcite_open_in_zotero*
+3.6. Open attachment                                  *zotcite_open_in_zotero*
 
 Zotcite calls `vim.ui.open()` to open attachments. But you can change the
 command in your config:
@@ -419,7 +432,7 @@ included a `zotero.desktop` file, you can do the following:
 
 
 ------------------------------------------------------------------------------
-3.6. Show errors of command to open attachment        *zotcite_wait_attachment*
+3.7. Show errors of command to open attachment        *zotcite_wait_attachment*
 
 While opening an attachment, zotcite cannot catch errors because it doesn't
 wait for the application to finish. If zotcite fails to open a PDF attachment,
