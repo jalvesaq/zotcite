@@ -292,32 +292,13 @@ where `ZoteroKey` is the key attributed by Zotero to the references stored in
 its database, `Author` is the last name of the first author, and `Year` is the
 full year (four digits). The `@ZoteroKey#` part of the citation key is
 mandatory because `zotref.py` uses it to add the bibliographic data that is
-parsed by `citeproc`, but it will be concealed by Vim. The remainder of
-the key is customizable. You can define whether it will include or not the
-first author's last name (in either lower case `{author}` or title case
-`{Author}`), the last name of the first three authors (either `{authors}` or
-`{Authors}`), the first word of the title (`{title}` or `{Title}`) and the
-year (with either four digits `{Year}` or only two `{year}`). Examples:
+parsed by `citeproc`, but it will be concealed by Neovim. The remainder of the
+key is customizable. You can define whether it will include or not the first
+author's last name (in either lower case `{author}` or title case `{Author}`),
+the last names of the first three authors (either `{authors}` or `{Authors}`),
+and the year (with either four digits `{Year}` or only two `{year}`). Example:
 >lua
- citation_template = '{author}{year}'
- citation_template = '{Authors}_{Year}_{Title}'
-<
-								*banned_words*
-The following words are deleted from the title before its first word is
-selected: a, an, the, some, from, on, in, to, of, do, and with. If you want to
-ban a different set of words, define `banned_words` in your `config` as in the
-examples:
->lua
- -- Spanish
- banned_words = 'el la las lo los uno una unos unas al de en no con para'
- -- French
- banned_words = 'la les l un une quelques à un de avec pour'
- -- Portuguese
- banned_words = 'o um uma uns umas à ao de da dos em na no com para'
- -- Italian
- banned_words = 'la le l gli un una alcuni alcune all alla da dei nell con per'
- -- German
- banned_words = 'der die das ein eine einer eines einem einen einige im zu mit für von'
+ citation_template = '{Author}-{year}'
 <
 								    *SQL_path*
 If Zotcite cannot find the path to Zotero's database (`zotero.sqlite`), put
