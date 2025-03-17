@@ -131,34 +131,23 @@ def main():
             if annot_type in ["Highlight", "Underline"]:
                 # Extract text from the highlighted region
                 text = ""
-
-                # Try multiple methods to extract text
                 try:
-                    # Method 1: Get text using get_text with clip (most reliable method)
-                    text = page.get_text("text", clip=rect)
+                    # Use word extraction so that only words mostly inside the highlight are included.
+                    words = page.get_text("words")
+                    for word in words:
+                        if len(word) >= 5:  # Ensure all required fields are present
+                            word_rect = fitz.Rect(word[:4])
+                            inter_rect = rect & word_rect  # Compute the intersection rectangle
+                            # Only add the word if more than 50% of its area is inside the annotation
+                            if word_rect.get_area() > 0 and (inter_rect.get_area() / word_rect.get_area()) > 0.5:
+                                text += word[4] + " "
                 except Exception:
                     try:
-                        # Method 2: Use get_textbox if available (older versions)
-                        if hasattr(page, "get_textbox"):
-                            text = page.get_textbox(rect)
+                        all_text = page.get_text("text")
+                        if all_text:
+                            text = "[Highlighted text could not be extracted precisely]"
                     except Exception:
-                        try:
-                            # Method 3: Extract words individually and combine
-                            words = page.get_text("words")
-                            for word in words:
-                                if len(word) >= 5:  # Make sure it has all required fields
-                                    word_rect = fitz.Rect(word[:4])
-                                    if rect.intersects(word_rect):
-                                        text += word[4] + " "
-                        except Exception:
-                            # Method 4: Last resort - get all text and note we couldn't extract properly
-                            try:
-                                all_text = page.get_text("text")
-                                if all_text:
-                                    text = "[Highlighted text could not be extracted precisely]"
-                            except Exception:
-                                # Unable to extract any text
-                                pass
+                        pass
 
                 # Clean up the text
                 if text:
