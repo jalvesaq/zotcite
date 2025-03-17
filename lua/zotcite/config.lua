@@ -150,6 +150,44 @@ local global_init = function()
     return true
 end
 
+-- stylua: ignore start
+
+M.hl_citations = function()
+    local ns = vim.api.nvim_create_namespace("ZCitation")
+    vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    local kp = "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]#"
+    local yp = "^%S*[0-9][0-9][0-9][0-9]"
+    if config.citation_template and config.citation_template:find("year") then
+        yp = "^%S*[0-9][0-9]"
+    end
+    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+    local set_m = vim.api.nvim_buf_set_extmark
+    for k, v in pairs(lines) do
+        local i = 1
+        while true do
+            local s, e = v:find(kp, i)
+            if not s or not e then break end
+            set_m(0, ns, k - 1, s - 1, { end_col = e, hl_group = "Ignore", conceal = "" })
+            local _, y = v:find(yp, e)
+            if y then
+                set_m(0, ns, k - 1, e, { end_col = y, hl_group = "Identifier" })
+                set_m(0, ns, k - 1, y - 5, { end_col = y - 4, hl_group = "Identifier", conceal = "_" })
+                local substr = v:sub(e, y)
+                local j = 1
+                while true do
+                    local _, m = substr:find("+", j)
+                    if not m then break end
+                    set_m(0, ns, k - 1, m + e - 2, { end_col = m + e - 1, hl_group = "Identifier", conceal = "_" })
+                    j = m + 1
+                end
+            end
+            i = e + 1
+        end
+    end
+end
+
+-- stylua: ignore end
+
 M.init = function()
     local ok = false
     for _, v in pairs(config.filetypes) do
@@ -161,20 +199,7 @@ M.init = function()
 
     if not ok then return end
 
-    -- FIXME: Use treesitter
-    vim.cmd([[
-    syn match zoteroCiteKey /@[A-Z0-9]\{8}#[:_[:digit:][:lower:][:upper:]\u00FF-\uFFFF\-]\+/ contains=zoteroHidden,zoteroVisible,@NoSpell containedin=pandocPCite
-    syn match zoteroCiteKey /@[A-Z0-9]\{8}#[:_[:digit:][:lower:][:upper:]\u00FF-\uFFFF\-]\+/ contains=zoteroHidden,zoteroVisible,@NoSpell
-    syn match zoteroHidden  /@[A-Z0-9]\{8}#/ contained containedin=zoteroCiteKey conceal
-    syn match zoteroBlank   /-\ze[0-9]/ contained containedin=zoteroCiteKey conceal cchar=  
-    syn match zoteroVisible /@[A-Z0-9]\{8}#\zs[:_[:digit:][:lower:][:upper:]\u00FF-\uFFFF\-]\+/ contained containedin=zoteroCiteKey
-    ]])
-    if config.hl_cite_key then
-        vim.cmd([[
-        hi default link zoteroHidden Comment
-        hi default link zoteroCiteKey Identifier
-        ]])
-    end
+    M.hl_citations()
 
     -- Do this only once
     if not did_global_init then

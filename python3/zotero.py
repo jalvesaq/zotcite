@@ -514,13 +514,13 @@ class ZoteroEntries:
                 if c in self._e[k]:
                     lastname = self._e[k][c][0][0]
                     for ln in self._e[k][c]:
-                        lastnames = lastnames + '_' + ln[0]
+                        lastnames = lastnames + '+' + ln[0]
                     break
             if lastnames == '':
                 lastnames = 'No_author'
 
-            lastnames = re.sub('^_', '', lastnames)
-            lastnames = re.sub('_.*_.*_.*', '_etal', lastnames)
+            lastnames = re.sub('^\\+', '', lastnames)
+            lastnames = re.sub('\\+.*\\+.*\\+.*', '+etal', lastnames)
             lastname = re.sub('\\W', '', lastname)
             titlew = re.sub('\\W', '', titlew)
             key = self._cite
