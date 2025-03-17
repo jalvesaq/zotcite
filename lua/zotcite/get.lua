@@ -365,8 +365,12 @@ local finish_pdfnote_2 = function(_, idx)
         zwarn('File not readable: "' .. fpath .. '"')
         return
     end
+
+    -- Determine which PDF extractor to use
+    local pdf_extractor = config.pdf_extractor or "pdfnotes.py"
+
     local notes = vim.system(
-        { config.zotcite_home .. "/pdfnotes.py", fpath, key, p },
+        { config.python_path, config.zotcite_home .. "/" .. pdf_extractor, fpath, key, p },
         { text = true }
     ):wait()
     if notes.code == 0 then
@@ -384,7 +388,7 @@ end
 local finish_pdfnote = function(sel)
     local zotkey = sel.value.key
     local repl = vim.fn.py3eval('ZotCite.GetRefData("' .. zotkey .. '")')
-    local citekey = " '@" .. zotkey .. "#" .. repl["citekey"] .. "' "
+    local citekey = "@" .. zotkey .. "#" .. repl["citekey"]
     local pg = "1"
     if repl.pages and repl.pages:find("[0-9]-") then pg = repl.pages end
     pdfnote_data = { citekey = citekey, pg = pg }

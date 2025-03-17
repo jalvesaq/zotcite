@@ -12,13 +12,13 @@ import re
 try:
     import PyQt5
 except ImportError:
-    sys.stdout.write("Please, install the Python3 module PyQt5")
+    sys.stderr.write("Please, install the Python3 module PyQt5")
     sys.exit(1)
 
 try:
     import popplerqt5
 except ImportError:
-    sys.stdout.write("Please, install the Python3 module popplerqt5")
+    sys.stderr.write("Please, install the Python3 module popplerqt5")
     sys.exit(1)
 
 def main():
