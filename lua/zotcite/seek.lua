@@ -1,11 +1,4 @@
-local pickers = require("telescope.pickers")
-local finders = require("telescope.finders")
-local sorters = require("telescope.config").values
-local actions = require("telescope.actions")
-local action_state = require("telescope.actions.state")
-local previewers = require("telescope.previewers")
-local entry_display = require("telescope.pickers.entry_display")
-
+local fzf_lua = require("fzf-lua")
 local M = {}
 
 local get_match = function(key)
@@ -142,72 +135,130 @@ M.refs = function(key, cb)
     if awidth > awlim then awidth = awlim end
     table.sort(references, function(a, b) return (a.adate > b.adate) end)
 
-    pickers
-        .new({}, {
-            prompt_title = "Search pattern",
-            results_title = "Zotero references",
-            finder = finders.new_table({
-                results = references,
-                entry_maker = function(entry)
-                    local displayer = entry_display.create({
-                        separator = " ",
-                        items = {
-                            { width = awidth }, -- Author
-                            { width = 4 }, -- Year
-                            { remaining = true }, -- Title
-                        },
-                    })
-                    return {
-                        value = entry,
-                        display = function(e)
-                            return displayer({
-                                { e.value.alastnm, "Identifier" },
-                                { e.value.year, "Number" },
-                                { e.value.title, "Title" },
-                            })
-                        end,
-                        ordinal = entry.display,
-                    }
-                end,
-            }),
-            sorter = sorters.generic_sorter({}),
-            previewer = previewers.new_buffer_previewer({
-                define_preview = function(self, entry, _)
-                    local bufnr = self.state.bufnr
-                    vim.api.nvim_set_option_value(
-                        "syntax",
-                        "zoteropreview",
-                        { buf = bufnr }
-                    )
+	local entries = {}
+	local previewtext = {}
 
-                    local preview_text = format_preview(entry.value)
+	for i, ref in ipairs(references) do
+		local entry_str = string.format("%s\t%-"..awidth.."s %-10s %-4s %s", ref.cite, ref.etype, ref.alastnm, ref.year, ref.title)
+		entries[i] = entry_str
+		previewtext[ref.cite] = format_preview(ref)
+	end
 
-                    vim.api.nvim_buf_set_lines(
-                        bufnr,
-                        0,
-                        -1,
-                        false,
-                        vim.split(preview_text, "\n")
-                    )
-                end,
-            }),
-            attach_mappings = function(prompt_bufnr, map)
-            map("i", "<C-o>", function()
-                local selection = action_state.get_selected_entry()
-                actions.close(prompt_bufnr)
-                -- Handle the selected reference here
-                cb(selection)
-            end)
-            map("i", "<CR>", function()
-                local selection = action_state.get_selected_entry()
-                -- actions.close(prompt_bufnr)
-                print(selection.value)
-                require("zotcite.get").open_attachment(selection.value.cite)
-            end)
-            return true
+	-- local function format_display(entry)
+	-- 	local display = format_entry(entry)
+	-- 	return { display = display, key = entry.key, full = entry }
+	-- end
+	--
+	-- local results = vim.tbl_map(format_display, entries)
+
+
+	-- fzf-lua configuration
+    fzf_lua.fzf_exec(entries, {
+        prompt = "Search pattern> ",
+        fzf_opts = {
+            ['--header'] = "Ctrl-o: Select | Enter: Open Attachment",
+			['--delimiter'] = '\t',
+			['--with-nth'] = '2',
+			['--ansi'] = true,
+        },
+		previewer = {
+		  _ctor = function()
+				local base = require 'fzf-lua.previewer.builtin'.buffer_or_file
+				local previewer = base:extend()
+				function previewer:populate_preview_buf(selection)
+					local citekey = selection:match("([^\t]+)")
+					local previewLines = previewtext[citekey]
+					local tmpbuf = self:get_tmp_buffer()
+					vim.api.nvim_set_option_value("syntax", "zoteropreview", { buf = tmpbuf })
+					vim.api.nvim_buf_set_lines(tmpbuf, 0, -1, false, vim.split(previewLines, '\n'))
+					self:set_preview_buf(tmpbuf)
+				end
+		    return previewer
+		  end,
+		},
+		actions = {
+            ['default'] = function(selected)
+                local citekey = selected[1]:match("([^\t]+)")
+                if citekey then
+                    require("zotcite.get").open_attachment(citekey)
+                end
             end,
-        })
-        :find()
+            ['ctrl-o'] = function(selected)
+                local citekey = selected[1]:match("([^\t]+)")
+                if citekey and cb then
+                    cb(citekey)
+                end
+            end,
+        },
+    })
+
+
+    -- pickers
+    --     .new({}, {
+    --         prompt_title = "Search pattern",
+    --         results_title = "Zotero references",
+    --         finder = finders.new_table({
+    --             results = references,
+    --             entry_maker = function(entry)
+    --                 local displayer = entry_display.create({
+    --                     separator = " ",
+    --                     items = {
+    --                         { width = awidth }, -- Author
+    --                         { width = 4 }, -- Year
+    --                         { remaining = true }, -- Title
+    --                     },
+    --                 })
+    --                 return {
+    --                     value = entry,
+    --                     display = function(e)
+    --                         return displayer({
+    --                             { e.value.alastnm, "Identifier" },
+    --                             { e.value.year, "Number" },
+    --                             { e.value.title, "Title" },
+    --                         })
+    --                     end,
+    --                     ordinal = entry.display,
+    --                 }
+    --             end,
+    --         }),
+    --         sorter = sorters.generic_sorter({}),
+    --         previewer = previewers.new_buffer_previewer({
+    --             define_preview = function(self, entry, _)
+    --                 local bufnr = self.state.bufnr
+    --                 vim.api.nvim_set_option_value(
+    --                     "syntax",
+    --                     "zoteropreview",
+    --                     { buf = bufnr }
+    --                 )
+    --
+    --                 local preview_text = format_preview(entry.value)
+    --
+    --                 vim.api.nvim_buf_set_lines(
+    --                     bufnr,
+    --                     0,
+    --                     -1,
+    --                     false,
+    --                     vim.split(preview_text, "\n")
+    --                 )
+    --             end,
+    --         }),
+    --         attach_mappings = function(prompt_bufnr, map)
+    --         map("i", "<C-o>", function()
+    --             local selection = action_state.get_selected_entry()
+    --             actions.close(prompt_bufnr)
+    --             -- Handle the selected reference here
+    --             cb(selection)
+    --         end)
+    --         map("i", "<CR>", function()
+    --             local selection = action_state.get_selected_entry()
+    --             -- actions.close(prompt_bufnr)
+    --             print(selection.value)
+    --             require("zotcite.get").open_attachment(selection.value.cite)
+    --         end)
+    --         return true
+    --         end,
+    --     })
+        -- :find()
 end
 
 --  text wrapping in the preview window
