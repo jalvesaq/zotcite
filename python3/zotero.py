@@ -426,7 +426,8 @@ class ZoteroEntries:
 
     def _add_most_fields(self):
         query = u"""
-            SELECT items.itemID, items.key, fields.fieldName, itemDataValues.value
+            SELECT items.itemID, items.key, items.dateModified,
+            fields.fieldName, itemDataValues.value
             FROM items, itemData, fields, itemDataValues
             WHERE
                 items.itemID = itemData.itemID
@@ -435,10 +436,11 @@ class ZoteroEntries:
             """
         self._e = {}
         self._cur.execute(query)
-        for item_id, item_key, field, value in self._cur.fetchall():
+        for item_id, item_key, dateModified, field, value in self._cur.fetchall():
             if item_id not in self._e:
                 self._e[item_id] = {'zotkey': item_key, 'alastnm': ''}
             self._e[item_id][field] = value
+            self._e[item_id]["dateModified"] = dateModified
 
     def _add_authors(self):
         query = u"""
@@ -514,6 +516,24 @@ class ZoteroEntries:
                 else:
                     year = ''
             self._e[k]['year'] = year
+            if 'title' in self._e[k]:
+                title = re.sub(ptrn, '', self._e[k]['title'].lower())
+                title = re.sub('^[a-z] ', '', title)
+                titlew = re.sub('[ ,;:\\.!?].*', '', title)
+            else:
+                self._e[k]['title'] = ''
+                titlew = ''
+            lastname = 'No_author'
+            lastnames = ''
+            creators = ['author'] + self._creators
+            for c in creators:
+                if c in self._e[k]:
+                    lastname = self._e[k][c][0][0]
+                    for ln in self._e[k][c]:
+                        lastnames = lastnames + '+' + ln[0]
+                    break
+            if lastnames == '':
+                lastnames = 'No_author'
 
         if self._bbt:
             citekeys = self._cur.execute("select itemID, itemKey, citationKey from citationkey").fetchall()
@@ -540,8 +560,9 @@ class ZoteroEntries:
                         break
                 if lastnames == '':
                     lastnames = 'No_author'
-                lastnames = re.sub('^_', '', lastnames)
-                lastnames = re.sub('_.*_.*_.*', '_etal', lastnames)
+
+                lastnames = re.sub('^\\+', '', lastnames)
+                lastnames = re.sub('\\+.*\\+.*\\+.*', '+etal', lastnames)
                 lastname = re.sub('\\W', '', lastname)
                 titlew = re.sub('\\W', '', titlew)
                 key = self._cite

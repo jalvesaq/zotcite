@@ -25,7 +25,7 @@ end
 
 M.ODTtoMarkdown = function(odt)
     require("zotcite.config").set_path()
-    local mdf = vim.system({ "odt2md.py", odt }, { text = true }):wait()
+    local mdf = vim.system({ config.python_path, "odt2md.py", odt }, { text = true }):wait()
     if mdf.code == 0 then
         vim.cmd("tabnew " .. mdf.stdout)
     else
