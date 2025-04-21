@@ -469,12 +469,20 @@ end
 
 M.zotero_info = function()
     local info = {}
+    if not vim.tbl_contains(config.filetypes, vim.o.filetype) then
+        zwarn("zotcite doesn't support " .. vim.o.filetype .. " filetype.")
+        return
+    end
     if config.zrunning then
         local pyinfo = vim.fn.py3eval("ZotCite.Info()")
         table.insert(info, { "Information from the Python module:\n", "Statement" })
         for k, v in pairs(pyinfo) do
             table.insert(info, { "  " .. k, "Title" }) -- FIXME: align output
             table.insert(info, { ": " .. tostring(v):gsub("\n", "") .. "\n" })
+        end
+    else
+        if vim.tbl_contains(config.filetypes, vim.o.filetype) then
+            table.insert(info, { "ZoteroEntries wasn't created.\n", "WarningMsg" })
         end
     end
     if #config.log > 0 then

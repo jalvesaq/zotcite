@@ -191,15 +191,7 @@ end
 -- stylua: ignore end
 
 M.init = function()
-    local ok = false
-    for _, v in pairs(config.filetypes) do
-        if vim.o.filetype == v then
-            ok = true
-            break
-        end
-    end
-
-    if not ok then return end
+    if not vim.tbl_contains(config.filetypes, vim.o.filetype) then return end
 
     M.hl_citations()
 

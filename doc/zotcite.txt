@@ -385,8 +385,8 @@ different value, follow the example:
 3.5. File types                                             *zotcite_filetypes*
 
 Zotcite is enabled only if the file type is `markdown`, `pandoc`, `rmd`,
-`quarto` or `vimwiki`. If you want it enabled for other file types, you should
-set the value of `filetypes` in your `config`. Example:
+`quarto` or `vimwiki`. If you want it enabled for other type of Markdown
+document, you should set the value of `filetypes` in your `config`. Example:
 >lua
  filetypes = { 'markdown', 'pandoc', 'rmd', 'vimwiki' }
 
