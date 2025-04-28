@@ -268,7 +268,10 @@ M.init = function()
             "autocmd BufWritePost <buffer> lua require('zotcite.get').collection_name(-1)"
         )
         local bn = vim.api.nvim_get_current_buf()
-        vim.schedule(function() require("zotcite.get").collection_name(bn) end)
+        vim.schedule(function()
+            vim.cmd("sleep 100m")
+            require("zotcite.get").collection_name(bn)
+        end)
     end
 end
 
