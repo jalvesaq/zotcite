@@ -193,7 +193,7 @@ M.refs = function(key, cb)
                 end,
             }),
             attach_mappings = function(prompt_bufnr, map)
-                map("i", "<CR>", function()
+                map({ "i", "n" }, "<CR>", function()
                     local selection = action_state.get_selected_entry()
                     actions.close(prompt_bufnr)
                     -- Handle the selected reference here
