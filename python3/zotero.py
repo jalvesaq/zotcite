@@ -209,13 +209,6 @@ class ZoteroEntries:
     _load_time = "0"
 
     def __init__(self):
-
-        # Year-page separator
-        if os.getenv('ZYearPageSep') is not None:
-            self._ypsep = str(os.getenv('ZYearPageSep'))
-        else:
-            self._ypsep = ', p. '
-
         # Template for citation keys
         if os.getenv('ZCitationTemplate') is not None:
             self._cite = str(os.getenv('ZCitationTemplate'))
@@ -508,19 +501,22 @@ class ZoteroEntries:
                 self._e[k]['title'] = ''
                 titlew = ''
             lastname = 'No_author'
-            lastnames = ''
+            lastnames = 'No_author'
             creators = ['author'] + self._creators
+            n = 0
+            lnms = []
             for c in creators:
                 if c in self._e[k]:
                     lastname = self._e[k][c][0][0]
                     for ln in self._e[k][c]:
-                        lastnames = lastnames + '+' + ln[0]
+                        lnms.append(ln[0])
+                        n += 1
                     break
-            if lastnames == '':
-                lastnames = 'No_author'
-
-            lastnames = re.sub('^\\+', '', lastnames)
-            lastnames = re.sub('\\+.*\\+.*\\+.*', '+etal', lastnames)
+            if n > 3:
+                lastnames = lnms[0] + "-etal"
+            else:
+                if n > 0:
+                    lastnames = "-".join(lnms)
             lastname = re.sub('\\W', '', lastname)
             titlew = re.sub('\\W', '', titlew)
             key = self._cite
@@ -565,15 +561,14 @@ class ZoteroEntries:
     def _get_compl_line(cls, e):
         alastnm = e['alastnm']
         if alastnm == '':
-            lst = [e['zotkey'] + '#' + e['citekey'], '', '(' + e['year'] + ') ' + e['title']]
+            lst = [e['zotkey'] + '-' + e['citekey'], '', '(' + e['year'] + ') ' + e['title']]
         else:
             if len(alastnm) > 40:
                 alastnm = alastnm[:40] + "…"
-            lst = [e['zotkey'] + '#' + e['citekey'], alastnm , '(' + e['year'] + ') ' + e['title']]
+            lst = [e['zotkey'] + '-' + e['citekey'], alastnm , '(' + e['year'] + ') ' + e['title']]
         return lst
 
-    @staticmethod
-    def _sanitize_markdown(s):
+    def _sanitize_markdown(self, s):
         s = s.replace("[", "\\[")
         s = s.replace("]", "\\]")
         s = s.replace("@", "\\@")
@@ -581,8 +576,28 @@ class ZoteroEntries:
         s = s.replace("_", "\\_")
         return s
 
+    def _sanitize_latex(self, s):
+        s = s.replace("\\", "TeXtBacKsLasH")
+        s = s.replace("%", "\\%")
+        s = s.replace("&", "\\&")
+        s = s.replace("$", "\\$")
+        s = s.replace("#", "\\#")
+        s = s.replace("_", "\\_")
+        s = s.replace("{", "\\{")
+        s = s.replace("}", "\\}")
+        s = s.replace("~", "\\textasciitilde{}")
+        s = s.replace("^", "\\textasciicircum{}")
+        s = s.replace("TeXtBacKsLasH", "\\textbackslash{}")
+        return s
+
+    def _sanitize(self, s, md):
+        if md:
+            return self._sanitize_markdown(s)
+        else:
+            return self._sanitize_latex(s)
+
     def GetMatch(self, ptrn, d, as_table = False):
-        """ Find citation key and save completion lines in temporary file
+        """ Find citation key and return list of completions
 
             ptrn (string): The pattern to search for, converted to lower case.
             d    (string): The name of the markdown document.
@@ -710,7 +725,7 @@ class ZoteroEntries:
         ref = ''
         for e in self._e:
             for k in keys:
-                zotkey = re.sub('#.*', '', k)
+                zotkey = re.sub('[\\-#].*', '', k)
                 zotkey = re.sub('@', '', zotkey)
                 if zotkey == self._e[e]['zotkey']:
                     ref += self._get_yaml_ref(self._e[e], k)
@@ -755,24 +770,24 @@ class ZoteroEntries:
                 e[aa] = re.sub('<sup>(.+?)</sup>', '$^{\\\\textrm{\\1}}$', e[aa])
                 e[aa] = re.sub('<span style="font-variant:small-caps;">(.+?)</span>', '\\\\textsc{\\1}', e[aa])
                 e[aa] = re.sub('<span class="nocase">(.+?)</span>', '{\\1}', e[aa])
+                e[aa] = re.sub('\n', ' ', e[aa])
 
-        ref = ['\n@' + e['etype'] + '{' + re.sub('#.*', '', citekey) + ',\n']
+        ref = ['@' + e['etype'] + '{' + re.sub('[\\-#].*', '', citekey) + ',']
         for aa in ['author', 'editor', 'contributor', 'translator',
                    'container-author']:
             if aa in e:
                 names = []
-                ref.append('  ' + aa + ' = {')
                 for last, first in e[aa]:
                     names.append(last + ', ' + first)
-                ref.append(' and '.join(names) + '},\n')
+                ref.append('  ' + aa + ' = {' + ' and '.join(names) + '},')
         if 'issued' in e:
             d = re.sub(' .*', '', e['issued']).split('-')
             if d[0] != '0000':
-                ref.append('  year = {' + e['year'] + '},\n')
+                ref.append('  year = {' + e['year'] + '},')
                 if d[1] != '00':
-                    ref.append('  month = {' + d[1] + '},\n')
+                    ref.append('  month = {' + d[1] + '},')
                 if d[2] != '00':
-                    ref.append('  day = {' + d[2] + '},\n')
+                    ref.append('  day = {' + d[2] + '},')
         if 'urldate' in e:
             e['urldate'] = re.sub(' .*', '', e['urldate'])
         if 'pages' in e:
@@ -782,11 +797,12 @@ class ZoteroEntries:
                 'alastnm', 'container-author', 'year']
         for f in e:
             if f not in dont:
-                ref.append('  ' + f + ' = {' + str(e[f]) + '},\n')
-        ref.append('}\n')
+                ref.append('  ' + f + ' = {' + re.sub('\n', ' ', str(e[f])) + '},')
+        ref.append('}')
+        ref.append('')
         return ref
 
-    def GetBib(self, keys):
+    def _get_bib(self, keys):
         """ Build the contents of a .bib file
 
             keys (list): List of citation keys (not Zotero keys) present in the document.
@@ -795,10 +811,49 @@ class ZoteroEntries:
         ref = {}
         for e in self._e:
             for k in keys:
-                zotkey = re.sub('#.*', '', k)
+                zotkey = re.sub('[\\-#].*', '', k)
                 if zotkey == self._e[e]['zotkey']:
                     ref[zotkey] = self._get_bib_ref(self._e[e], k)
         return ref
+
+    def UpdateBib(self, ks, bibf, verbose):
+        """ Build the contents of a .bib file
+
+            keys (list): List of citation keys (not Zotero keys) present in the document.
+
+            bibf (string): Name of bib file to update
+
+            verbose (boolean): Print information or not
+        """
+
+        keys = set(ks)
+        if os.path.exists(bibf):
+            if verbose:
+                sys.stderr.write('zotcite: updating "' + str(bibf) + '"\n')
+                sys.stderr.flush()
+            # Read old bib file
+            bib = {}
+            key = None
+            with open(bibf) as f:
+                for line in f:
+                    if line[0] == '@':
+                        key = re.sub('^@.*{', '', re.sub(',\\s*$', '', line))
+                        bib[key] = []
+                    if key:
+                        bib[key].append(re.sub("\n$", "", line))
+            # Replace existing references and add new ones
+            newbib = self._get_bib(keys)
+            for key in newbib:
+                bib[key] = newbib[key]
+        else:
+            if verbose:
+                sys.stderr.write('zotcite: writing "' + str(bibf) + '"\n')
+                sys.stderr.flush()
+            bib = self._get_bib(keys)
+
+        with open(bibf, 'w') as f:
+            for k in bib.keys():
+                f.write("\n".join(bib[k]) + "\n")
 
     def GetAttachment(self, zotkey):
         """ Tell Vim what attachment is associated with the citation key
@@ -812,6 +867,17 @@ class ZoteroEntries:
                     return self._e[k]['attachment']
                 return ["nOaTtAChMeNt"]
         return ["nOcItEkEy"]
+
+    def GetAllCitations(self):
+        """ Return a list of all [zotkey, citekey].
+
+            zotkey  (string): The Zotero key as it appears in the markdown document.
+        """
+
+        res = {}
+        for k in self._e:
+            res[self._e[k]['zotkey']] = self._e[k]['citekey']
+        return res
 
     def GetRefData(self, zotkey):
         """ Return the key's dictionary.
@@ -831,10 +897,10 @@ class ZoteroEntries:
         """
 
         if Id in self._e.keys():
-            return '@' + self._e[Id]['zotkey'] + '#' + self._e[Id]['citekey']
+            return '@' + self._e[Id]['zotkey'] + '-' + self._e[Id]['citekey']
         return "IdNotFound"
 
-    def GetAnnotations(self, key, offset):
+    def GetAnnotations(self, key, offset, clean, md):
         """ Return user annotations made using Zotero's PDF viewer.
 
             key (string): The Zotero key as it appears in the markdown document.
@@ -853,9 +919,31 @@ class ZoteroEntries:
         cur.execute(query)
 
         citekey = ''
-        for k in self._e:
-            if self._e[k]['zotkey'] == key:
-                citekey = self._e[k]['citekey']
+        if not clean:
+            for k in self._e:
+                if self._e[k]['zotkey'] == key:
+                    citekey = '-' + self._e[k]['citekey']
+
+        # Year-page separator
+        if os.getenv('ZYearPageSep') is not None:
+            ypsep = str(os.getenv('ZYearPageSep'))
+        else:
+            if md:
+                ypsep = ', p. '
+            else:
+                ypsep = 'p. '
+
+        def cite(pg):
+            if md:
+                if pg is None:
+                    return ' [@' + key + citekey + ']'
+                else:
+                    return ' [@' + key + citekey + ypsep + pg + ']'
+            else:
+                if pg is None:
+                    return ' \\cite{' + key + citekey + '}'
+                else:
+                    return ' \\cite[' + ypsep + pg + ']{' + key + citekey + '}'
 
         notes = []
         for i in cur.fetchall():
@@ -876,23 +964,23 @@ class ZoteroEntries:
                     for s in ss:
                         notes.append(s)
                     if page is None: # web snapshots
-                        notes.append(' [@' + key + '#' + citekey + ']')
+                        notes.append(cite(None))
                     else:
-                        notes.append(' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                        notes.append(cite(page))
                 elif page is None: # web snapshots
-                    notes.append(i[7] + ' [@' + key + '#' + citekey + ']')
+                    notes.append(i[7] + cite(None))
                 else:
-                    notes.append(i[7] + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                    notes.append(i[7] + cite(page))
             if i[6] and page is None: # Highlighted text, web snapshots
                 notes.append('')
-                notes.append('> ' + self._sanitize_markdown(i[6].replace("\n"," ")) + ' [@' + key + '#' + citekey + ']')
+                notes.append('> ' + self._sanitize(i[6].replace("\n"," "), md) + cite(None))
             elif i[6]: # Highlighted text
                 notes.append('')
-                notes.append('> ' + self._sanitize_markdown(i[6]) + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                notes.append('> ' + self._sanitize(i[6], md) + cite(page))
         return notes
 
 
-    def GetNotes(self, key):
+    def GetNotes(self, key, clean):
         """ Return user notes from a reference.
 
             key (string): The Zotero key as it appears in the markdown document.
@@ -935,22 +1023,31 @@ class ZoteroEntries:
         if notes == '':
             return ''
 
-        def key2ref(k):
+        def key2ref(k, clean):
             k = re.sub('\001', '', k)
             k = re.sub('\002', '', k)
             r = 'NotFound'
             for i in self._e:
                 if self._e[i]['zotkey'] == k:
                     r = self._e[i]['citekey']
-            return '\001' + k + '#' + r + '; '
+            if clean:
+                return '\001' + k + '; '
+            else:
+                return '\001' + k + '-' + r + '; '
+
+        # Year-page separator
+        if os.getenv('ZYearPageSep') is not None:
+            ypsep = str(os.getenv('ZYearPageSep'))
+        else:
+            ypsep = ', p. '
 
         def item2ref(s):
             s = re.sub('.*?items%2F(........).*?', '\001\\1\002', s, flags=re.M)
-            s = re.sub('\001(........)\002', lambda k: key2ref(k.group()), s, flags=re.M)
-            s = re.sub('%22locator%22%3A%22(.*?)%22', self._ypsep + '\\1; %22', s, flags=re.M)
-            s = re.sub('%22.*?' + self._ypsep, self._ypsep, s, flags=re.M)
+            s = re.sub('\001(........)\002', lambda k: key2ref(k.group(), clean), s, flags=re.M)
+            s = re.sub('%22locator%22%3A%22(.*?)%22', ypsep + '\\1; %22', s, flags=re.M)
+            s = re.sub('%22.*?' + ypsep, ypsep, s, flags=re.M)
             s = re.sub('%22.*', '', s, flags=re.M)
-            s = re.sub('; ' + self._ypsep, self._ypsep, s, flags=re.M)
+            s = re.sub('; ' + ypsep, ypsep, s, flags=re.M)
             s = re.sub('; $', '', s, flags=re.M)
             return '\002' + s + '\003'
 

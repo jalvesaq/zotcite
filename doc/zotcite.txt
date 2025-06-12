@@ -6,10 +6,8 @@
     2.1. Commands                                           |zotcite_commands|
     2.2. Mappings                                           |zotcite_mappings|
     2.3. Compiling documents                          |zotcite_compiling_docs|
-    2.4. Suggested workflow                                 |zotcite_workflow|
-    2.5. Alternative workflows                       |zotcite_other_workflows|
  3. Customization                                      |zotcite_customization|
-    3.1. Change default maps                         |zotcite_change_mappings|
+    3.1. Python path                                     |zotcite_python_path|
     3.2. Change default maps                         |zotcite_change_mappings|
     3.3. Zotcite engine                                       |zotcite_engine|
     3.4. Syntax highlighting                            |zotcite_highlighting|
@@ -102,6 +100,8 @@ If you have installed `cmp-zotcite`, then, in Insert mode, type the `@` letter
 and one or more letters of either the last name of the first author or the
 reference title. The matching of citation keys is case-insensitive.
 
+In Vim's Insert mode, <c-x><c-b> inserts citation keys (requires Telescope).
+
 In Vim's Normal mode, put the cursor over a citation key and press:
 
   - <Leader>zo to open the reference's attachment as registered in Zotero's
@@ -121,7 +121,9 @@ In Vim's Normal mode, put the cursor over a citation key and press:
 
 
 ------------------------------------------------------------------------------
-2.3. Compiling documents                               *zotcite_compiling_docs*
+2.3. Compiling documents                              *zotcite_compiling_docs*
+
+No bib file (use the zotref filter instead) ~
 
 To convert a Markdown document with pandoc, use the `zotref.py` filter that comes
 with Zotcite. The Zotcite plugin adds the directory where `zotref.py` is to the
@@ -143,8 +145,8 @@ it somewhere:
  end
 
 Then, do not use either the `bibliography` field or the `citeproc` field (if
-you use one of them, `citeproc` will run before `zotref.py`) and put in the
-header of your Quarto document:
+you use any of them, `citeproc` will run before `zotref.py`) and put in the
+YAML header of your Quarto document:
 >yaml
  filters:
      - /full/path/to/zotcite/python3/zotref.py
@@ -161,47 +163,36 @@ For a Lua filter to fix the APA citation style, see:
 
 
 To compile an RMarkdown document with the R.nvim plugin
-(https://github.com/jalvesaq/Nvim-R), add the following lines to the YAML
+(https://github.com/R-nvim/R.nvim), add the following lines to the YAML
 header of the document (replace `pdf_document` with the desired output):
 >yaml
  output:
    pdf_document:
      pandoc_args: ['-F', 'zotref.py', '--citeproc']
 
-Note: On Windows, you might have to replace `zotref.py` with its full path.
-Example:
+Notes for Windows users:
+
+You might have to replace `zotref.py` with its full path. Example:
 >yaml
  output:
    pdf_document:
      pandoc_args: ['-F', '/Path/to/zotcite/python3/zotref.py', '--citeproc']
-
-Note: Old versions of `pandoc` require `-F pandoc-citeproc` instead of
-`--citeproc`.
-
-Note: On Windows, `zotref.py` will convert the bib file from "latin1" to
+<
+On Windows, `zotref.py` will convert the bib file from "latin1" to
 "utf-8". If "latin1" is not the Zotero encoding in your region, set
 `zotero_encoding` with the correct value in your `config`. Example:
 >lua
  zotero_encoding = 'latin2'
 
+For Typst, the following command should work:
+>sh
+ pandoc example.typ -F /path/to/zotcite/python3/zotref.py -C -o example.pdf
+<
 
-------------------------------------------------------------------------------
-2.4. Suggested workflow                                       *zotcite_workflow*
+Bib file + zotref filter ~
 
-The suggested workflow is:
-
-  1. Use Zotero's browser connector to download papers in PDF format.
-
-  2. Read the papers, highlighting important passages, and making annotations.
-
-  3. Run the command `:Zpdfnote` to extract your notes from the PDF document and
-     insert them into the markdown document.
-
-  5. Finish editing your markdown document.
-
-
-------------------------------------------------------------------------------
-2.5. Alternative workflows                           *zotcite_other_workflows*
+Note: Make backup of your bib files because they will be overwritten by
+zotcite.
 
 The goal of Zotcite is to avoid the need for exporting bib files from Zotero.
 The `zotref.py` filter receives the Markdown document from its standard input,
@@ -226,6 +217,40 @@ complement it with Zotero references, you can put in your YAML header:
 or, simply:
 >yaml
  bibliography: old.bib
+
+
+With bib file (no need of using use the zotref filter) ~
+
+Note: Make backup of your bib files because they will be overwritten by
+zotcite.
+
+If you put in your zotcite config
+>lua
+ bib_and_vt = { markdown = true, quarto = true, rmd = true },
+<
+zotcite will automatically save the bib file indicated in the YAML header when
+saving the document and will not append the author name and year of
+publication to the Zotero key. That is, instead of the format
+`@ABCDEFGH-Author-Year`, the citation key will have the format `@ABCDEFGH`.
+The `Author-Year` complement will be inserted as a virtual text. This means
+that you will not need the `zotref` filter to remove the `Author-Year`
+complement before compiling the document with `pandoc`. Hence, the name
+`bib_and_vt` means: save and update a bib file, write Zotero keys without the
+zotcite complement, and add the zotcite complement as virtual text.
+
+This is the only way of using zotcite with LaTeX or Rnoweb.
+
+If you have a markdown document with citations including the `-Author-Year`
+part and want to switch to the clean format, the command below will delete the
+`-Author-Year` complements (but there is no automatic way of getting them back):
+>
+ :%s/@\([A-Z0-9]\{8}\)[-#][-:+_[:digit:][:lower:][:upper:]\u00FF-\uFFFF]\+/@\1/g
+<
+Note: make a backup of you Markdown document before running the command to
+be able to revert the changes if anything goes wrong.
+
+
+Convert from ODT ~
 
 If you have an OpenDocument Text with citations inserted by the Zotero
 extension and want to convert it to Markdown, you can use the `odt2md.py`
@@ -261,49 +286,67 @@ zotcite config. Example:
 >lua
  python_path = "/home/user_name/.py3env/bin/python3"
 <
+The Python script `pdfnote.py` imports the modules `PyQt5` and `popplerqt5`.
+On Debian systems they can be installed with the command:
+>sh
+ sudo apt install python3-pyqt5 python3-poppler-qt5
+<
+In any system, if using `pip`:
+>sh
+ pip install poppler-qt5
+ pip install python-poppler-qt5
+<
+If you have trouble install `poppler-qt5` or `python-poppler-qt5` you can add
+to your zotcite config:
+>lua
+ pdf_extractor = "pdfnotes2.py",
+<
+The Python script `pdfnotes2.py` requires the `pymupdf` module, which can be
+installed on Debian:
+>sh
+ sudo apt install python3-pymupdf
+<
+or with `pip`:
+>sh
+ pip install pymupdf
+<
 
 ------------------------------------------------------------------------------
 3.2. Change default maps                             *zotcite_change_mappings*
 
-To change the shortcut to open reference attachment, set the value of
-<Plug>ZOpenAttachment in your |init.lua| as below:
+Below are examples of how to change the available key bindings:
 >lua
+ -- Insert citation key:
+ vim.keymap.set("i", "<c-b>", "<Plug>ZCite")
+
+ -- Open reference attachment:
  vim.keymap.set("n", "<c-]>", "<Plug>ZOpenAttachment")
 
-To change the shortcut to see basic information on the reference of a citation
-key, follow the example:
->lua
+ -- See basic information on the reference of a citation key:
  vim.keymap.set("n", "<Leader>I", "<Plug>ZCitationInfo")
 
-To change the shortcut to see how the reference of a citation key is stored by
-Zotcite, follow the example:
->lua
- vim.keymap.set("n", "<Leader>A", "<Plug>ZCitationCompleteInfo")
+ -- See how the reference of a citation key is stored by Zotcite:
+ vim.keymap.set("n", "<Leader>C", "<Plug>ZCitationCompleteInfo")
 
-To change the shortcut to see how the reference is converted into YAML, follow
-the example:
->lua
+ -- See how the reference is converted into YAML:
  vim.keymap.set("n", "<Leader>Y", "<Plug>ZCitationYamlRef")
 
-To change the shortcut to extract the abstract into the current buffer from the
-abstract field in complete info:
->lua
- vim.keymap.set("n", "<Leader>Y", "<Plug>ZExtractAbstract")
+ -- Extract the abstract into the current buffer from the citation under cursor:
+ vim.keymap.set("n", "<Leader>A", "<Plug>ZExtractAbstract")
 
-To change the shortcut to view the (pdf or html) document generated from the
-current (Markdown, Rmd, or Quarto) document, follow the example:
->lua
+ -- View the (pdf or html) document generated from the
+ -- current (Markdown, Rmd, or Quarto) document:
  vim.keymap.set("n", "<Leader>V", "<Plug>ZViewDocument")
-
+<
 
 ------------------------------------------------------------------------------
-3.3. Zotcite engine                                            *zotcite_engine*
+3.3. Zotcite engine                                           *zotcite_engine*
 
 							   *citation_template*
-The citation keys inserted by Zotcite have the format `@ZoteroKey#Author_Year`
+The citation keys inserted by Zotcite have the format `@ZoteroKey-Author_Year`
 where `ZoteroKey` is the key attributed by Zotero to the references stored in
 its database, `Author` is the last name of the first author, and `Year` is the
-full year (four digits). The `@ZoteroKey#` part of the citation key is
+full year (four digits). The `@ZoteroKey-` part of the citation key is
 mandatory because `zotref.py` uses it to add the bibliographic data that is
 parsed by `citeproc`, but it will be concealed by Neovim. The remainder of the
 key is customizable. You can define whether it will include or not the first
@@ -364,7 +407,7 @@ of the Markdown document, as in the examples:
 
 
 ------------------------------------------------------------------------------
-3.4. Syntax Highlighting                                 *zotcite_highlighting*
+3.4. Syntax Highlighting                                *zotcite_highlighting*
 
 Syntax highlighting customization is done with Vim variables.
 
@@ -382,7 +425,7 @@ different value, follow the example:
 
 
 ------------------------------------------------------------------------------
-3.5. File types                                             *zotcite_filetypes*
+3.5. File types                                            *zotcite_filetypes*
 
 Zotcite is enabled only if the file type is `markdown`, `pandoc`, `rmd`,
 `quarto` or `vimwiki`. If you want it enabled for other type of Markdown

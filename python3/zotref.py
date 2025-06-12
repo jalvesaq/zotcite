@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """
-Pandoc filter to add references from Zotero database to the YAML header.
+Pandoc filter to add references from Zotero database to the YAML header of
+Markdown document or write a bib file for Typst document.
 """
 
 import sys
@@ -30,7 +31,7 @@ def ReadBib(fnm):
 def WalkClean(x):
     if isinstance(x, dict) and 't' in x.keys() and x['t'] == 'Cite':
         for a in x['c'][0]:
-            a['citationId'] = re.sub('#.*', '', a['citationId'])
+            a['citationId'] = re.sub('[\\-#].*', '', a['citationId'])
             cites.append(a['citationId'])
     else:
         if isinstance(x, dict) and 'c' in x.keys() and isinstance(x['c'], list):
@@ -51,7 +52,7 @@ if __name__ == "__main__":
     j = json.load(io.StringIO(i))
 
     # To avoid duplicated references, delete the visible part of the citation key
-    # and get all citations from the markdown document
+    # and get all citations from the document
     WalkClean(j['blocks'])
 
     if 'abstract' in j['meta']:
@@ -81,26 +82,15 @@ if __name__ == "__main__":
                 else:
                     if j['meta']['bibliography']['t'] == 'MetaInlines':
                         j['meta']['bibliography'] = {'t': 'MetaList', 'c': [j['meta']['bibliography'], zitem]}
-
-        # Get fresh references
-        r = z.GetBib(c)
-
-        # Save the bib file
-        if os.path.exists(zbib):
-            sys.stderr.write('zotref (zotcite): updating "' + str(zbib) + '"\n')
-            # Read old references
-            o = ReadBib(zbib)
-            # Replace old references with new ones
-            for key in r.keys():
-                o[key] = r[key]
         else:
-            sys.stderr.write('zotref (zotcite): writing "' + str(zbib) + '"\n')
-            o = r
-        sys.stderr.flush()
+            if isinstance(b, str):
+                if b.find('zotcite.bib'):
+                    zbib = b
+                else:
+                    zbib = tempfile.gettempdir() + '/' + os.getlogin() + '-zotcite.bib'
 
-        with open(zbib, 'w') as f:
-            for k in o.keys():
-                f.write("\n" + "".join(o[k]))
+        # Update the bib file
+        z.UpdateBib(c, zbib, True)
 
         if os.name == "nt":
             enc = os.getenv('ZoteroEncoding')

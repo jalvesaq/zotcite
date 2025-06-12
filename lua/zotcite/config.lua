@@ -1,10 +1,29 @@
 local config = {
     hl_cite_key = true,
+    bib_and_vt = {
+        markdown = false,
+        pandoc = false,
+        vimwiki = false,
+        rmd = false,
+        quarto = false,
+        typst = false,
+        latex = true,
+        rnoweb = true,
+    },
     sort_key = "dateModified",
     conceallevel = 2,
     wait_attachment = false,
     open_in_zotero = false,
-    filetypes = { "markdown", "pandoc", "rmd", "quarto", "vimwiki" },
+    filetypes = {
+        "markdown",
+        "pandoc",
+        "vimwiki",
+        "rmd",
+        "quarto",
+        "typst",
+        "latex",
+        "rnoweb",
+    },
     zrunning = false,
     zotcite_home = nil,
     python_path = "python3",
@@ -34,6 +53,10 @@ M.update_config = function(opts)
     for k, v in pairs(opts) do
         config[k] = v
     end
+
+    config.bib_and_vt.latex = true
+    config.bib_and_vt.tex = true
+    config.bib_and_vt.rnoweb = true
 
     if config.citation_template then
         vim.env.ZCitationTemplate = config.citation_template
@@ -152,48 +175,8 @@ local global_init = function()
     return true
 end
 
--- stylua: ignore start
-
-M.hl_citations = function()
-    local ns = vim.api.nvim_create_namespace("ZCitation")
-    vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
-    local kp = "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]#"
-    local yp = "^%S*[0-9][0-9][0-9][0-9]"
-    if config.citation_template and config.citation_template:find("year") then
-        yp = "^%S*[0-9][0-9]"
-    end
-    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
-    local set_m = vim.api.nvim_buf_set_extmark
-    for k, v in pairs(lines) do
-        local i = 1
-        while true do
-            local s, e = v:find(kp, i)
-            if not s or not e then break end
-            set_m(0, ns, k - 1, s - 1, { end_col = e, hl_group = "Ignore", conceal = "" })
-            local _, y = v:find(yp, e)
-            if y then
-                set_m(0, ns, k - 1, e, { end_col = y, hl_group = "Identifier" })
-                set_m(0, ns, k - 1, y - 5, { end_col = y - 4, hl_group = "Identifier", conceal = "_" })
-                local substr = v:sub(e, y)
-                local j = 1
-                while true do
-                    local _, m = substr:find("+", j)
-                    if not m then break end
-                    set_m(0, ns, k - 1, m + e - 2, { end_col = m + e - 1, hl_group = "Identifier", conceal = "_" })
-                    j = m + 1
-                end
-            end
-            i = e + 1
-        end
-    end
-end
-
--- stylua: ignore end
-
 M.init = function()
     if not vim.tbl_contains(config.filetypes, vim.o.filetype) then return end
-
-    M.hl_citations()
 
     -- Do this only once
     if not did_global_init then
@@ -263,12 +246,17 @@ M.init = function()
             "Zotcite: Paste abstract note in current buffer"
         )
         vim.o.conceallevel = config.conceallevel
-        vim.cmd("autocmd BufWritePre <buffer> lua require('zotcite.utils').check_bib()")
+        if config.bib_and_vt[vim.o.filetype] then
+            vim.cmd("autocmd InsertLeave <buffer> lua require('zotcite.hl').citations()")
+        end
+        vim.cmd("autocmd BufWritePre <buffer> lua require('zotcite.bib').update()")
         vim.cmd(
             "autocmd BufWritePost <buffer> lua require('zotcite.get').collection_name(-1)"
         )
         local bn = vim.api.nvim_get_current_buf()
+
         vim.schedule(function()
+            require("zotcite.hl").citations()
             vim.cmd("sleep 100m")
             require("zotcite.get").collection_name(bn)
         end)

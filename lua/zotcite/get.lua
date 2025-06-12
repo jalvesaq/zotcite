@@ -80,32 +80,65 @@ M.PDFPath = function(zotkey, cb)
     end
 end
 
+local is_valid_char = function(c)
+    return (c >= "0" and c <= "9")
+        or (c >= "A" and c <= "z")
+        or (c >= "a" and c <= "z")
+        or c:byte(1, 1) > 127
+end
+
+local citation_key_vt = function(line, pos)
+    pos = pos + 1
+    if line:sub(pos, pos) == "<" then
+        pos = pos + 1
+    elseif line:sub(pos, pos) == ">" then
+        pos = pos - 1
+    end
+    local i = pos
+    local j = pos
+    while i > 0 and is_valid_char(line:sub(i, i)) do
+        i = i - 1
+    end
+    while j <= #line and is_valid_char(line:sub(j, j)) do
+        j = j + 1
+    end
+    local key = line:sub(i + 1, j - 1)
+    if #key == 8 then return key end
+    return ""
+end
+
+local citation_key_hl = function(line, pos)
+    pos = pos + 1
+    if line:sub(pos, pos) == "@" then pos = pos + 1 end
+    local i = pos
+    local k = line:sub(i, i)
+    while i > 0 and (k == "#" or k == "+" or k == "-" or is_valid_char(k)) do
+        i = i - 1
+        if line:sub(i, i) == "@" then
+            local j = i + 1
+            k = line:sub(j, j)
+            while j <= #line and is_valid_char(k) do
+                j = j + 1
+                k = line:sub(j, j)
+            end
+            local key = line:sub(i + 1, j - 1)
+            if #key == 8 then return key end
+            break
+        end
+        k = line:sub(i, i)
+    end
+    return ""
+end
+
 M.citation_key = function()
     local lnum = vim.api.nvim_win_get_cursor(0)[1]
     local line = vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]
     local pos = vim.api.nvim_win_get_cursor(0)[2]
-    local found_i = false
-    local i = pos + 1
-    local k
-    while i > 0 do
-        k = line:sub(i, i)
-        if k:find("@") then
-            found_i = true
-            i = i + 1
-            break
-        end
-        if not k:find("[A-Za-z0-9_#%-]") then break end
-        i = i - 1
+
+    if config.bib_and_vt[vim.o.filetype] then
+        return citation_key_vt(line, pos)
     end
-    if found_i then
-        local j = i + 8
-        k = line:sub(j, j)
-        if k == "#" then
-            local key = line:sub(i, j - 1)
-            return key
-        end
-    end
-    return ""
+    return citation_key_hl(line, pos)
 end
 
 M.yaml_ref = function()
@@ -125,7 +158,7 @@ M.reference_data = function(btype)
     local wrd = M.citation_key()
     if wrd ~= "" then
         local repl = vim.fn.py3eval('ZotCite.GetRefData("' .. wrd .. '")')
-        if not repl then
+        if type(repl) ~= "table" then
             zwarn("Citation key not found")
             return
         end
@@ -148,7 +181,12 @@ end
 
 local finish_citation = function(ref)
     local rownr = vim.api.nvim_win_get_cursor(0)[1] - 1
-    local cite = "@" .. ref.value.key .. "#" .. ref.value.cite
+    local cite
+    if config.bib_and_vt[vim.o.filetype] then
+        cite = ref.value.key
+    else
+        cite = "@" .. ref.value.key .. "-" .. ref.value.cite
+    end
     vim.api.nvim_buf_set_text(
         0,
         rownr,
@@ -160,7 +198,7 @@ local finish_citation = function(ref)
     local colnr = citation.start_col + #cite
     vim.api.nvim_win_set_cursor(0, { rownr + 1, colnr })
     vim.api.nvim_feedkeys("a", "n", false)
-    require("zotcite.config").hl_citations()
+    require("zotcite.hl").citations()
 end
 
 M.citation = function()
@@ -186,7 +224,7 @@ M.abstract = function()
     local wrd = M.citation_key()
     if wrd ~= "" then
         local repl = vim.fn.py3eval('ZotCite.GetRefData("' .. wrd .. '")')
-        if not repl then
+        if type(repl) ~= "table" then
             zwarn("Citation key not found")
             return
         end
@@ -198,26 +236,33 @@ M.abstract = function()
     end
 end
 
-local finish_annotations = function(sel)
+local get_annotations = function(sel)
+    local clean = config.bib_and_vt[vim.o.filetype] and "True" or "False"
+    local md = (vim.o.filetype == "tex" or vim.o.filetype == "rnoweb") and "False" or "True"
+    local key = sel.value.key
     local repl = vim.fn.py3eval(
-        'ZotCite.GetAnnotations("' .. sel.value.key .. '", ' .. offset .. ")"
+        'ZotCite.GetAnnotations("' .. key .. '", ' .. offset .. ", " .. clean .. ", " .. md .. ")"
     )
     if #repl == 0 then
         zwarn("No annotation found.")
-    else
+    end
+    return repl
+end
+
+local finish_annotations = function(sel)
+    if not sel then return end
+    local repl = get_annotations(sel)
+    if #repl > 0 then
         local lnum = vim.api.nvim_win_get_cursor(0)[1]
         vim.api.nvim_buf_set_lines(0, lnum, lnum, true, repl)
-        require("zotcite.config").hl_citations()
+        require("zotcite.hl").citations()
     end
 end
 
 local finish_annotations_selection = function(sel)
-    local raw_annotations = vim.fn.py3eval(
-        'ZotCite.GetAnnotations("' .. sel.value.key .. '", ' .. offset .. ")"
-    )
-    if #raw_annotations == 0 then
-        zwarn("No annotation found.")
-    else
+    if not sel then return end
+    local raw_annotations = get_annotations(sel)
+    if #raw_annotations > 0 then
         local grouped_annotations = {}
         local current_group = {}
         local last_was_quote = false
@@ -271,14 +316,10 @@ local finish_annotations_selection = function(sel)
                         table.insert(selected_annotations, grouped_annotations[index])
                     end
                     local lnum = vim.api.nvim_win_get_cursor(0)[1]
-                    vim.api.nvim_buf_set_lines(
-                        0,
-                        lnum,
-                        lnum,
-                        true,
-                        vim.split(table.concat(selected_annotations, "\n\n"), "\n")
-                    )
-                    require("zotcite.config").hl_citations()
+                    local txt = table.concat(selected_annotations, "\n\n")
+                    local lines = vim.split(txt, "\n")
+                    vim.api.nvim_buf_set_lines(0, lnum, lnum, true, lines)
+                    require("zotcite.hl").citations()
                 end
                 return
             end
@@ -308,12 +349,9 @@ local finish_annotations_selection = function(sel)
                                 lnum,
                                 lnum,
                                 true,
-                                vim.split(
-                                    table.concat(selected_annotations, "\n\n"),
-                                    "\n"
-                                )
+                                vim.split(table.concat(selected_annotations, "\n\n"), "\n")
                             )
-                            require("zotcite.config").hl_citations()
+                            require("zotcite.hl").citations()
                         end
                     end
                 end
@@ -342,14 +380,16 @@ M.annotations = function(ko, use_selection)
 end
 
 local finish_note = function(sel)
-    local repl = vim.fn.py3eval('ZotCite.GetNotes("' .. sel.value.key .. '")')
+    local clean = config.bib_and_vt[vim.o.filetype] and "True" or "False"
+    local key = sel.value.key
+    local repl = vim.fn.py3eval('ZotCite.GetNotes("' .. key .. '", ' .. clean .. ')')
     if repl == "" then
         zwarn("No note found.")
     else
         local lines = vim.fn.split(repl, "\n")
         local lnum = vim.api.nvim_win_get_cursor(0)[1]
         vim.api.nvim_buf_set_lines(0, lnum, lnum, true, lines)
-        require("zotcite.config").hl_citations()
+        require("zotcite.hl").citations()
     end
 end
 
@@ -374,8 +414,9 @@ local finish_pdfnote_2 = function(_, idx)
         { text = true }
     ):wait()
     if notes.code == 0 then
-        vim.api.nvim_buf_set_lines(0, lnum, lnum, true, vim.fn.split(notes.stdout, "\n"))
-        require("zotcite.config").hl_citations()
+        local lines = vim.fn.split(notes.stdout, "\n")
+        vim.api.nvim_buf_set_lines(0, lnum, lnum, true, lines)
+        require("zotcite.hl").citations()
     elseif notes.code == 33 then
         zwarn('Failed to load "' .. fpath .. '" as a valid PDF document.')
     elseif notes.code == 34 then
@@ -388,7 +429,16 @@ end
 local finish_pdfnote = function(sel)
     local zotkey = sel.value.key
     local repl = vim.fn.py3eval('ZotCite.GetRefData("' .. zotkey .. '")')
-    local citekey = "@" .. zotkey .. "#" .. repl["citekey"]
+    if type(repl) ~= "table" then
+        zwarn("Citation key not found")
+        return
+    end
+    local citekey
+    if config.bib_and_vt[vim.o.filetype] then
+        citekey = "@" .. zotkey
+    else
+        citekey = "@" .. zotkey .. "-" .. repl["citekey"]
+    end
     local pg = "1"
     if repl.pages and repl.pages:find("[0-9]-") then pg = repl.pages end
     pdfnote_data = { citekey = citekey, pg = pg }

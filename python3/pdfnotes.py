@@ -18,7 +18,7 @@ except ImportError:
 try:
     import popplerqt5
 except ImportError:
-    sys.stderr.write("Please, install the Python3 module popplerqt5")
+    sys.stderr.write("Please, install the Python3 module python-poppler-qt5")
     sys.exit(1)
 
 def main():
