@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 """
-Pandoc filter to add references from Zotero database to the YAML header.
+Pandoc filter to add references from Zotero database to the YAML header of
+Markdown document or write a bib file for Typst document.
 """
 
 import sys
@@ -51,7 +52,7 @@ if __name__ == "__main__":
     j = json.load(io.StringIO(i))
 
     # To avoid duplicated references, delete the visible part of the citation key
-    # and get all citations from the markdown document
+    # and get all citations from the document
     WalkClean(j['blocks'])
 
     if 'abstract' in j['meta']:
@@ -81,6 +82,12 @@ if __name__ == "__main__":
                 else:
                     if j['meta']['bibliography']['t'] == 'MetaInlines':
                         j['meta']['bibliography'] = {'t': 'MetaList', 'c': [j['meta']['bibliography'], zitem]}
+        else:
+            if isinstance(b, str):
+                if b.find('zotcite.bib'):
+                    zbib = b
+                else:
+                    zbib = tempfile.gettempdir() + '/' + os.getlogin() + '-zotcite.bib'
 
         # Get fresh references
         r = z.GetBib(c)
