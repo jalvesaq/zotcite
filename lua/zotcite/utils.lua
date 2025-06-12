@@ -25,7 +25,8 @@ end
 
 M.ODTtoMarkdown = function(odt)
     require("zotcite.config").set_path()
-    local mdf = vim.system({ config.python_path, "odt2md.py", odt }, { text = true }):wait()
+    local mdf = vim.system({ config.python_path, "odt2md.py", odt }, { text = true })
+        :wait()
     if mdf.code == 0 then
         vim.cmd("tabnew " .. mdf.stdout)
     else
@@ -62,29 +63,6 @@ M.view_document = function()
         return
     end
     M.open(doc)
-end
-
-M.check_bib = function()
-    local bib =
-        require("zotcite.get").yaml_field("bibliography", vim.api.nvim_get_current_buf())
-    if not bib then return end
-
-    local bibf = nil
-    if type(bib) == "table" then
-        if #bib == 0 then return end
-        bibf = bib[1]
-    elseif type(bib) == "string" then
-        bibf = bib
-    end
-    if type(bibf) ~= "string" then
-        zwarn('Invalid "bibliography" field: ' .. vim.inspect(bib))
-        return
-    end
-
-    if bibf:find(".*zotcite.bib$") and vim.fn.filereadable(bibf) == 0 then
-        -- Ensure that `quarto preview` will work
-        vim.fn.writefile({}, bibf)
-    end
 end
 
 M.open = function(fpath)

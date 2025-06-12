@@ -24,9 +24,4 @@ if __name__ == "__main__":
 
     # Get all references from ~/Zotero/zotero.sqlite
     z = ZoteroEntries()
-    r = z.GetBib(keys)
-
-    # Save the bib file
-    with open(sys.argv[2], 'w') as f:
-        for k in r.keys():
-            f.write("\n" + "".join(r[k]))
+    z.UpdateBib(keys, sys.argv[2], True)
