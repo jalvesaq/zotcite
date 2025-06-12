@@ -300,10 +300,10 @@ current (Markdown, Rmd, or Quarto) document, follow the example:
 3.3. Zotcite engine                                            *zotcite_engine*
 
 							   *citation_template*
-The citation keys inserted by Zotcite have the format `@ZoteroKey#Author_Year`
+The citation keys inserted by Zotcite have the format `@ZoteroKey-Author_Year`
 where `ZoteroKey` is the key attributed by Zotero to the references stored in
 its database, `Author` is the last name of the first author, and `Year` is the
-full year (four digits). The `@ZoteroKey#` part of the citation key is
+full year (four digits). The `@ZoteroKey-` part of the citation key is
 mandatory because `zotref.py` uses it to add the bibliographic data that is
 parsed by `citeproc`, but it will be concealed by Neovim. The remainder of the
 key is customizable. You can define whether it will include or not the first

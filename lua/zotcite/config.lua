@@ -157,7 +157,7 @@ end
 M.hl_citations = function()
     local ns = vim.api.nvim_create_namespace("ZCitation")
     vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
-    local kp = "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]#"
+    local kp = "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][%-%#]"
     local yp = "^%S*[0-9][0-9][0-9][0-9]"
     if config.citation_template and config.citation_template:find("year") then
         yp = "^%S*[0-9][0-9]"

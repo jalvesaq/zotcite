@@ -30,7 +30,7 @@ def ReadBib(fnm):
 def WalkClean(x):
     if isinstance(x, dict) and 't' in x.keys() and x['t'] == 'Cite':
         for a in x['c'][0]:
-            a['citationId'] = re.sub('#.*', '', a['citationId'])
+            a['citationId'] = re.sub('[\\-#].*', '', a['citationId'])
             cites.append(a['citationId'])
     else:
         if isinstance(x, dict) and 'c' in x.keys() and isinstance(x['c'], list):
