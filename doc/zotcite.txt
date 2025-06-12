@@ -143,7 +143,7 @@ it somewhere:
  end
 
 Then, do not use either the `bibliography` field or the `citeproc` field (if
-you use one of them, `citeproc` will run before `zotref.py`) and put in the
+you use any of them, `citeproc` will run before `zotref.py`) and put in the
 header of your Quarto document:
 >yaml
  filters:
@@ -161,28 +161,32 @@ For a Lua filter to fix the APA citation style, see:
 
 
 To compile an RMarkdown document with the R.nvim plugin
-(https://github.com/jalvesaq/Nvim-R), add the following lines to the YAML
+(https://github.com/R-nvim/R.nvim), add the following lines to the YAML
 header of the document (replace `pdf_document` with the desired output):
 >yaml
  output:
    pdf_document:
      pandoc_args: ['-F', 'zotref.py', '--citeproc']
 
-Note: On Windows, you might have to replace `zotref.py` with its full path.
-Example:
+Notes for Windows users:
+
+You might have to replace `zotref.py` with its full path. Example:
 >yaml
  output:
    pdf_document:
      pandoc_args: ['-F', '/Path/to/zotcite/python3/zotref.py', '--citeproc']
-
-Note: Old versions of `pandoc` require `-F pandoc-citeproc` instead of
-`--citeproc`.
-
-Note: On Windows, `zotref.py` will convert the bib file from "latin1" to
+<
+On Windows, `zotref.py` will convert the bib file from "latin1" to
 "utf-8". If "latin1" is not the Zotero encoding in your region, set
 `zotero_encoding` with the correct value in your `config`. Example:
 >lua
  zotero_encoding = 'latin2'
+
+For Typst, the following command should work:
+>sh
+ pandoc example.typ -F /path/to/zotcite/python3/zotref.py -C -o example.pdf
+<
+The file `references.bib` will be updated with Zotero's references.
 
 
 ------------------------------------------------------------------------------
@@ -300,10 +304,10 @@ current (Markdown, Rmd, or Quarto) document, follow the example:
 3.3. Zotcite engine                                            *zotcite_engine*
 
 							   *citation_template*
-The citation keys inserted by Zotcite have the format `@ZoteroKey#Author_Year`
+The citation keys inserted by Zotcite have the format `@ZoteroKey-Author_Year`
 where `ZoteroKey` is the key attributed by Zotero to the references stored in
 its database, `Author` is the last name of the first author, and `Year` is the
-full year (four digits). The `@ZoteroKey#` part of the citation key is
+full year (four digits). The `@ZoteroKey-` part of the citation key is
 mandatory because `zotref.py` uses it to add the bibliographic data that is
 parsed by `citeproc`, but it will be concealed by Neovim. The remainder of the
 key is customizable. You can define whether it will include or not the first

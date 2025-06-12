@@ -4,7 +4,7 @@ local config = {
     conceallevel = 2,
     wait_attachment = false,
     open_in_zotero = false,
-    filetypes = { "markdown", "pandoc", "rmd", "quarto", "vimwiki" },
+    filetypes = { "markdown", "pandoc", "rmd", "quarto", "typst", "vimwiki" },
     zrunning = false,
     zotcite_home = nil,
     python_path = "python3",
@@ -152,12 +152,116 @@ local global_init = function()
     return true
 end
 
+local find_typst_bib = function()
+    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+    for _, v in pairs(lines) do
+        if v:find("#bibliography%(['\"]") then
+            local bib = v:gsub("#bibliography%(['\"]", "")
+            bib = bib:gsub("['\"].*", "")
+            return bib
+        end
+    end
+    zwarn("Could not find the '#bibliography' identifier.")
+    return nil
+end
+
+local find_markdown_bib = function()
+    local ybib = require("zotcite.get").yaml_field("bibliography", 0)
+    if not ybib then
+        zwarn("Could not find 'bibliography' field in YAML header.")
+        return nil
+    end
+
+    if type(ybib) == "string" then
+        return ybib
+    end
+
+    local bib = nil
+    if type(ybib) == "table" then
+        for _, v in pairs(ybib) do
+            if type(v) == "string" then
+                bib = v
+                if v:find("zotcite.bib") then
+                    break
+                end
+            end
+        end
+    end
+    return bib
+end
+
+local find_bib_fn = function()
+    if vim.o.filetype == "typst" then
+        return find_typst_bib()
+    end
+    return find_markdown_bib()
+end
+
+M.update_bib = function(bib)
+    if not bib then
+        bib = find_bib_fn()
+        if not bib then
+            return
+        end
+    end
+
+    local kp = "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
+    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+    local citations = {}
+    for _, v in pairs(lines) do
+        local i = 1
+        while true do
+            local s, e = v:find(kp, i)
+            if not s or not e then break end
+            table.insert(citations, v:sub(s + 1, e))
+            i = e + 1
+        end
+    end
+    if #citations > 0 then
+        vim.fn.py3eval(
+            'ZotCite.UpdateBib(["'
+                .. table.concat(citations, '", "')
+                .. '"], "'
+                .. bib
+                .. '", False)'
+        )
+    end
+end
+
+M.vt_citations = function()
+    vim.o.conceallevel = 2
+    local ac = vim.fn.py3eval("ZotCite.GetAllCitations()")
+    local ns = vim.api.nvim_create_namespace("ZCitation")
+    vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
+    local kp = "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
+    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+    local set_m = vim.api.nvim_buf_set_extmark
+    local a = ""
+    for k, v in pairs(lines) do
+        local i = 1
+        while true do
+            local s, e = v:find(kp, i)
+            if not s or not e then break end
+            set_m(0, ns, k - 1, s - 1, { end_col = e, hl_group = "Ignore", conceal = "" })
+            a = ac[v:sub(s + 1, e)]
+            set_m(
+                0,
+                ns,
+                k - 1,
+                e,
+                { virt_text = { { a, "Identifier" } }, virt_text_pos = "inline" }
+            )
+            i = e + 1
+        end
+    end
+end
+
 -- stylua: ignore start
 
 M.hl_citations = function()
     local ns = vim.api.nvim_create_namespace("ZCitation")
     vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
-    local kp = "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]#"
+    local kp = "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][%-%#]"
     local yp = "^%S*[0-9][0-9][0-9][0-9]"
     if config.citation_template and config.citation_template:find("year") then
         yp = "^%S*[0-9][0-9]"
@@ -174,10 +278,12 @@ M.hl_citations = function()
             if y then
                 set_m(0, ns, k - 1, e, { end_col = y, hl_group = "Identifier" })
                 set_m(0, ns, k - 1, y - 5, { end_col = y - 4, hl_group = "Identifier", conceal = "_" })
+                e = e + 1
                 local substr = v:sub(e, y)
                 local j = 1
                 while true do
-                    local _, m = substr:find("+", j)
+                    local _, m = substr:find("+", j) -- old delimiter
+                    if not m then _, m = substr:find("%-", j) end
                     if not m then break end
                     set_m(0, ns, k - 1, m + e - 2, { end_col = m + e - 1, hl_group = "Identifier", conceal = "_" })
                     j = m + 1

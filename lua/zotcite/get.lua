@@ -89,18 +89,30 @@ M.citation_key = function()
     local k
     while i > 0 do
         k = line:sub(i, i)
-        if k:find("@") then
+        if k == "@" then
             found_i = true
             i = i + 1
             break
         end
-        if not k:find("[A-Za-z0-9_#%-]") then break end
+        if
+            not (
+                k == "#" -- old delimiter
+                or k == "+" -- old delimiter
+                or k == "-"
+                or (k >= "0" and k <= "9")
+                or (k >= "A" and k <= "z")
+                or (k >= "a" and k <= "z")
+                or k:byte(1, 1) > 127
+            )
+        then
+            break
+        end
         i = i - 1
     end
     if found_i then
         local j = i + 8
         k = line:sub(j, j)
-        if k == "#" then
+        if k == "#" or k == "-" then
             local key = line:sub(i, j - 1)
             return key
         end
@@ -148,7 +160,7 @@ end
 
 local finish_citation = function(ref)
     local rownr = vim.api.nvim_win_get_cursor(0)[1] - 1
-    local cite = "@" .. ref.value.key .. "#" .. ref.value.cite
+    local cite = "@" .. ref.value.key .. "-" .. ref.value.cite
     vim.api.nvim_buf_set_text(
         0,
         rownr,
