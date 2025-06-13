@@ -565,11 +565,11 @@ class ZoteroEntries:
     def _get_compl_line(cls, e):
         alastnm = e['alastnm']
         if alastnm == '':
-            lst = [e['zotkey'] + '#' + e['citekey'], '', '(' + e['year'] + ') ' + e['title']]
+            lst = [e['zotkey'] + '-' + e['citekey'], '', '(' + e['year'] + ') ' + e['title']]
         else:
             if len(alastnm) > 40:
                 alastnm = alastnm[:40] + "…"
-            lst = [e['zotkey'] + '#' + e['citekey'], alastnm , '(' + e['year'] + ') ' + e['title']]
+            lst = [e['zotkey'] + '-' + e['citekey'], alastnm , '(' + e['year'] + ') ' + e['title']]
         return lst
 
     @staticmethod
