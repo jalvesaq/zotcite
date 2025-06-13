@@ -148,7 +148,7 @@ end
 
 local finish_citation = function(ref)
     local rownr = vim.api.nvim_win_get_cursor(0)[1] - 1
-    local cite = "@" .. ref.value.key .. "#" .. ref.value.cite
+    local cite = "@" .. ref.value.key .. "-" .. ref.value.cite
     vim.api.nvim_buf_set_text(
         0,
         rownr,

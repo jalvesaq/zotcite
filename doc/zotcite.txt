@@ -123,6 +123,8 @@ In Vim's Normal mode, put the cursor over a citation key and press:
 ------------------------------------------------------------------------------
 2.3. Compiling documents                               *zotcite_compiling_docs*
 
+2.3.1 Markdown or Quarto
+
 To convert a Markdown document with pandoc, use the `zotref.py` filter that comes
 with Zotcite. The Zotcite plugin adds the directory where `zotref.py` is to the
 system `$PATH`. So, from within Neovim, do:
@@ -143,7 +145,7 @@ it somewhere:
  end
 
 Then, do not use either the `bibliography` field or the `citeproc` field (if
-you use one of them, `citeproc` will run before `zotref.py`) and put in the
+you use any of them, `citeproc` will run before `zotref.py`) and put in the
 header of your Quarto document:
 >yaml
  filters:
@@ -161,28 +163,32 @@ For a Lua filter to fix the APA citation style, see:
 
 
 To compile an RMarkdown document with the R.nvim plugin
-(https://github.com/jalvesaq/Nvim-R), add the following lines to the YAML
+(https://github.com/R-nvim/R.nvim), add the following lines to the YAML
 header of the document (replace `pdf_document` with the desired output):
 >yaml
  output:
    pdf_document:
      pandoc_args: ['-F', 'zotref.py', '--citeproc']
 
-Note: On Windows, you might have to replace `zotref.py` with its full path.
-Example:
+Notes for Windows users:
+
+You might have to replace `zotref.py` with its full path. Example:
 >yaml
  output:
    pdf_document:
      pandoc_args: ['-F', '/Path/to/zotcite/python3/zotref.py', '--citeproc']
-
-Note: Old versions of `pandoc` require `-F pandoc-citeproc` instead of
-`--citeproc`.
-
-Note: On Windows, `zotref.py` will convert the bib file from "latin1" to
+<
+On Windows, `zotref.py` will convert the bib file from "latin1" to
 "utf-8". If "latin1" is not the Zotero encoding in your region, set
 `zotero_encoding` with the correct value in your `config`. Example:
 >lua
  zotero_encoding = 'latin2'
+
+For Typst, the following command should work:
+>sh
+ pandoc example.typ --bibliography references.bib -F /path/to/zotcite/python3/zotref.py -C -o example.pdf
+<
+The file `references.bib` will be updated with Zotero's references.
 
 
 ------------------------------------------------------------------------------
