@@ -123,8 +123,6 @@ In Vim's Normal mode, put the cursor over a citation key and press:
 ------------------------------------------------------------------------------
 2.3. Compiling documents                               *zotcite_compiling_docs*
 
-2.3.1 Markdown or Quarto
-
 To convert a Markdown document with pandoc, use the `zotref.py` filter that comes
 with Zotcite. The Zotcite plugin adds the directory where `zotref.py` is to the
 system `$PATH`. So, from within Neovim, do:

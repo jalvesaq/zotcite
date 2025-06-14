@@ -508,19 +508,19 @@ class ZoteroEntries:
                 self._e[k]['title'] = ''
                 titlew = ''
             lastname = 'No_author'
-            lastnames = ''
+            lastnames = 'No_author'
             creators = ['author'] + self._creators
+            n = 0
+            lnms = []
             for c in creators:
                 if c in self._e[k]:
                     lastname = self._e[k][c][0][0]
                     for ln in self._e[k][c]:
-                        lastnames = lastnames + '+' + ln[0]
+                        lnms.append(ln[0])
+                        n += 1
                     break
-            if lastnames == '':
-                lastnames = 'No_author'
-
-            lastnames = re.sub('^\\+', '', lastnames)
-            lastnames = re.sub('\\+.*\\+.*\\+.*', '+etal', lastnames)
+            if n > 0:
+                lastnames = "-".join(lnms)
             lastname = re.sub('\\W', '', lastname)
             titlew = re.sub('\\W', '', titlew)
             key = self._cite
@@ -710,7 +710,7 @@ class ZoteroEntries:
         ref = ''
         for e in self._e:
             for k in keys:
-                zotkey = re.sub('#.*', '', k)
+                zotkey = re.sub('[\\-#].*', '', k)
                 zotkey = re.sub('@', '', zotkey)
                 if zotkey == self._e[e]['zotkey']:
                     ref += self._get_yaml_ref(self._e[e], k)
@@ -756,7 +756,7 @@ class ZoteroEntries:
                 e[aa] = re.sub('<span style="font-variant:small-caps;">(.+?)</span>', '\\\\textsc{\\1}', e[aa])
                 e[aa] = re.sub('<span class="nocase">(.+?)</span>', '{\\1}', e[aa])
 
-        ref = ['\n@' + e['etype'] + '{' + re.sub('#.*', '', citekey) + ',\n']
+        ref = ['\n@' + e['etype'] + '{' + re.sub('[\\-#].*', '', citekey) + ',\n']
         for aa in ['author', 'editor', 'contributor', 'translator',
                    'container-author']:
             if aa in e:
@@ -795,7 +795,7 @@ class ZoteroEntries:
         ref = {}
         for e in self._e:
             for k in keys:
-                zotkey = re.sub('#.*', '', k)
+                zotkey = re.sub('[\\-#].*', '', k)
                 if zotkey == self._e[e]['zotkey']:
                     ref[zotkey] = self._get_bib_ref(self._e[e], k)
         return ref
@@ -831,7 +831,7 @@ class ZoteroEntries:
         """
 
         if Id in self._e.keys():
-            return '@' + self._e[Id]['zotkey'] + '#' + self._e[Id]['citekey']
+            return '@' + self._e[Id]['zotkey'] + '-' + self._e[Id]['citekey']
         return "IdNotFound"
 
     def GetAnnotations(self, key, offset):
@@ -876,19 +876,19 @@ class ZoteroEntries:
                     for s in ss:
                         notes.append(s)
                     if page is None: # web snapshots
-                        notes.append(' [@' + key + '#' + citekey + ']')
+                        notes.append(' [@' + key + '-' + citekey + ']')
                     else:
-                        notes.append(' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                        notes.append(' [@' + key + '-' + citekey + self._ypsep + page + ']')
                 elif page is None: # web snapshots
-                    notes.append(i[7] + ' [@' + key + '#' + citekey + ']')
+                    notes.append(i[7] + ' [@' + key + '-' + citekey + ']')
                 else:
-                    notes.append(i[7] + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                    notes.append(i[7] + ' [@' + key + '-' + citekey + self._ypsep + page + ']')
             if i[6] and page is None: # Highlighted text, web snapshots
                 notes.append('')
-                notes.append('> ' + self._sanitize_markdown(i[6].replace("\n"," ")) + ' [@' + key + '#' + citekey + ']')
+                notes.append('> ' + self._sanitize_markdown(i[6].replace("\n"," ")) + ' [@' + key + '-' + citekey + ']')
             elif i[6]: # Highlighted text
                 notes.append('')
-                notes.append('> ' + self._sanitize_markdown(i[6]) + ' [@' + key + '#' + citekey + self._ypsep + page + ']')
+                notes.append('> ' + self._sanitize_markdown(i[6]) + ' [@' + key + '-' + citekey + self._ypsep + page + ']')
         return notes
 
 
@@ -942,7 +942,7 @@ class ZoteroEntries:
             for i in self._e:
                 if self._e[i]['zotkey'] == k:
                     r = self._e[i]['citekey']
-            return '\001' + k + '#' + r + '; '
+            return '\001' + k + '-' + r + '; '
 
         def item2ref(s):
             s = re.sub('.*?items%2F(........).*?', '\001\\1\002', s, flags=re.M)

@@ -174,10 +174,12 @@ M.hl_citations = function()
             if y then
                 set_m(0, ns, k - 1, e, { end_col = y, hl_group = "Identifier" })
                 set_m(0, ns, k - 1, y - 5, { end_col = y - 4, hl_group = "Identifier", conceal = "_" })
+                e = e + 1
                 local substr = v:sub(e, y)
                 local j = 1
                 while true do
-                    local _, m = substr:find("+", j)
+                    local _, m = substr:find("+", j) -- old delimiter
+                    if not m then _, m = substr:find("%-", j) end
                     if not m then break end
                     set_m(0, ns, k - 1, m + e - 2, { end_col = m + e - 1, hl_group = "Identifier", conceal = "_" })
                     j = m + 1
