@@ -519,8 +519,11 @@ class ZoteroEntries:
                         lnms.append(ln[0])
                         n += 1
                     break
-            if n > 0:
-                lastnames = "-".join(lnms)
+            if n > 3:
+                lastnames = lnms[0] + "-etal"
+            else:
+                if n > 0:
+                    lastnames = "-".join(lnms)
             lastname = re.sub('\\W', '', lastname)
             titlew = re.sub('\\W', '', titlew)
             key = self._cite
@@ -582,7 +585,7 @@ class ZoteroEntries:
         return s
 
     def GetMatch(self, ptrn, d, as_table = False):
-        """ Find citation key and save completion lines in temporary file
+        """ Find citation key and return list of completions
 
             ptrn (string): The pattern to search for, converted to lower case.
             d    (string): The name of the markdown document.
