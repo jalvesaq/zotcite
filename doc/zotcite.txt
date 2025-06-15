@@ -207,6 +207,9 @@ The suggested workflow is:
 ------------------------------------------------------------------------------
 2.5. Alternative workflows                           *zotcite_other_workflows*
 
+Note: Make backup of your bib files because they will be overwritten by
+zotcite.
+
 The goal of Zotcite is to avoid the need for exporting bib files from Zotero.
 The `zotref.py` filter receives the Markdown document from its standard input,
 extracts all citation keys from the document, gets all corresponding

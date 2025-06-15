@@ -160,7 +160,12 @@ end
 
 local finish_citation = function(ref)
     local rownr = vim.api.nvim_win_get_cursor(0)[1] - 1
-    local cite = "@" .. ref.value.key .. "-" .. ref.value.cite
+    local cite
+    if config.b_vt_hl[vim.api.nvim_get_current_buf()] then
+        cite = ref.value.key
+    else
+        cite = "@" .. ref.value.key .. "-" .. ref.value.cite
+    end
     vim.api.nvim_buf_set_text(
         0,
         rownr,
@@ -172,7 +177,7 @@ local finish_citation = function(ref)
     local colnr = citation.start_col + #cite
     vim.api.nvim_win_set_cursor(0, { rownr + 1, colnr })
     vim.api.nvim_feedkeys("a", "n", false)
-    require("zotcite.config").hl_citations()
+    require("zotcite.hl").citations()
 end
 
 M.citation = function()
@@ -219,7 +224,7 @@ local finish_annotations = function(sel)
     else
         local lnum = vim.api.nvim_win_get_cursor(0)[1]
         vim.api.nvim_buf_set_lines(0, lnum, lnum, true, repl)
-        require("zotcite.config").hl_citations()
+        require("zotcite.hl").citations()
     end
 end
 
@@ -290,7 +295,7 @@ local finish_annotations_selection = function(sel)
                         true,
                         vim.split(table.concat(selected_annotations, "\n\n"), "\n")
                     )
-                    require("zotcite.config").hl_citations()
+                    require("zotcite.hl").citations()
                 end
                 return
             end
@@ -325,7 +330,7 @@ local finish_annotations_selection = function(sel)
                                     "\n"
                                 )
                             )
-                            require("zotcite.config").hl_citations()
+                            require("zotcite.hl").citations()
                         end
                     end
                 end
@@ -361,7 +366,7 @@ local finish_note = function(sel)
         local lines = vim.fn.split(repl, "\n")
         local lnum = vim.api.nvim_win_get_cursor(0)[1]
         vim.api.nvim_buf_set_lines(0, lnum, lnum, true, lines)
-        require("zotcite.config").hl_citations()
+        require("zotcite.hl").citations()
     end
 end
 
@@ -387,7 +392,7 @@ local finish_pdfnote_2 = function(_, idx)
     ):wait()
     if notes.code == 0 then
         vim.api.nvim_buf_set_lines(0, lnum, lnum, true, vim.fn.split(notes.stdout, "\n"))
-        require("zotcite.config").hl_citations()
+        require("zotcite.hl").citations()
     elseif notes.code == 33 then
         zwarn('Failed to load "' .. fpath .. '" as a valid PDF document.')
     elseif notes.code == 34 then
