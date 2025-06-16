@@ -6,10 +6,8 @@
     2.1. Commands                                           |zotcite_commands|
     2.2. Mappings                                           |zotcite_mappings|
     2.3. Compiling documents                          |zotcite_compiling_docs|
-    2.4. Suggested workflow                                 |zotcite_workflow|
-    2.5. Alternative workflows                       |zotcite_other_workflows|
  3. Customization                                      |zotcite_customization|
-    3.1. Change default maps                         |zotcite_change_mappings|
+    3.1. Python path                                     |zotcite_python_path|
     3.2. Change default maps                         |zotcite_change_mappings|
     3.3. Zotcite engine                                       |zotcite_engine|
     3.4. Syntax highlighting                            |zotcite_highlighting|
@@ -102,6 +100,8 @@ If you have installed `cmp-zotcite`, then, in Insert mode, type the `@` letter
 and one or more letters of either the last name of the first author or the
 reference title. The matching of citation keys is case-insensitive.
 
+In Vim's Insert mode, <c-x><c-b> inserts citation keys (requires Telescope).
+
 In Vim's Normal mode, put the cursor over a citation key and press:
 
   - <Leader>zo to open the reference's attachment as registered in Zotero's
@@ -121,7 +121,7 @@ In Vim's Normal mode, put the cursor over a citation key and press:
 
 
 ------------------------------------------------------------------------------
-2.3. Compiling documents                               *zotcite_compiling_docs*
+2.3. Compiling documents                              *zotcite_compiling_docs*
 
 No bib file (use the zotref filter instead) ~
 
@@ -288,39 +288,33 @@ zotcite config. Example:
 ------------------------------------------------------------------------------
 3.2. Change default maps                             *zotcite_change_mappings*
 
-To change the shortcut to open reference attachment, set the value of
-<Plug>ZOpenAttachment in your |init.lua| as below:
+Below are examples of how to change the available key bindings:
 >lua
+ -- Insert citation key:
+ vim.keymap.set("i", "<c-b>", "<Plug>ZCite")
+
+ -- Open reference attachment:
  vim.keymap.set("n", "<c-]>", "<Plug>ZOpenAttachment")
 
-To change the shortcut to see basic information on the reference of a citation
-key, follow the example:
->lua
+ -- See basic information on the reference of a citation key:
  vim.keymap.set("n", "<Leader>I", "<Plug>ZCitationInfo")
 
-To change the shortcut to see how the reference of a citation key is stored by
-Zotcite, follow the example:
->lua
- vim.keymap.set("n", "<Leader>A", "<Plug>ZCitationCompleteInfo")
+ -- See how the reference of a citation key is stored by Zotcite:
+ vim.keymap.set("n", "<Leader>C", "<Plug>ZCitationCompleteInfo")
 
-To change the shortcut to see how the reference is converted into YAML, follow
-the example:
->lua
+ -- See how the reference is converted into YAML:
  vim.keymap.set("n", "<Leader>Y", "<Plug>ZCitationYamlRef")
 
-To change the shortcut to extract the abstract into the current buffer from the
-abstract field in complete info:
->lua
- vim.keymap.set("n", "<Leader>Y", "<Plug>ZExtractAbstract")
+ -- Extract the abstract into the current buffer from the citation under cursor:
+ vim.keymap.set("n", "<Leader>A", "<Plug>ZExtractAbstract")
 
-To change the shortcut to view the (pdf or html) document generated from the
-current (Markdown, Rmd, or Quarto) document, follow the example:
->lua
+ -- View the (pdf or html) document generated from the
+ -- current (Markdown, Rmd, or Quarto) document:
  vim.keymap.set("n", "<Leader>V", "<Plug>ZViewDocument")
-
+<
 
 ------------------------------------------------------------------------------
-3.3. Zotcite engine                                            *zotcite_engine*
+3.3. Zotcite engine                                           *zotcite_engine*
 
 							   *citation_template*
 The citation keys inserted by Zotcite have the format `@ZoteroKey-Author_Year`
@@ -387,7 +381,7 @@ of the Markdown document, as in the examples:
 
 
 ------------------------------------------------------------------------------
-3.4. Syntax Highlighting                                 *zotcite_highlighting*
+3.4. Syntax Highlighting                                *zotcite_highlighting*
 
 Syntax highlighting customization is done with Vim variables.
 
@@ -405,7 +399,7 @@ different value, follow the example:
 
 
 ------------------------------------------------------------------------------
-3.5. File types                                             *zotcite_filetypes*
+3.5. File types                                            *zotcite_filetypes*
 
 Zotcite is enabled only if the file type is `markdown`, `pandoc`, `rmd`,
 `quarto` or `vimwiki`. If you want it enabled for other type of Markdown
