@@ -236,13 +236,21 @@ M.abstract = function()
     end
 end
 
-local finish_annotations = function(sel)
+local get_annotations = function(sel)
+    local clean = config.bib_and_vt[vim.o.filetype] and "True" or "False"
+    local key = sel.value.key
     local repl = vim.fn.py3eval(
-        'ZotCite.GetAnnotations("' .. sel.value.key .. '", ' .. offset .. ")"
+        'ZotCite.GetAnnotations("' .. key .. '", ' .. offset .. ", " .. clean .. ")"
     )
     if #repl == 0 then
         zwarn("No annotation found.")
-    else
+    end
+    return repl
+end
+
+local finish_annotations = function(sel)
+    local repl = get_annotations(sel)
+    if #repl > 0 then
         local lnum = vim.api.nvim_win_get_cursor(0)[1]
         vim.api.nvim_buf_set_lines(0, lnum, lnum, true, repl)
         require("zotcite.hl").citations()
@@ -250,12 +258,8 @@ local finish_annotations = function(sel)
 end
 
 local finish_annotations_selection = function(sel)
-    local raw_annotations = vim.fn.py3eval(
-        'ZotCite.GetAnnotations("' .. sel.value.key .. '", ' .. offset .. ")"
-    )
-    if #raw_annotations == 0 then
-        zwarn("No annotation found.")
-    else
+    local raw_annotations = get_annotations(sel)
+    if #raw_annotations > 0 then
         local grouped_annotations = {}
         local current_group = {}
         local last_was_quote = false
@@ -380,7 +384,9 @@ M.annotations = function(ko, use_selection)
 end
 
 local finish_note = function(sel)
-    local repl = vim.fn.py3eval('ZotCite.GetNotes("' .. sel.value.key .. '")')
+    local clean = config.bib_and_vt[vim.o.filetype] and "True" or "False"
+    local key = sel.value.key
+    local repl = vim.fn.py3eval('ZotCite.GetNotes("' .. key .. '", ' .. clean .. ')')
     if repl == "" then
         zwarn("No note found.")
     else
@@ -430,7 +436,12 @@ local finish_pdfnote = function(sel)
         zwarn("Citation key not found")
         return
     end
-    local citekey = "@" .. zotkey .. "#" .. repl["citekey"]
+    local citekey
+    if config.bib_and_vt[vim.o.filetype] then
+        citekey = "@" .. zotkey
+    else
+        citekey = "@" .. zotkey .. "-" .. repl["citekey"]
+    end
     local pg = "1"
     if repl.pages and repl.pages:find("[0-9]-") then pg = repl.pages end
     pdfnote_data = { citekey = citekey, pg = pg }

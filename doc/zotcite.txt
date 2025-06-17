@@ -284,6 +284,30 @@ zotcite config. Example:
 >lua
  python_path = "/home/user_name/.py3env/bin/python3"
 <
+The Python script `pdfnote.py` imports the modules `PyQt5` and `popplerqt5`.
+On Debian systems they can be installed with the command:
+>sh
+ sudo apt install python3-pyqt5 python3-poppler-qt5
+<
+In any system, if using `pip`:
+>sh
+ pip install poppler-qt5
+ pip install python-poppler-qt5
+<
+If you have trouble install `poppler-qt5` or `python-poppler-qt5` you can add
+to your zotcite config:
+>lua
+ pdf_extractor = "pdfnotes2.py",
+<
+The Python script `pdfnotes2.py` requires the `pymupdf` module, which can be
+installed on Debian:
+>sh
+ sudo apt install python3-pymupdf
+<
+or with `pip`:
+>sh
+ pip install pymupdf
+<
 
 ------------------------------------------------------------------------------
 3.2. Change default maps                             *zotcite_change_mappings*

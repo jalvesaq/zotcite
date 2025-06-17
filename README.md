@@ -49,14 +49,10 @@ Requirements:
   - Python 3 modules pynvim (see Neovim documentation on `provider-python` for
     details) and PyYAML.
 
-  - Python modules PyQt5 and python-poppler-qt5 (only if you are going to extract
-    annotations from PDF documents). On Debian based Linux distributions, you
-    can install them with the command:
-
-    `sudo apt install python3-pyqt5 python3-poppler-qt5`
-
-Depending on your system, you may have to install python modules in an virtual
-environment and maybe also system-wide.
+  - Only if you are going to extract annotations from PDF documents that were
+    inserted by a PDF viewer other than Zotero: Python modules PyQt5 and
+    python-poppler-qt5, or Python module pymupdf (see Zotcite documentation
+    for details).
 
 Zotcite can be installed as any Neovim plugin, and it depends on
 [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim), and

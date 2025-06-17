@@ -63,10 +63,9 @@ def main():
             page1 = 1
 
     # Get year-page separator from environment
-    if os.getenv('ZYearPageSep') is None:
+    ypsep = os.getenv('ZYearPageSep')
+    if ypsep is None:
         ypsep = ', p. '
-    else:
-        ypsep = os.getenv('ZYearPageSep')
 
     notes = []
 

@@ -888,7 +888,7 @@ class ZoteroEntries:
             return '@' + self._e[Id]['zotkey'] + '-' + self._e[Id]['citekey']
         return "IdNotFound"
 
-    def GetAnnotations(self, key, offset):
+    def GetAnnotations(self, key, offset, clean):
         """ Return user annotations made using Zotero's PDF viewer.
 
             key (string): The Zotero key as it appears in the markdown document.
@@ -907,9 +907,10 @@ class ZoteroEntries:
         cur.execute(query)
 
         citekey = ''
-        for k in self._e:
-            if self._e[k]['zotkey'] == key:
-                citekey = self._e[k]['citekey']
+        if not clean:
+            for k in self._e:
+                if self._e[k]['zotkey'] == key:
+                    citekey = '-' + self._e[k]['citekey']
 
         notes = []
         for i in cur.fetchall():
@@ -930,23 +931,23 @@ class ZoteroEntries:
                     for s in ss:
                         notes.append(s)
                     if page is None: # web snapshots
-                        notes.append(' [@' + key + '-' + citekey + ']')
+                        notes.append(' [@' + key + citekey + ']')
                     else:
-                        notes.append(' [@' + key + '-' + citekey + self._ypsep + page + ']')
+                        notes.append(' [@' + key + citekey + self._ypsep + page + ']')
                 elif page is None: # web snapshots
-                    notes.append(i[7] + ' [@' + key + '-' + citekey + ']')
+                    notes.append(i[7] + ' [@' + key + citekey + ']')
                 else:
-                    notes.append(i[7] + ' [@' + key + '-' + citekey + self._ypsep + page + ']')
+                    notes.append(i[7] + ' [@' + key + citekey + self._ypsep + page + ']')
             if i[6] and page is None: # Highlighted text, web snapshots
                 notes.append('')
-                notes.append('> ' + self._sanitize_markdown(i[6].replace("\n"," ")) + ' [@' + key + '-' + citekey + ']')
+                notes.append('> ' + self._sanitize_markdown(i[6].replace("\n"," ")) + ' [@' + key + citekey + ']')
             elif i[6]: # Highlighted text
                 notes.append('')
-                notes.append('> ' + self._sanitize_markdown(i[6]) + ' [@' + key + '-' + citekey + self._ypsep + page + ']')
+                notes.append('> ' + self._sanitize_markdown(i[6]) + ' [@' + key + citekey + self._ypsep + page + ']')
         return notes
 
 
-    def GetNotes(self, key):
+    def GetNotes(self, key, clean):
         """ Return user notes from a reference.
 
             key (string): The Zotero key as it appears in the markdown document.
@@ -989,18 +990,21 @@ class ZoteroEntries:
         if notes == '':
             return ''
 
-        def key2ref(k):
+        def key2ref(k, clean):
             k = re.sub('\001', '', k)
             k = re.sub('\002', '', k)
             r = 'NotFound'
             for i in self._e:
                 if self._e[i]['zotkey'] == k:
                     r = self._e[i]['citekey']
-            return '\001' + k + '-' + r + '; '
+            if clean:
+                return '\001' + k + '; '
+            else:
+                return '\001' + k + '-' + r + '; '
 
         def item2ref(s):
             s = re.sub('.*?items%2F(........).*?', '\001\\1\002', s, flags=re.M)
-            s = re.sub('\001(........)\002', lambda k: key2ref(k.group()), s, flags=re.M)
+            s = re.sub('\001(........)\002', lambda k: key2ref(k.group(), clean), s, flags=re.M)
             s = re.sub('%22locator%22%3A%22(.*?)%22', self._ypsep + '\\1; %22', s, flags=re.M)
             s = re.sub('%22.*?' + self._ypsep, self._ypsep, s, flags=re.M)
             s = re.sub('%22.*', '', s, flags=re.M)
