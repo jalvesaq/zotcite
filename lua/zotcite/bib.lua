@@ -100,7 +100,7 @@ local get_md_citations = function()
 end
 
 local get_tex_citations = function()
-    local kp1 = "\\%w*cite[%w%*]*{"
+    local kp1 = "\\%w*cit.*{"
     local kp2 = "[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
     local ckeys = {}
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
@@ -154,6 +154,7 @@ M.update = function(bib)
                 .. '", False)'
         )
     end
+    vim.schedule(require("zotcite.hl").citations)
 end
 
 return M

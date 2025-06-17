@@ -209,13 +209,6 @@ class ZoteroEntries:
     _load_time = "0"
 
     def __init__(self):
-
-        # Year-page separator
-        if os.getenv('ZYearPageSep') is not None:
-            self._ypsep = str(os.getenv('ZYearPageSep'))
-        else:
-            self._ypsep = ', p. '
-
         # Template for citation keys
         if os.getenv('ZCitationTemplate') is not None:
             self._cite = str(os.getenv('ZCitationTemplate'))
@@ -575,14 +568,33 @@ class ZoteroEntries:
             lst = [e['zotkey'] + '-' + e['citekey'], alastnm , '(' + e['year'] + ') ' + e['title']]
         return lst
 
-    @staticmethod
-    def _sanitize_markdown(s):
+    def _sanitize_markdown(self, s):
         s = s.replace("[", "\\[")
         s = s.replace("]", "\\]")
         s = s.replace("@", "\\@")
         s = s.replace("*", "\\*")
         s = s.replace("_", "\\_")
         return s
+
+    def _sanitize_latex(self, s):
+        s = s.replace("\\", "TeXtBacKsLasH")
+        s = s.replace("%", "\\%")
+        s = s.replace("&", "\\&")
+        s = s.replace("$", "\\$")
+        s = s.replace("#", "\\#")
+        s = s.replace("_", "\\_")
+        s = s.replace("{", "\\{")
+        s = s.replace("}", "\\}")
+        s = s.replace("~", "\\textasciitilde{}")
+        s = s.replace("^", "\\textasciicircum{}")
+        s = s.replace("TeXtBacKsLasH", "\\textbackslash{}")
+        return s
+
+    def _sanitize(self, s, md):
+        if md:
+            return self._sanitize_markdown(s)
+        else:
+            return self._sanitize_latex(s)
 
     def GetMatch(self, ptrn, d, as_table = False):
         """ Find citation key and return list of completions
@@ -888,7 +900,7 @@ class ZoteroEntries:
             return '@' + self._e[Id]['zotkey'] + '-' + self._e[Id]['citekey']
         return "IdNotFound"
 
-    def GetAnnotations(self, key, offset, clean):
+    def GetAnnotations(self, key, offset, clean, md):
         """ Return user annotations made using Zotero's PDF viewer.
 
             key (string): The Zotero key as it appears in the markdown document.
@@ -912,6 +924,27 @@ class ZoteroEntries:
                 if self._e[k]['zotkey'] == key:
                     citekey = '-' + self._e[k]['citekey']
 
+        # Year-page separator
+        if os.getenv('ZYearPageSep') is not None:
+            ypsep = str(os.getenv('ZYearPageSep'))
+        else:
+            if md:
+                ypsep = ', p. '
+            else:
+                ypsep = 'p. '
+
+        def cite(pg):
+            if md:
+                if pg is None:
+                    return ' [@' + key + citekey + ']'
+                else:
+                    return ' [@' + key + citekey + ypsep + pg + ']'
+            else:
+                if pg is None:
+                    return ' \\cite{' + key + citekey + '}'
+                else:
+                    return ' \\cite[' + ypsep + pg + ']{' + key + citekey + '}'
+
         notes = []
         for i in cur.fetchall():
             if i[8] is not None:
@@ -931,19 +964,19 @@ class ZoteroEntries:
                     for s in ss:
                         notes.append(s)
                     if page is None: # web snapshots
-                        notes.append(' [@' + key + citekey + ']')
+                        notes.append(cite(None))
                     else:
-                        notes.append(' [@' + key + citekey + self._ypsep + page + ']')
+                        notes.append(cite(page))
                 elif page is None: # web snapshots
-                    notes.append(i[7] + ' [@' + key + citekey + ']')
+                    notes.append(i[7] + cite(None))
                 else:
-                    notes.append(i[7] + ' [@' + key + citekey + self._ypsep + page + ']')
+                    notes.append(i[7] + cite(page))
             if i[6] and page is None: # Highlighted text, web snapshots
                 notes.append('')
-                notes.append('> ' + self._sanitize_markdown(i[6].replace("\n"," ")) + ' [@' + key + citekey + ']')
+                notes.append('> ' + self._sanitize(i[6].replace("\n"," "), md) + cite(None))
             elif i[6]: # Highlighted text
                 notes.append('')
-                notes.append('> ' + self._sanitize_markdown(i[6]) + ' [@' + key + citekey + self._ypsep + page + ']')
+                notes.append('> ' + self._sanitize(i[6], md) + cite(page))
         return notes
 
 
@@ -1002,13 +1035,19 @@ class ZoteroEntries:
             else:
                 return '\001' + k + '-' + r + '; '
 
+        # Year-page separator
+        if os.getenv('ZYearPageSep') is not None:
+            ypsep = str(os.getenv('ZYearPageSep'))
+        else:
+            ypsep = ', p. '
+
         def item2ref(s):
             s = re.sub('.*?items%2F(........).*?', '\001\\1\002', s, flags=re.M)
             s = re.sub('\001(........)\002', lambda k: key2ref(k.group(), clean), s, flags=re.M)
-            s = re.sub('%22locator%22%3A%22(.*?)%22', self._ypsep + '\\1; %22', s, flags=re.M)
-            s = re.sub('%22.*?' + self._ypsep, self._ypsep, s, flags=re.M)
+            s = re.sub('%22locator%22%3A%22(.*?)%22', ypsep + '\\1; %22', s, flags=re.M)
+            s = re.sub('%22.*?' + ypsep, ypsep, s, flags=re.M)
             s = re.sub('%22.*', '', s, flags=re.M)
-            s = re.sub('; ' + self._ypsep, self._ypsep, s, flags=re.M)
+            s = re.sub('; ' + ypsep, ypsep, s, flags=re.M)
             s = re.sub('; $', '', s, flags=re.M)
             return '\002' + s + '\003'
 

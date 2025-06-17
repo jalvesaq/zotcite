@@ -238,9 +238,10 @@ end
 
 local get_annotations = function(sel)
     local clean = config.bib_and_vt[vim.o.filetype] and "True" or "False"
+    local md = (vim.o.filetype == "tex" or vim.o.filetype == "rnoweb") and "False" or "True"
     local key = sel.value.key
     local repl = vim.fn.py3eval(
-        'ZotCite.GetAnnotations("' .. key .. '", ' .. offset .. ", " .. clean .. ")"
+        'ZotCite.GetAnnotations("' .. key .. '", ' .. offset .. ", " .. clean .. ", " .. md .. ")"
     )
     if #repl == 0 then
         zwarn("No annotation found.")
@@ -313,13 +314,9 @@ local finish_annotations_selection = function(sel)
                         table.insert(selected_annotations, grouped_annotations[index])
                     end
                     local lnum = vim.api.nvim_win_get_cursor(0)[1]
-                    vim.api.nvim_buf_set_lines(
-                        0,
-                        lnum,
-                        lnum,
-                        true,
-                        vim.split(table.concat(selected_annotations, "\n\n"), "\n")
-                    )
+                    local txt = table.concat(selected_annotations, "\n\n")
+                    local lines = vim.split(txt, "\n")
+                    vim.api.nvim_buf_set_lines(0, lnum, lnum, true, lines)
                     require("zotcite.hl").citations()
                 end
                 return
@@ -350,10 +347,7 @@ local finish_annotations_selection = function(sel)
                                 lnum,
                                 lnum,
                                 true,
-                                vim.split(
-                                    table.concat(selected_annotations, "\n\n"),
-                                    "\n"
-                                )
+                                vim.split(table.concat(selected_annotations, "\n\n"), "\n")
                             )
                             require("zotcite.hl").citations()
                         end
@@ -418,7 +412,8 @@ local finish_pdfnote_2 = function(_, idx)
         { text = true }
     ):wait()
     if notes.code == 0 then
-        vim.api.nvim_buf_set_lines(0, lnum, lnum, true, vim.fn.split(notes.stdout, "\n"))
+        local lines = vim.fn.split(notes.stdout, "\n")
+        vim.api.nvim_buf_set_lines(0, lnum, lnum, true, lines)
         require("zotcite.hl").citations()
     elseif notes.code == 33 then
         zwarn('Failed to load "' .. fpath .. '" as a valid PDF document.')

@@ -47,7 +47,7 @@ local vt_citations_typ = function(ac, ns, lines)
 end
 
 local vt_citations_tex = function(ac, ns, lines)
-    local kp1 = "\\%w*cite[%w%*]*{"
+    local kp1 = "\\%w*cit.*{"
     local kp2 = "[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
     local a = ""
     for k, v in pairs(lines) do

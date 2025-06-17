@@ -4,8 +4,8 @@
 > Users of Vim and Neovim < 0.10.4 have to switch to the "vim" branch.
 
 _Zotcite_ is a Neovim plugin that provides integration with Zotero for
-Markdown, Quarto, Rmd, vimwiki, Typst, LaTeX and Rnoweb file types. With
-_zotcite_ you can:
+Markdown, Quarto, Rmd, vimwiki, and Typst and has rudimentary support for
+LaTeX and Rnoweb file types. With _zotcite_ you can:
 
   - Do auto-completion of citation keys from Zotero database in
     Markdown, RMarkdown, Quarto, and Typst documents (with `cmp-zotcite`).
