@@ -250,6 +250,7 @@ local get_annotations = function(sel)
 end
 
 local finish_annotations = function(sel)
+    if not sel then return end
     local repl = get_annotations(sel)
     if #repl > 0 then
         local lnum = vim.api.nvim_win_get_cursor(0)[1]
@@ -259,6 +260,7 @@ local finish_annotations = function(sel)
 end
 
 local finish_annotations_selection = function(sel)
+    if not sel then return end
     local raw_annotations = get_annotations(sel)
     if #raw_annotations > 0 then
         local grouped_annotations = {}
