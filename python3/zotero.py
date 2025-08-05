@@ -794,7 +794,7 @@ class ZoteroEntries:
             e['pages'] = re.sub('([0-9])-([0-9])', '\\1--\\2', e['pages'])
         dont = ['etype', 'issued', 'abstract', 'citekey', 'zotkey',
                 'collection', 'author', 'editor', 'contributor', 'translator',
-                'alastnm', 'container-author', 'year']
+                'alastnm', 'container-author', 'year'] + self._exclude
         for f in e:
             if f not in dont:
                 ref.append('  ' + f + ' = {' + re.sub('\n', ' ', str(e[f])) + '},')
