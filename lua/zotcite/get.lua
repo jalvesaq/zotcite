@@ -135,9 +135,7 @@ M.citation_key = function()
     local line = vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]
     local pos = vim.api.nvim_win_get_cursor(0)[2]
 
-    if config.bib_and_vt[vim.o.filetype] then
-        return citation_key_vt(line, pos)
-    end
+    if config.bib_and_vt[vim.o.filetype] then return citation_key_vt(line, pos) end
     return citation_key_hl(line, pos)
 end
 
@@ -180,6 +178,7 @@ M.reference_data = function(btype)
 end
 
 local finish_citation = function(ref)
+    if not ref then return end
     local rownr = vim.api.nvim_win_get_cursor(0)[1] - 1
     local cite
     if config.bib_and_vt[vim.o.filetype] then
@@ -238,14 +237,20 @@ end
 
 local get_annotations = function(sel)
     local clean = config.bib_and_vt[vim.o.filetype] and "True" or "False"
-    local md = (vim.o.filetype == "tex" or vim.o.filetype == "rnoweb") and "False" or "True"
+    local md = not vim.tbl_contains({ "tex", "rnoweb" }, vim.o.filetype)
     local key = sel.value.key
     local repl = vim.fn.py3eval(
-        'ZotCite.GetAnnotations("' .. key .. '", ' .. offset .. ", " .. clean .. ", " .. md .. ")"
+        'ZotCite.GetAnnotations("'
+            .. key
+            .. '", '
+            .. offset
+            .. ", "
+            .. clean
+            .. ", "
+            .. md
+            .. ")"
     )
-    if #repl == 0 then
-        zwarn("No annotation found.")
-    end
+    if #repl == 0 then zwarn("No annotation found.") end
     return repl
 end
 
@@ -311,12 +316,12 @@ local finish_annotations_selection = function(sel)
 
             if #opts == 0 then
                 if #selected_indices > 0 then
-                    local selected_annotations = {}
+                    local sel_annot = {}
                     for index in pairs(selected_indices) do
-                        table.insert(selected_annotations, grouped_annotations[index])
+                        table.insert(sel_annot, grouped_annotations[index])
                     end
                     local lnum = vim.api.nvim_win_get_cursor(0)[1]
-                    local txt = table.concat(selected_annotations, "\n\n")
+                    local txt = table.concat(sel_annot, "\n\n")
                     local lines = vim.split(txt, "\n")
                     vim.api.nvim_buf_set_lines(0, lnum, lnum, true, lines)
                     require("zotcite.hl").citations()
@@ -336,12 +341,9 @@ local finish_annotations_selection = function(sel)
                         end
                     else
                         if #selected_indices > 0 then
-                            local selected_annotations = {}
+                            local annot = {}
                             for index in pairs(selected_indices) do
-                                table.insert(
-                                    selected_annotations,
-                                    grouped_annotations[index]
-                                )
+                                table.insert(annot, grouped_annotations[index])
                             end
                             local lnum = vim.api.nvim_win_get_cursor(0)[1]
                             vim.api.nvim_buf_set_lines(
@@ -349,7 +351,7 @@ local finish_annotations_selection = function(sel)
                                 lnum,
                                 lnum,
                                 true,
-                                vim.split(table.concat(selected_annotations, "\n\n"), "\n")
+                                vim.split(table.concat(annot, "\n\n"), "\n")
                             )
                             require("zotcite.hl").citations()
                         end
@@ -382,7 +384,7 @@ end
 local finish_note = function(sel)
     local clean = config.bib_and_vt[vim.o.filetype] and "True" or "False"
     local key = sel.value.key
-    local repl = vim.fn.py3eval('ZotCite.GetNotes("' .. key .. '", ' .. clean .. ')')
+    local repl = vim.fn.py3eval('ZotCite.GetNotes("' .. key .. '", ' .. clean .. ")")
     if repl == "" then
         zwarn("No note found.")
     else
@@ -453,9 +455,16 @@ end
 M.PDFNote = function(key) seek.refs(key, finish_pdfnote) end
 
 M.yaml_field = function(field, bn)
+    if vim.tbl_contains({ "tex", "rnoweb" }, vim.bo.filetype) then return nil end
     local node = vim.treesitter.get_node({ bufnr = bn, pos = { 0, 0 } })
     if not node then
-        zwarn("Error: Is treesitter enabled?")
+        zwarn(
+            'Could not get YAML field "'
+                .. field
+                .. '" (buffer number '
+                .. tostring(bn)
+                .. ")"
+        )
         return nil
     end
     if node:type() ~= "minus_metadata" then return nil end

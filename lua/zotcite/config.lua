@@ -256,8 +256,8 @@ M.init = function()
         local bn = vim.api.nvim_get_current_buf()
 
         vim.schedule(function()
+            vim.treesitter.start()
             require("zotcite.hl").citations()
-            vim.cmd("sleep 100m")
             require("zotcite.get").collection_name(bn)
         end)
     end

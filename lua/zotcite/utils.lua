@@ -5,7 +5,7 @@ local M = {}
 local zwarn = require("zotcite").zwarn
 
 M.add_yaml_refs = function()
-    local bigstr = vim.fn.join(vim.fn.getline(1, "$"))
+    local bigstr = vim.fn.join(vim.api.nvim_buf_get_lines(0, 0, -1, true))
     local rlist = vim.fn.uniq(vim.fn.sort(vim.fn.split(bigstr)))
     if rlist and type(rlist) == "table" and #rlist > 0 then
         local list2 = {}
@@ -44,11 +44,11 @@ M.view_document = function()
     end
     if type(fmt) == "table" then
         for k, _ in pairs(fmt) do
-            ext = k
+            ext = tostring(k)
             break
         end
-    elseif type(fmt) == "string" then
-        ext = fmt
+    else
+        ext = tostring(fmt)
     end
     if ext == "html_document" or ext == "revealjs" then
         ext = "html"
