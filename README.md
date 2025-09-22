@@ -58,6 +58,7 @@ Zotcite can be installed as any Neovim plugin, and it depends on
 [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim), and
 [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) as well
 as tree-sitter parsers for `markdown`, `markdown_inline`, and `yaml`.
+If editing LaTeX or Rnoweb files, you will also need thir parsers.
 Optionally, you can also use
 [cmp-zotcite](https://github.com/jalvesaq/cmp-zotcite), for auto-completing
 the citations keys. Below is an example of how to install `zotcite` with

@@ -463,6 +463,8 @@ M.yaml_field = function(field, bn)
                 .. field
                 .. '" (buffer number '
                 .. tostring(bn)
+                .. ", filetype "
+                .. vim.bo.filetype
                 .. ")"
         )
         return nil

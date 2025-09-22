@@ -24,6 +24,7 @@ local config = {
         "latex",
         "rnoweb",
     },
+    register_treesitter = true,
     zrunning = false,
     zotcite_home = nil,
     python_path = "python3",
@@ -72,6 +73,9 @@ M.update_config = function(opts)
         )
     end
     if config.zotero_encoding then vim.env.ZoteroEncoding = config.zotero_encoding end
+    if config.register_treesitter then
+        vim.treesitter.language.register("markdown", { "quarto", "rmd" })
+    end
 end
 
 M.has_buffer = function(bufnr)
@@ -253,10 +257,10 @@ M.init = function()
         vim.cmd(
             "autocmd BufWritePost <buffer> lua require('zotcite.get').collection_name(-1)"
         )
-        local bn = vim.api.nvim_get_current_buf()
 
+        vim.treesitter.start()
+        local bn = vim.api.nvim_get_current_buf()
         vim.schedule(function()
-            vim.treesitter.start()
             require("zotcite.hl").citations()
             require("zotcite.get").collection_name(bn)
         end)

@@ -433,6 +433,13 @@ document, you should set the value of `filetypes` in your `config`. Example:
 >lua
  filetypes = { 'markdown', 'pandoc', 'rmd', 'vimwiki' }
 
+Zotcite registers the Markdown parser to both Quarto and RMarkdown documents.
+This will change in the future if dedicated parsers are written for them.
+You can disable this feature in your zotcite config:
+>lua
+ register_treesitter = false
+
+
 
 ------------------------------------------------------------------------------
 3.6. Open attachment                                  *zotcite_open_in_zotero*
