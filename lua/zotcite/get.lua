@@ -237,7 +237,7 @@ end
 
 local get_annotations = function(sel)
     local clean = config.bib_and_vt[vim.o.filetype] and "True" or "False"
-    local md = not vim.tbl_contains({ "tex", "rnoweb" }, vim.o.filetype)
+    local md = vim.tbl_contains({ "tex", "rnoweb" }, vim.o.filetype) and "False" or "True"
     local key = sel.value.key
     local repl = vim.fn.py3eval(
         'ZotCite.GetAnnotations("'
