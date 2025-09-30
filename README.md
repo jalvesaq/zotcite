@@ -79,9 +79,9 @@ the citations keys. Below is an example of how to install `zotcite` with
     },
 ```
 
-Note: you don't need to lazy load zotcite because it already lazy loads its
-modules only for the supported file types, and you do need to call zotcite's
-setup function.
+Note: you don't need to lazy load zotcite because it is a filetype plugin
+which means that it already lazy loads its modules only for the supported file
+types.
 
 The Python module `zotero` does not import the `vim` module. Hence, its code
 could easily be adapted to other text editors or as a language server for
