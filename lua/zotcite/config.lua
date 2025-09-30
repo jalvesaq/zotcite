@@ -1,28 +1,58 @@
+---@class BibVirtTxt
+---@field latex? boolean
+---@field markdown? boolean
+---@field pandoc? boolean
+---@field quarto? boolean
+---@field rmd? boolean
+---@field rnoweb? boolean
+---@field typst? boolean
+---@field vimwiki? boolean
+
+---@class ZotciteUserOpts
+---@field hl_cite_key? boolean Whether to syntax highlight citation keys
+---@field bib_and_vt? BibVirtTxt Save and update a bib file; add the zotcite complement as virtual text
+---@field sort_key? string Reference field to as sorting key by :Zseek
+---@field conceallevel? 0 | 1 | 2 Value to set the Vim option 'conceallevel'
+---@field wait_attachment? boolean Freeze Neovim after opening a PDF attachment
+---@field open_in_zotero? boolean Open PDF attachments in Zotero
+---@field filetypes? string[] File types for which Zotcite is enabled
+---@field register_treesitter? boolean Register Markdown parser for Quarto and RMarkdown
+---@field python_path? string Absolute path to `python3` executable
+---@field pdf_extractor? '"pdfnotes.py"' | '"pdfnotes2.py"' Application to extract notes from PDF documents
+---@field citation_template? string Template for citation keys
+---@field SQL_path? string Path to `zotero.sqlite`
+---@field zotero_encoding? string Zotero encoding (by default, "utf-8" on Linux and "latin1" on Windows)
+---@field tmpdir? string Temporary directory
+---@field exclude_fields? string Fields to be excluded from Zotero references
+---@field year_page_sep? string String used to separate the year from the page in references (by default, ", p. ")
+---@field open_cmd? string Command to open attachments
+
+---@type ZotciteUserOpts
 local config = {
     hl_cite_key = true,
     bib_and_vt = {
+        latex = true,
         markdown = false,
         pandoc = false,
-        vimwiki = false,
-        rmd = false,
         quarto = false,
-        typst = false,
-        latex = true,
+        rmd = false,
         rnoweb = true,
+        typst = false,
+        vimwiki = false,
     },
     sort_key = "dateModified",
     conceallevel = 2,
     wait_attachment = false,
     open_in_zotero = false,
     filetypes = {
+        "latex",
         "markdown",
         "pandoc",
-        "vimwiki",
-        "rmd",
         "quarto",
-        "typst",
-        "latex",
+        "rmd",
         "rnoweb",
+        "typst",
+        "vimwiki",
     },
     register_treesitter = true,
     zrunning = false,
@@ -33,6 +63,7 @@ local config = {
 }
 
 local did_global_init = false
+local first_buf
 
 local zwarn = require("zotcite").zwarn
 
@@ -63,7 +94,7 @@ M.update_config = function(opts)
         vim.env.ZCitationTemplate = config.citation_template
     end
     if config.banned_words then vim.env.ZBannedWords = config.banned_words end
-    if config.zotero_SQL_path then vim.env.ZoteroSQLpath = config.zotero_SQL_path end
+    if config.SQL_path then vim.env.ZoteroSQLpath = config.SQL_path end
     if config.tmpdir then vim.env.Zotcite_tmpdir = config.tmpdir end
     if config.exclude_fields then vim.env.Zotcite_exclude = config.exclude_fields end
     if config.year_page_sep then vim.env.ZYearPageSep = config.year_page_sep end
@@ -96,9 +127,7 @@ M.set_collection = function(bufnr, collection)
     end
 end
 
-local new_buffer = function()
-    table.insert(b, { bufnr = vim.api.nvim_get_current_buf(), zotcite_cllctn = "" })
-end
+local new_buffer = function(bnr) table.insert(b, { bufnr = bnr, zotcite_cllctn = "" }) end
 
 local set_path = function()
     config.zotcite_home = debug.getinfo(1).short_src:gsub("/lua.*", "") .. "/python3"
@@ -115,7 +144,6 @@ local set_path = function()
 end
 
 local global_init = function()
-    did_global_init = true
     if vim.fn.has("python3") == 0 then
         zwarn("zotcite requires python3")
         table.insert(config.log, "Python3 provider not working.")
@@ -143,10 +171,11 @@ local global_init = function()
     vim.env.RmdFile = vim.fn.expand("%:p")
 
     vim.api.nvim_create_user_command("Zrefs", require("zotcite.utils").add_yaml_refs, {})
-    local s = require("zotcite.seek")
     vim.api.nvim_create_user_command(
         "Zseek",
-        function(tbl) s.refs(tbl.args, s.print) end,
+        function(tbl)
+            require("zotcite.seek").refs(tbl.args, require("zotcite.seek").print)
+        end,
         { nargs = "?", desc = "Zotcite: seek references" }
     )
     vim.api.nvim_create_user_command(
@@ -176,95 +205,106 @@ local global_init = function()
         { nargs = 1, desc = "Zotcite: convert ODT to Markdown" }
     )
     vim.api.nvim_create_user_command("Zconfig", require("zotcite.config").show, {})
+    require("zotcite.get").collection_name(first_buf)
     return true
 end
 
 M.init = function()
-    if not vim.tbl_contains(config.filetypes, vim.o.filetype) then return end
-
     -- Do this only once
     if not did_global_init then
-        if global_init() == false then return end
+        did_global_init = true
+        if vim.v.vim_did_enter == 0 then
+            vim.api.nvim_create_autocmd("VimEnter", {
+                callback = function() vim.schedule(global_init) end,
+            })
+        else
+            vim.schedule(global_init)
+        end
     end
 
-    -- And repeat this for every buffer
-    if not M.has_buffer(vim.api.nvim_get_current_buf()) then
-        new_buffer()
+    local bnr = vim.api.nvim_get_current_buf()
+    first_buf = bnr
+    if M.has_buffer(bnr) then return end
 
-        local create_map = function(m, p, s, c, d)
-            local opts = { silent = true, noremap = true, expr = false, desc = d }
-            if vim.fn.hasmapto(p, m) == 1 then
-                vim.api.nvim_buf_set_keymap(0, m, p, c, opts)
-            else
-                vim.api.nvim_buf_set_keymap(0, m, s, c, opts)
-            end
+    -- But repeat this for every buffer
+    if not vim.tbl_contains(config.filetypes, vim.bo[bnr].filetype) then return end
+    new_buffer(bnr)
+
+    local create_map = function(m, p, s, c, d)
+        local opts = { silent = true, noremap = true, expr = false, desc = d }
+        if vim.fn.hasmapto(p, m) == 1 then
+            vim.api.nvim_buf_set_keymap(bnr, m, p, c, opts)
+        else
+            vim.api.nvim_buf_set_keymap(bnr, m, s, c, opts)
         end
-
-        create_map(
-            "i",
-            "<Plug>ZCite",
-            "<C-X><C-B>",
-            "<Cmd>lua require('zotcite.get').citation()<CR>",
-            "Zotcite: insert citation"
-        )
-        create_map(
-            "n",
-            "<Plug>ZOpenAttachment",
-            "<Leader>zo",
-            "<Cmd>lua require('zotcite.get').open_attachment()<CR>",
-            "Zotcite: open attachment"
-        )
-        create_map(
-            "n",
-            "<Plug>ZViewDocument",
-            "<Leader>zv",
-            "<Cmd>lua require('zotcite.utils').view_document()<CR>",
-            "Zotcite: view document"
-        )
-        create_map(
-            "n",
-            "<Plug>ZCitationInfo",
-            "<Leader>zi",
-            "<Cmd>lua require('zotcite.get').reference_data('ayt')<CR>",
-            "Zotcite: show reference info (short)"
-        )
-        create_map(
-            "n",
-            "<Plug>ZCitationCompleteInfo",
-            "<Leader>za",
-            "<Cmd>lua require('zotcite.get').reference_data('raw')<CR>",
-            "Zotcite: show reference info (complete)"
-        )
-        create_map(
-            "n",
-            "<Plug>ZCitationYamlRef",
-            "<Leader>zy",
-            "<Cmd>lua require('zotcite.get').yaml_ref()<CR>",
-            "Zotcite: show reference as YAML"
-        )
-        create_map(
-            "n",
-            "<Plug>ZExtractAbstract",
-            "<leader>zb",
-            "<Cmd>lua require('zotcite.get').abstract()<CR>",
-            "Zotcite: Paste abstract note in current buffer"
-        )
-        vim.o.conceallevel = config.conceallevel
-        if config.bib_and_vt[vim.o.filetype] then
-            vim.cmd("autocmd InsertLeave <buffer> lua require('zotcite.hl').citations()")
-        end
-        vim.cmd("autocmd BufWritePre <buffer> lua require('zotcite.bib').update()")
-        vim.cmd(
-            "autocmd BufWritePost <buffer> lua require('zotcite.get').collection_name(-1)"
-        )
-
-        vim.treesitter.start()
-        local bn = vim.api.nvim_get_current_buf()
-        vim.schedule(function()
-            require("zotcite.hl").citations()
-            require("zotcite.get").collection_name(bn)
-        end)
     end
+
+    create_map(
+        "i",
+        "<Plug>ZCite",
+        "<C-X><C-B>",
+        "<Cmd>lua require('zotcite.get').citation()<CR>",
+        "Zotcite: insert citation"
+    )
+    create_map(
+        "n",
+        "<Plug>ZOpenAttachment",
+        "<Leader>zo",
+        "<Cmd>lua require('zotcite.get').open_attachment()<CR>",
+        "Zotcite: open attachment"
+    )
+    create_map(
+        "n",
+        "<Plug>ZViewDocument",
+        "<Leader>zv",
+        "<Cmd>lua require('zotcite.utils').view_document()<CR>",
+        "Zotcite: view document"
+    )
+    create_map(
+        "n",
+        "<Plug>ZCitationInfo",
+        "<Leader>zi",
+        "<Cmd>lua require('zotcite.get').reference_data('ayt')<CR>",
+        "Zotcite: show reference info (short)"
+    )
+    create_map(
+        "n",
+        "<Plug>ZCitationCompleteInfo",
+        "<Leader>za",
+        "<Cmd>lua require('zotcite.get').reference_data('raw')<CR>",
+        "Zotcite: show reference info (complete)"
+    )
+    create_map(
+        "n",
+        "<Plug>ZCitationYamlRef",
+        "<Leader>zy",
+        "<Cmd>lua require('zotcite.get').yaml_ref()<CR>",
+        "Zotcite: show reference as YAML"
+    )
+    create_map(
+        "n",
+        "<Plug>ZExtractAbstract",
+        "<leader>zb",
+        "<Cmd>lua require('zotcite.get').abstract()<CR>",
+        "Zotcite: Paste abstract note in current buffer"
+    )
+    vim.o.conceallevel = config.conceallevel
+    vim.treesitter.start(bnr)
+    if config.bib_and_vt[vim.o.filetype] then
+        vim.api.nvim_create_autocmd(
+            "InsertLeave",
+            { buffer = bnr, callback = require("zotcite.hl").citations }
+        )
+    end
+    vim.api.nvim_create_autocmd(
+        "BufWritePre",
+        { buffer = bnr, callback = require("zotcite.bib").update }
+    )
+    vim.api.nvim_create_autocmd("BufWritePost", {
+        buffer = bnr,
+        callback = function(ev) require("zotcite.get").collection_name(ev.buf) end,
+    })
+    require("zotcite.hl").citations()
 end
 
 M.get_config = function() return config end

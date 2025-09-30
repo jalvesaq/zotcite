@@ -456,22 +456,12 @@ M.PDFNote = function(key) seek.refs(key, finish_pdfnote) end
 
 M.yaml_field = function(field, bn)
     if vim.tbl_contains({ "tex", "rnoweb" }, vim.bo.filetype) then return nil end
-    local node = vim.treesitter.get_node({ bufnr = bn, pos = { 0, 0 } })
-    if not node then
-        zwarn(
-            'Could not get YAML field "'
-                .. field
-                .. '" (buffer number '
-                .. tostring(bn)
-                .. ", filetype "
-                .. vim.bo.filetype
-                .. ")"
-        )
-        return nil
-    end
-    if node:type() ~= "minus_metadata" then return nil end
+    local line1 = vim.api.nvim_buf_get_lines(bn, 0, 1, true)[1]
+    if not line1 == "---" then return end
 
     -- FIXME: use treesitter to avoid dependence on PyYAML
+    -- local node = vim.treesitter.get_node({ bufnr = bn, pos = { 0, 0 } })
+    -- if not node or node:type() ~= "minus_metadata" then return nil end
 
     local lines = vim.api.nvim_buf_get_lines(bn, 0, -1, true)
     local nlines = #lines
@@ -503,7 +493,6 @@ M.yaml_field = function(field, bn)
 end
 
 M.collection_name = function(bn)
-    if bn == -1 then bn = vim.api.nvim_get_current_buf() end
     local newc = M.yaml_field("collection", bn)
     if not newc then return end
 
