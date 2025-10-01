@@ -1,12 +1,12 @@
 """ Class ZoteroEntries """
 import sys
 import os
-import re
-import sqlite3
-import copy
-import yaml
 import subprocess
 import time
+import re
+import copy
+import sqlite3
+import yaml
 
 # A lot of code was either adapted or plainly copied from citation_vim,
 # written by Rafael Schouten: https://github.com/rafaqz/citation.vim
@@ -890,14 +890,14 @@ class ZoteroEntries:
                 return self._e[k]
         return None
 
-    def GetCitationById(self, Id):
+    def GetCitationById(self, id):
         """ Return the complete citation string.
 
-            Id  (string): The item ID as stored by Zotero.
+            id  (string): The item ID as stored by Zotero.
         """
 
-        if Id in self._e.keys():
-            return '@' + self._e[Id]['zotkey'] + '-' + self._e[Id]['citekey']
+        if id in self._e.keys():
+            return '@' + self._e[id]['zotkey'] + '-' + self._e[id]['citekey']
         return "IdNotFound"
 
     def GetAnnotations(self, key, offset, clean, md):
