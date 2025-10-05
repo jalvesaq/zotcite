@@ -1,10 +1,3 @@
-local pickers = require("telescope.pickers")
-local finders = require("telescope.finders")
-local sorters = require("telescope.config").values
-local actions = require("telescope.actions")
-local action_state = require("telescope.actions.state")
-local previewers = require("telescope.previewers")
-local entry_display = require("telescope.pickers.entry_display")
 local config = require("zotcite.config").get_config()
 local ns = vim.api.nvim_create_namespace("ZSeekPreview")
 
@@ -90,6 +83,13 @@ end
 ---@param key string Pattern to search
 ---@param cb function Callback function
 M.refs = function(key, cb)
+    local pickers = require("telescope.pickers")
+    local finders = require("telescope.finders")
+    local sorters = require("telescope.config").values
+    local actions = require("telescope.actions")
+    local action_state = require("telescope.actions.state")
+    local previewers = require("telescope.previewers")
+    local entry_display = require("telescope.pickers.entry_display")
     local mtchs = get_match(key)
     local references = {}
 

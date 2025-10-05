@@ -21,7 +21,7 @@ end
 local find_typst_bib = function()
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
     for _, v in pairs(lines) do
-        if v:find("#bibliography%(['\"]") then
+        if v and v:find("#bibliography%(['\"]") then
             local bib = v:gsub("#bibliography%(['\"]", "")
             bib = bib:gsub("['\"].*", "")
             return bib
@@ -122,11 +122,9 @@ local get_tex_citations = function()
     return ckeys
 end
 
-M.update = function(bib)
-    if not bib then
-        bib = find_bib_fn()
-        if not bib then return end
-    end
+M.update = function()
+    local bib = find_bib_fn()
+    if not bib then return end
 
     local ckeys
     if vim.o.filetype == "tex" or vim.o.filetype == "rnoweb" then
