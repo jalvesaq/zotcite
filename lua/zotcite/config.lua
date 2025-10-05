@@ -9,23 +9,46 @@
 ---@field vimwiki? boolean
 
 ---@class ZotciteUserOpts
----@field hl_cite_key? boolean Whether to syntax highlight citation keys
----@field bib_and_vt? BibVirtTxt Save and update a bib file; add the zotcite complement as virtual text
----@field sort_key? string Reference field to as sorting key by :Zseek
----@field conceallevel? 0 | 1 | 2 Value to set the Vim option 'conceallevel'
----@field wait_attachment? boolean Freeze Neovim after opening a PDF attachment
----@field open_in_zotero? boolean Open PDF attachments in Zotero
----@field filetypes? string[] File types for which Zotcite is enabled
----@field register_treesitter? boolean Register Markdown parser for Quarto and RMarkdown
----@field python_path? string Absolute path to `python3` executable
----@field pdf_extractor? '"pdfnotes.py"' | '"pdfnotes2.py"' Application to extract notes from PDF documents
----@field citation_template? string Template for citation keys
----@field SQL_path? string Path to `zotero.sqlite`
----@field zotero_encoding? string Zotero encoding (by default, "utf-8" on Linux and "latin1" on Windows)
----@field tmpdir? string Temporary directory
----@field exclude_fields? string Fields to be excluded from Zotero references
----@field year_page_sep? string String used to separate the year from the page in references (by default, ", p. ")
+---Whether to syntax highlight citation keys
+---@field hl_cite_key? boolean
+---Save and update a bib file; add the
+---zotcite complement as virtual text
+---@field bib_and_vt? BibVirtTxt
+---Reference field to as sorting key by :Zseek
+---@field sort_key? string
+---Value to set the Vim option 'conceallevel'
+---@field conceallevel? 0 | 1 | 2
+---Freeze Neovim after opening a PDF attachment
+---@field wait_attachment? boolean
+---Open PDF attachments in Zotero
+---@field open_in_zotero? boolean
+---Space separated list of file types
+---for which Zotcite is enabled
+---@field filetypes? string[]
+---Register Markdown parser for Quarto and RMarkdown
+---@field register_treesitter? boolean
+---Absolute path to `python3` executable
+---@field python_path? string
+---Application to extract notes from PDF documents
+---@field pdf_extractor? '"pdfnotes.py"' | '"pdfnotes2.py"'
+---Template for citation keys
+---@field citation_template? string
+---Path to `zotero.sqlite`
+---@field SQL_path? string
+---Zotero encoding (by default, "utf-8" on Linux
+---and "latin1" on Windows)
+---@field zotero_encoding? string
+---Temporary directory
+---@field tmpdir? string
+---Fields to be excluded from Zotero references
+---@field exclude_fields? string
+---String used to separate the year from the
+---page in references (by default, ", p. ")
+---@field year_page_sep? string
 ---@field open_cmd? string Command to open attachments
+---Space separated list of words from title to be
+---excluded from citation keys
+---@field banned_words? string
 
 ---@type ZotciteUserOpts
 local config = {
