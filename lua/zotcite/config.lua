@@ -233,6 +233,9 @@ local global_init = function()
 end
 
 M.init = function()
+    -- Disable for LSP popup windows
+    if vim.o.buftype == "nofile" then return end
+
     -- Do this only once
     if not did_global_init then
         did_global_init = true
