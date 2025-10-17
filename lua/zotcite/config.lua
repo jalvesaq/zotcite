@@ -190,6 +190,9 @@ local global_init = function()
     config.data_dir = vim.fn.expand(info["data dir"])
     config.attach_dir = vim.fn.expand(info["attachments dir"])
 
+    require("zotcite.hl").citations()
+    require("zotcite.lsp").start()
+
     set_path()
     vim.env.RmdFile = vim.fn.expand("%:p")
 
@@ -237,7 +240,9 @@ M.init = function()
     if vim.o.buftype == "nofile" then return end
 
     -- Do this only once
-    if not did_global_init then
+    if did_global_init then
+        require("zotcite.hl").citations()
+    else
         did_global_init = true
         if vim.v.vim_did_enter == 0 then
             vim.api.nvim_create_autocmd("VimEnter", {
@@ -330,7 +335,6 @@ M.init = function()
         buffer = bnr,
         callback = function(ev) require("zotcite.get").collection_name(ev.buf) end,
     })
-    require("zotcite.hl").citations()
 end
 
 M.get_config = function() return config end
