@@ -4,11 +4,12 @@
 > Users of Vim and Neovim < 0.10.4 have to switch to the "vim" branch.
 
 _Zotcite_ is a Neovim plugin that provides integration with Zotero for
-Markdown, Quarto, Rmd, vimwiki, and Typst and has rudimentary support for
-LaTeX and Rnoweb file types. With _zotcite_ you can:
+Markdown, Quarto, Rmd, vimwiki, Typst, LaTeX, and Rnoweb file types. With
+_zotcite_ you can:
 
   - Do auto-completion of citation keys from Zotero database in
-    Markdown, RMarkdown, Quarto, and Typst documents (with `cmp-zotcite`).
+    Markdown, RMarkdown, Quarto, and Typst (requires `cmp-zotcite` if Neovim <
+    0.12).
 
     ![Auto-completion](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_completion.gif "auto-completion")
 
@@ -58,10 +59,8 @@ Zotcite can be installed as any Neovim plugin, and it depends on
 [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim), and
 [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) as well
 as tree-sitter parsers for `markdown`, `markdown_inline`, and `yaml`.
-If editing LaTeX or Rnoweb files, you will also need thir parsers.
-Optionally, you can also use
-[cmp-zotcite](https://github.com/jalvesaq/cmp-zotcite), for auto-completing
-the citations keys. Below is an example of how to install `zotcite` with
+If editing LaTeX or Rnoweb files, you will also need their parsers.
+Below is an example of how to install `zotcite` with
 [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
@@ -80,8 +79,8 @@ the citations keys. Below is an example of how to install `zotcite` with
 ```
 
 Note: you don't need to lazy load zotcite because it is a filetype plugin
-which means that it already lazy loads its modules only for the supported file
-types.
+which means that it already lazy loads its modules, which will enabled only
+for the supported file types.
 
 The Python module `zotero` does not import the `vim` module. Hence, its code
 could easily be adapted to other text editors or as a language server for
