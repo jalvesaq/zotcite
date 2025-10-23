@@ -204,7 +204,7 @@ local function lsp_notify(method, _)
     end
 end
 
--- Ver ~/.local/share/nvim/site/pack/core/opt/none-ls.nvim/lua/null-ls/rpc.lua
+-- Inspired by null-ls (see none-ls.nvim/lua/null-ls/rpc.lua)
 local function lsp_start(_, _)
     return {
         request = lsp_request,
