@@ -105,8 +105,9 @@ M.show = function()
 end
 
 local update_config = function()
-    if require("zotcite").user_opts then
-        for k, v in pairs(require("zotcite").user_opts) do
+    local zotcite = require("zotcite")
+    if zotcite.user_opts then
+        for k, v in pairs(zotcite.user_opts) do
             config[k] = v
         end
     end
