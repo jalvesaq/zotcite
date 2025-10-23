@@ -182,7 +182,7 @@ local function lsp_request(method, params, callback, _)
         if #zid > 0 then
             for _, v in pairs(zid) do
                 if vim.lsp.buf_is_attached(0, v) then vim.lsp.buf_detach_client(0, v) end
-                vim.lsp.stop_client(zid)
+                vim.lsp.stop_client(v)
             end
         end
     else
