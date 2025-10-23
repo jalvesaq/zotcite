@@ -79,7 +79,7 @@ Below is an example of how to install `zotcite` with
 ```
 
 Note: you don't need to lazy load zotcite because it is a filetype plugin
-which means that it already lazy loads its modules, which will enabled only
+which means that it already lazy loads its modules, which will be enabled only
 for the supported file types.
 
 The Python module `zotero` does not import the `vim` module. Hence, its code
