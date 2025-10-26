@@ -151,13 +151,13 @@ local function lsp_request(method, params, callback, _)
             items = compl_items,
         })
     elseif method == "completionItem/resolve" then
-        require("zotcite.hl").citations()
         local zotkey = params.textEdit.newText:gsub("%-.*", "")
         local detail = resolve(zotkey)
         if detail then
             params.detail = detail
             callback(nil, params)
         end
+        vim.schedule(require("zotcite.hl").citations)
     elseif method == "textDocument/hover" then
         if not compl_region then return end
         local res = hover(params.position.line, params.position.character)
