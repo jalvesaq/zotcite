@@ -728,7 +728,7 @@ class ZoteroEntries:
                 zotkey = re.sub('[\\-#].*', '', k)
                 zotkey = re.sub('@', '', zotkey)
                 if zotkey == self._e[e]['zotkey']:
-                    ref += self._get_yaml_ref(self._e[e], k)
+                    ref += self._get_yaml_ref(self._e[e], re.sub("@", "", k))
         if ref != '':
             ref = 'references:\n' + ref
         return ref
