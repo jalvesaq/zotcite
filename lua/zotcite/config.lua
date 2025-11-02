@@ -156,7 +156,7 @@ end
 local new_buffer = function(bnr) table.insert(b, { bufnr = bnr, zotcite_cllctn = "" }) end
 
 local set_path = function()
-    config.zotcite_home = debug.getinfo(1).short_src:gsub("/lua.*", "") .. "/python3"
+    config.zotcite_home = debug.getinfo(1, "S").source:match("^@(.*)/lua.*") .. "/python3"
     if vim.fn.has("win32") == 1 then
         local zpath = config.zotcite_home:gsub("/", "\\")
         if not vim.env.PATH:find(zpath) then
