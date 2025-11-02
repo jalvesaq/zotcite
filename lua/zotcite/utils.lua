@@ -10,7 +10,7 @@ M.add_yaml_refs = function()
     if rlist and type(rlist) == "table" and #rlist > 0 then
         local list2 = {}
         for _, v in pairs(rlist) do
-            if v:find("^@.*#") then table.insert(list2, v) end
+            if v:find("^@.*[%-#]") then table.insert(list2, v) end
         end
         if #list2 > 0 then
             local refs = vim.fn.py3eval(
