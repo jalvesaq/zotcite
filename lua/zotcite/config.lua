@@ -176,11 +176,14 @@ local global_init = function()
         return false
     end
 
+    local t1 = vim.uv.hrtime()
     vim.cmd("py3 import os")
 
     -- Start ZoteroEntries
     vim.cmd.py3("from zotero import ZoteroEntries")
     vim.cmd.py3("ZotCite = ZoteroEntries()")
+    local t2 = vim.uv.hrtime()
+    M.init_time = math.floor(((t2 - t1) / 1000000) + 0.5)
     local info = vim.fn.py3eval("ZotCite.Info()")
     if info == vim.NIL then
         zwarn("Failed to run the Python command `ZotCite.Info()`")

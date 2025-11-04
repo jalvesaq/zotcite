@@ -541,6 +541,11 @@ M.zotero_info = function()
             table.insert(info, { v .. "\n", "WarningMsg" })
         end
     end
+    local itime = require("zotcite.config").init_time
+    if itime then
+        table.insert(info, { "  Time to get Zotero data (ms)", "Title" })
+        table.insert(info, { ": " .. tostring(itime) })
+    end
     vim.schedule(function() vim.api.nvim_echo(info, false, {}) end)
 end
 
