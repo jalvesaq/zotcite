@@ -261,6 +261,11 @@ follow the examples:
  tmpdir = '/path/to/temporary_and_cache_directory'
  tmpdir = '/dev/shm/zotcite-user_name'
 
+Zotcite adds its `scripts` directory to the environment variable `PATH`. If
+it's not correctly finding the directory, you can set it manually:
+>lua
+ scripts_path = "/path/to/zotcite/scripts"
+<
 When Zotero's SQLite3 database is updated, zotcite copies it to its temporary
 directory. While copying, the slowest operation is writing the copy of the
 file to disk. If you have enough RAM, you may want to set `tmpdir` as a

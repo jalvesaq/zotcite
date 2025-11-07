@@ -375,10 +375,13 @@ local finish_pdfnote_2 = function(_, idx)
     -- Determine which PDF extractor to use
     local pdf_extractor = config.pdf_extractor or "pdfnotes.py"
 
-    local notes = vim.system(
-        { config.python_path, config.zotcite_home .. "/" .. pdf_extractor, fpath, key, p },
-        { text = true }
-    ):wait()
+    local notes = vim.system({
+        config.python_path,
+        config.scripts_path .. "/" .. pdf_extractor,
+        fpath,
+        key,
+        p,
+    }, { text = true }):wait()
     if notes.code == 0 then
         local lines = vim.fn.split(notes.stdout, "\n")
         vim.api.nvim_buf_set_lines(0, lnum, lnum, true, lines)

@@ -55,7 +55,6 @@ local config = {
         "vimwiki",
     },
     register_treesitter = true,
-    zotcite_home = nil,
     python_path = "python3",
     pdf_extractor = "pdfnotes.py", -- Default: "pdfnotes.py", alternative: "pdfnotes2.py"
 }
@@ -118,15 +117,18 @@ end
 M.get_b = function() return b end
 
 local set_path = function()
-    config.zotcite_home = debug.getinfo(1, "S").source:match("^@(.*)/lua.*") .. "/scripts"
+    if not config.scripts_path then
+        config.scripts_path = debug.getinfo(1, "S").source:match("^@(.*)/lua.*")
+            .. "/scripts"
+    end
     if vim.fn.has("win32") == 1 then
-        local zpath = config.zotcite_home:gsub("/", "\\")
+        local zpath = config.scripts_path:gsub("/", "\\")
         if not vim.env.PATH:find(zpath) then
             vim.env.PATH = zpath .. ";" .. vim.env.PATH
         end
     else
-        if not vim.env.PATH:find(config.zotcite_home) then
-            vim.env.PATH = config.zotcite_home .. ":" .. vim.env.PATH
+        if not vim.env.PATH:find(config.scripts_path) then
+            vim.env.PATH = config.scripts_path .. ":" .. vim.env.PATH
         end
     end
 end
