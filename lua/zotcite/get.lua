@@ -27,8 +27,11 @@ local TranslateZPath = function(strg)
 
     if strg:find(":attachments:") then
         -- The user has set Edit / Preferences / Files and Folders / Base directory for linked attachments
-        if config.attach_dir == "" then
-            zwarn("Attachments dir is not defined")
+        if not config.attach_dir then
+            zwarn(
+                "Are you using a base directory for linked attachments? "
+                    .. "The config option `attach_dir` is not defined."
+            )
         else
             fpath = strg:gsub(".*:attachments:", "/" .. config.attach_dir .. "/")
         end
@@ -37,7 +40,8 @@ local TranslateZPath = function(strg)
         fpath = strg:gsub(".*:/", "/")
     elseif strg:find(":storage:") then
         -- Default path
-        fpath = config.data_dir .. strg:gsub("(.*):storage:", "/storage/%1/")
+        fpath = config.zotero_sqlite_path:match("(.*)/.-")
+            .. strg:gsub("(.*):storage:", "/storage/%1/")
     end
     if vim.fn.filereadable(fpath) == 0 then
         zwarn('Could not find "' .. fpath .. '"')
@@ -375,9 +379,10 @@ local finish_pdfnote_2 = function(_, idx)
     -- Determine which PDF extractor to use
     local pdf_extractor = config.pdf_extractor or "pdfnotes.py"
 
+    vim.env.ZYearPageSep = config.year_page_sep
     local notes = vim.system({
         config.python_path,
-        config.scripts_path .. "/" .. pdf_extractor,
+        config.python_scripts_path .. "/" .. pdf_extractor,
         fpath,
         key,
         p,

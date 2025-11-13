@@ -7,7 +7,7 @@
     2.2. Mappings                                           |zotcite_mappings|
     2.3. Compiling documents                          |zotcite_compiling_docs|
  3. Customization                                      |zotcite_customization|
-    3.1. Python path                                     |zotcite_python_path|
+    3.1. Paths                                                 |zotcite_paths|
     3.2. Change default maps                         |zotcite_change_mappings|
     3.3. Zotcite engine                                       |zotcite_engine|
     3.4. Syntax highlighting                            |zotcite_highlighting|
@@ -166,8 +166,26 @@ of the citation fields.
 3. Customization                                       *zotcite_customization*
 
 ------------------------------------------------------------------------------
-3.1. Python path                                         *zotcite_python_path*
+3.1. Paths                                                     |zotcite_paths|
 
+							  *zotero_sqlite_path*
+If Zotcite cannot find the path to Zotero's database (`zotero.sqlite`), put
+the correct path in your `config`. Example:
+>lua
+ zotero_sqlite_path = '~/.zotero/zotero.sqlite'
+<
+								      *tmpdir*
+If Zotcite is trying to use a non-writable directory as its temporary and
+cache directory, set the value of `tmpdir`. Example:
+>lua
+ tmpdir = '/dev/shm/zotcite-user_name'
+
+Zotcite adds its `scripts` directory to the environment variable `PATH`. If
+it's not correctly finding the directory, you can set it manually:
+>lua
+ python_scripts_path = "/path/to/zotcite/scripts"
+<
+							 *zotcite_python_path*
 Zotcite runs "python3" when extracting notes from PDF documents annotated by
 PDF viewers other than Zotero (`:Zpdfnote`) and when converting ODT to
 Markdown (`:Zodt2md`). If "python3" is not in your path or if you are running
@@ -175,30 +193,6 @@ Python from a virtual environment, you should set the correct path in your
 zotcite config. Example:
 >lua
  python_path = "/home/user_name/.py3env/bin/python3"
-<
-The Python script `pdfnote.py` imports the modules `PyQt5` and `popplerqt5`.
-On Debian systems they can be installed with the command:
->sh
- sudo apt install python3-pyqt5 python3-poppler-qt5
-<
-In any system, if using `pip`:
->sh
- pip install poppler-qt5
- pip install python-poppler-qt5
-<
-If you have trouble install `poppler-qt5` or `python-poppler-qt5` you can add
-to your zotcite config:
->lua
- pdf_extractor = "pdfnotes2.py",
-<
-The Python script `pdfnotes2.py` requires the `pymupdf` module, which can be
-installed on Debian:
->sh
- sudo apt install python3-pymupdf
-<
-or with `pip`:
->sh
- pip install pymupdf
 <
 
 ------------------------------------------------------------------------------
@@ -247,25 +241,6 @@ digits `{Year}` or only two `{year}`). Example:
 >lua
  citation_template = '{Author}-{year}'
 <
-								    *SQL_path*
-If Zotcite cannot find the path to Zotero's database (`zotero.sqlite`), put
-the correct path in your `config`:
->lua
- SQL_path = '/path/to/zotero.sqlite'
-<
-								      *tmpdir*
-If Zotcite is trying to use a non-writable directory as its temporary and
-cache directory, or if for any reason you want to change this directory,
-follow the examples:
->lua
- tmpdir = '/path/to/temporary_and_cache_directory'
- tmpdir = '/dev/shm/zotcite-user_name'
-
-Zotcite adds its `scripts` directory to the environment variable `PATH`. If
-it's not correctly finding the directory, you can set it manually:
->lua
- scripts_path = "/path/to/zotcite/scripts"
-<
 When Zotero's SQLite3 database is updated, zotcite copies it to its temporary
 directory. While copying, the slowest operation is writing the copy of the
 file to disk. If you have enough RAM, you may want to set `tmpdir` as a
@@ -301,6 +276,31 @@ of the Markdown document, as in the examples:
  collection: ['PhD Thesis', 'New Paper']
  ---
 
+
+The Python script `pdfnote.py` imports the modules `PyQt5` and `popplerqt5`.
+On Debian systems they can be installed with the command:
+>sh
+ sudo apt install python3-pyqt5 python3-poppler-qt5
+<
+In any system, if using `pip`:
+>sh
+ pip install poppler-qt5
+ pip install python-poppler-qt5
+<
+If you have trouble install `poppler-qt5` or `python-poppler-qt5` you can add
+to your zotcite config:
+>lua
+ pdf_extractor = "pdfnotes2.py",
+<
+The Python script `pdfnotes2.py` requires the `pymupdf` module, which can be
+installed on Debian:
+>sh
+ sudo apt install python3-pymupdf
+<
+or with `pip`:
+>sh
+ pip install pymupdf
+<
 
 ------------------------------------------------------------------------------
 3.4. Syntax Highlighting                                *zotcite_highlighting*

@@ -21,12 +21,16 @@
 ---Template for citation keys
 ---@field citation_template? string
 ---Path to `zotero.sqlite`
----@field SQL_path? string
+---@field zotero_sqlite_path? string
+---Path to attachments directory (if any)
+---@field attach_dir? string
+---Temporary directory
+---@field tmpdir? string
+---Directory of zotcite's Python scripts
+---@field python_scripts_path? string
 ---Zotero encoding (by default, "utf-8" on Linux
 ---and "latin1" on Windows)
 ---@field zotero_encoding? string
----Temporary directory
----@field tmpdir? string
 ---Fields to be excluded from Zotero references
 ---@field exclude_fields? string
 ---String used to separate the year from the
@@ -88,20 +92,6 @@ local update_config = function()
         end
     end
 
-    if config.citation_template then
-        vim.env.ZCitationTemplate = config.citation_template
-    end
-    if config.banned_words then vim.env.ZBannedWords = config.banned_words end
-    if config.SQL_path then vim.env.ZoteroSQLpath = config.SQL_path end
-    if config.tmpdir then vim.env.Zotcite_tmpdir = config.tmpdir end
-    if config.exclude_fields then vim.env.Zotcite_exclude = config.exclude_fields end
-    if config.year_page_sep then vim.env.ZYearPageSep = config.year_page_sep end
-    if vim.env.Zotero_encoding then
-        zwarn(
-            "The environment variable `Zotero_encoding` now is a config option: `zotero_encoding`."
-        )
-    end
-    if config.zotero_encoding then vim.env.ZoteroEncoding = config.zotero_encoding end
     if config.register_treesitter then
         vim.treesitter.language.register("markdown", { "quarto", "rmd" })
     end
@@ -117,18 +107,18 @@ end
 M.get_b = function() return b end
 
 local set_path = function()
-    if not config.scripts_path then
-        config.scripts_path = debug.getinfo(1, "S").source:match("^@(.*)/lua.*")
+    if not config.python_scripts_path then
+        config.python_scripts_path = debug.getinfo(1, "S").source:match("^@(.*)/lua.*")
             .. "/scripts"
     end
     if vim.fn.has("win32") == 1 then
-        local zpath = config.scripts_path:gsub("/", "\\")
+        local zpath = config.python_scripts_path:gsub("/", "\\")
         if not vim.env.PATH:find(zpath) then
             vim.env.PATH = zpath .. ";" .. vim.env.PATH
         end
     else
-        if not vim.env.PATH:find(config.scripts_path) then
-            vim.env.PATH = config.scripts_path .. ":" .. vim.env.PATH
+        if not vim.env.PATH:find(config.python_scripts_path) then
+            vim.env.PATH = config.python_scripts_path .. ":" .. vim.env.PATH
         end
     end
 end
@@ -148,10 +138,6 @@ local global_init = function()
         zwarn("Failed to get information from Zotero", true)
         return false
     end
-
-    vim.env.Zotcite_tmpdir = vim.fn.expand(info["tmpdir"])
-    config.data_dir = vim.fn.expand(info["data_dir"])
-    config.attach_dir = vim.fn.expand(info["attach_dir"])
 
     require("zotcite.hl").citations()
     require("zotcite.lsp").start()

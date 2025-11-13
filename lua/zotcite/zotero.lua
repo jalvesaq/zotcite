@@ -8,14 +8,12 @@
 -- We can't use the "vim" module because zotref will be called by external
 -- tools. For the same reason, we can't use the "zotcite" module
 
+local config = require("zotcite.config").get_config()
+
 local cite_template
 local banned_words = {}
-local zsqlite
 local zcopy
 local ztime
-local data_dir
-local attach_dir
-local tmpdir
 local exclude_fields = {}
 local entry = {}
 local collections = {}
@@ -267,6 +265,9 @@ end
 
 local M = {}
 
+--- Reads profile.ini to find prefs.js and then find the values of `data_dir`
+--- and `attachment_dir`.
+---@return string?, string?
 local function get_zotero_prefs()
     local zp = expand_tilde("~/.zotero/zotero/profiles.ini")
     if not vim.uv.fs_access(zp, "r") then
@@ -278,49 +279,37 @@ local function get_zotero_prefs()
         end
     end
 
+    local adir
+    local zsql
     local zotero_basedir = zp:match("^(.*)/.-")
-    local f = io.open(zp, "r")
-    local lines = {}
-    if f then
-        for line in f:lines() do
-            table.insert(lines, line)
-        end
-        f:close()
-    end
+    local lines = vim.fn.readfile(zp)
     for _, line in pairs(lines) do
         if line:find("Path=") == 1 then
             local zprofile = line:gsub("Path=", "")
             local zprefs = zotero_basedir .. "/" .. zprofile .. "/" .. "prefs.js"
             if vim.uv.fs_access(zprefs, "r") then
-                local pf = io.open(zprefs, "r")
-                local prefs = {}
-                if pf then
-                    for pref in pf:lines() do
-                        table.insert(prefs, pref)
-                    end
-                    pf:close()
-                end
+                local prefs = vim.fn.readfile(zprefs)
                 for _, pref in pairs(prefs) do
                     if
                         pref:find("extensions.zotero.baseAttachmentPath")
                         and pref:find("extensions.zotero.baseAttachmentPath") > 0
                     then
-                        attach_dir = pref:match('.*", "(.*)".*\n')
+                        adir = pref:match('.*", "(.*)".*\n')
                     end
                     if
-                        not zsqlite
-                        and pref:find("extensions.zotero.dataDir")
+                        pref:find("extensions.zotero.dataDir")
                         and pref:find("extensions.zotero.dataDir") > 0
                     then
-                        data_dir = pref:match('.*", "(.*)".*')
+                        local data_dir = pref:match('.*", "(.*)".*')
                         if vim.uv.fs_access(data_dir .. "/zotero.sqlite", "r") then
-                            zsqlite = data_dir .. "/zotero.sqlite"
+                            zsql = data_dir .. "/zotero.sqlite"
                         end
                     end
                 end
             end
         end
     end
+    return adir, zsql
 end
 
 ---Define which Zotero collections each markdown document uses
@@ -354,13 +343,13 @@ local function getmtime(path)
 end
 
 local function copy_zotero_data()
-    ztime = getmtime(zsqlite)
-    zcopy = tmpdir .. "/copy_of_zotero.sqlite"
+    ztime = getmtime(config.zotero_sqlite_path)
+    zcopy = config.tmpdir .. "/copy_of_zotero.sqlite"
     local zcopy_time = getmtime(zcopy)
 
     -- Make a copy of zotero.sqlite to avoid locks
     if ztime > zcopy_time then
-        local f = io.open(zsqlite, "rb")
+        local f = io.open(config.zotero_sqlite_path, "rb")
         local b = nil
         if f then
             b = f:read("*all")
@@ -972,7 +961,7 @@ function M.get_ref_data(zotkey)
 end
 
 local function get_ypsep(md)
-    local ypsep = os.getenv("ZYearPageSep")
+    local ypsep = config.year_page_sep
     if not ypsep then
         if md then
             ypsep = ", p. "
@@ -996,7 +985,7 @@ end
 
 -- Return user annotations made using Zotero's PDF viewer.
 function M.get_annotations(key, offset, md)
-    if not zsqlite then return end
+    if not config.zotero_sqlite_path then return end
     copy_zotero_data()
 
     local key_id = get_key_id(key)
@@ -1077,7 +1066,7 @@ end
 ---@param md boolean Whether the document has Markdown syntax
 ---@return string | nil
 function M.get_notes(key, md)
-    if not zsqlite then return end
+    if not config.zotero_sqlite_path then return end
     copy_zotero_data()
 
     local key_id = get_key_id(key)
@@ -1149,10 +1138,9 @@ function M.info()
 
     local r = {
         ["zotcite dir"] = debug.getinfo(1, "S").short_src:match("^(.*)/.-/.-"),
-        ["data_dir"] = data_dir,
-        ["attach_dir"] = attach_dir,
-        ["zotero.sqlite"] = zsqlite,
-        ["tmpdir"] = tmpdir,
+        ["attach_dir"] = config.attach_dir,
+        ["zotero.sqlite"] = config.zotero_sqlite_path,
+        ["tmpdir"] = config.attach_dir,
         ["docs"] = docs,
         ["citation template"] = cite_template,
         ["banned words"] = table.concat(banned_words, ", "),
@@ -1164,7 +1152,7 @@ function M.info()
 end
 
 local function load_zotero_data()
-    if not zsqlite then return end
+    if not config.zotero_sqlite_path then return end
     copy_zotero_data()
 
     get_collections()
@@ -1181,7 +1169,7 @@ end
 ---@param d string Buffer name
 ---@return table
 function M.get_match(ptrn, d)
-    if getmtime(zsqlite) > ztime then load_zotero_data() end
+    if getmtime(config.zotero_sqlite_path) > ztime then load_zotero_data() end
 
     local keys = {}
     if docs[d] then
@@ -1249,11 +1237,11 @@ end
 ---@return boolean
 function M.init()
     -- Template for citation keys
-    cite_template = os.getenv("ZCitationTemplate")
+    cite_template = config.citation_template
     if not cite_template then cite_template = "{Authors}-{Year}" end
 
     -- Title words to be ignored
-    local bw = os.getenv("ZBannedWords")
+    local bw = config.banned_words
     if bw then
         banned_words = str_split(bw, " ")
     else
@@ -1262,68 +1250,59 @@ function M.init()
     end
 
     -- Path to zotero.sqlite
-    local z = os.getenv("ZoteroSQLpath")
-    if z then z = expand_tilde(z) end
-    if z then
-        if vim.uv.fs_access(z, "r") then
-            zsqlite = z
-        else
-            z = z:gsub("/$", "") .. "/zotero.sqlite"
-            if vim.uv.fs_access(z, "r") then
-                zsqlite = z
-            else
-                local msg = 'Please, check if the environment variable `Zotero_SQL_path` is set correctly: "'
-                    .. z
-                    .. '" not found.'
-                zwarn(msg)
-                return false
-            end
+    if config.zotero_sqlite_path then
+        if not vim.uv.fs_access(config.zotero_sqlite_path, "r") then
+            local msg = 'Please, check if the config option `zotero_sqlite_path` is set correctly: "'
+                .. config.zotero_sqlite_path
+                .. '" not found.'
+            zwarn(msg)
+            return false
         end
     end
 
-    if not attach_dir or not zsqlite then get_zotero_prefs() end
+    -- Path to attachments directory
+    if config.attach_dir and not is_directory(config.attach_dir) then
+        local msg = "Please, fix the value `attach_dir` in your config. The directory "
+            .. config.attach_dir
+            .. " is not writable."
+        zwarn(msg)
+        return false
+    end
 
-    if not zsqlite then
-        z = os.getenv("USERPROFILE")
-        if z then
-            z = expand_tilde(z .. "/Zotero/zotero.sqlite")
-            if vim.uv.fs_access(z, "r") then
-                zsqlite = z
-            else
-                zwarn(
-                    "The file zotero.sqlite was not found. Please, set the value "
-                        .. "of the environment variable `ZoteroSQLpath`.",
-                    true
-                )
-            end
+    if not config.zotero_sqlite_path then
+        local adir, zdir = get_zotero_prefs()
+        if adir and not config.attach_dir then config.attach_dir = adir end
+        if zdir then
+            config.zotero_sqlite_path = zdir
+        else
+            return false
         end
-        if not zsqlite then return false end
     end
 
     -- Temporary directory
-    tmpdir = os.getenv("Zotcite_tmpdir")
-    if not tmpdir then
+    if not config.tmpdir then
         if os.getenv("XDG_CACHE_HOME") then
-            tmpdir = os.getenv("XDG_CACHE_HOME") .. "/zotcite"
+            config.tmpdir = os.getenv("XDG_CACHE_HOME") .. "/zotcite"
         elseif os.getenv("APPDATA") then
-            tmpdir = os.getenv("APPDATA") .. "/zotcite"
+            config.tmpdir = os.getenv("APPDATA") .. "/zotcite"
         elseif is_directory(expand_tilde("~/.cache")) then
-            tmpdir = expand_tilde("~/.cache/zotcite")
+            config.tmpdir = expand_tilde("~/.cache/zotcite")
         elseif is_directory(expand_tilde("~/Library/Caches")) then
-            tmpdir = expand_tilde("~/Library/Caches/zotcite")
+            config.tmpdir = expand_tilde("~/Library/Caches/zotcite")
         else
-            tmpdir = "/tmp/.zotcite"
+            config.tmpdir = "/tmp/.zotcite"
         end
     end
-    if not is_directory(tmpdir) then
-        if vim.fn.mkdir(tmpdir, "p", "0o700") == 0 then
-            zwarn("Error creating directory '" .. tmpdir .. "'")
+
+    if not is_directory(config.tmpdir) then
+        if vim.fn.mkdir(config.tmpdir, "p", "0o700") == 0 then
+            zwarn("Error creating directory '" .. config.tmpdir .. "'")
             return false
         end
-        if not is_directory(tmpdir) then
+        if not is_directory(config.tmpdir) then
             zwarn(
                 'Please, either set or fix the value of `tmpdir` in your zotcite config: "'
-                    .. tmpdir
+                    .. config.tmpdir
                     .. '" is not writable.'
             )
             return false
@@ -1331,7 +1310,7 @@ function M.init()
     end
 
     -- Fields that should not be added to the YAML references:
-    local zexcl = os.getenv("Zotcite_exclude")
+    local zexcl = config.exclude_fields
     if not zexcl then
         exclude_fields = {}
     else
