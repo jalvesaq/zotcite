@@ -142,7 +142,10 @@ end
 --- This function receives 4 arguments: method, params, callback, notify_callback
 local function lsp_request(method, params, callback, _)
     if method == "textDocument/completion" then
-        if not compl_region then return end
+        if not compl_region then
+            callback(nil, { result = nil })
+            return
+        end
         local compl_items = complete(params.position.line, params.position.character)
         callback(nil, {
             isIncomplete = false,
@@ -159,7 +162,10 @@ local function lsp_request(method, params, callback, _)
         end
         vim.schedule(require("zotcite.hl").citations)
     elseif method == "textDocument/hover" then
-        if not compl_region then return end
+        if not compl_region then
+            callback(nil, { result = nil })
+            return
+        end
         local res = hover(params.position.line, params.position.character)
         if res then callback(nil, res) end
     elseif method == "initialize" then
@@ -182,7 +188,11 @@ local function lsp_request(method, params, callback, _)
         if #zid > 0 then
             for _, v in pairs(zid) do
                 if vim.lsp.buf_is_attached(0, v) then vim.lsp.buf_detach_client(0, v) end
-                vim.lsp.stop_client(v)
+                if vim.fn.has("nvim-0.12") == 1 then
+                    vim.lsp.get_client_by_id(v):stop()
+                else
+                    vim.lsp.stop_client(v)
+                end
             end
         end
     else
