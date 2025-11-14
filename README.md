@@ -98,7 +98,11 @@ Please, read the plugin's
 [documentation](https://raw.githubusercontent.com/jalvesaq/zotcite/master/doc/zotcite.txt)
 for further instructions.
 
-## Acknowledgment
+## See also:
 
-Zotcite's Python code was based on the
+Zotcite's original Python code was based on the
 [citation.vim](https://github.com/rafaqz/citation.vim) project.
+
+Similar project, but depending on BetterBibtex:
+
+[telescope-zotero.nvim](https://github.com/jmbuhr/telescope-zotero.nvim)
