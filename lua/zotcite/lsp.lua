@@ -147,12 +147,8 @@ local function lsp_request(method, params, callback, _)
             return
         end
         local compl_items = complete(params.position.line, params.position.character)
-        callback(nil, {
-            isIncomplete = false,
-            is_incomplete_forward = false,
-            is_incomplete_backward = true,
-            items = compl_items,
-        })
+        if not compl_items then callback(nil, { result = nil }) end
+        callback(nil, { isIncomplete = false, items = compl_items })
     elseif method == "completionItem/resolve" then
         local zotkey = params.textEdit.newText:gsub("%-.*", "")
         local detail = resolve(zotkey)
@@ -177,8 +173,6 @@ local function lsp_request(method, params, callback, _)
                 hoverProvider = true,
                 completionProvider = {
                     resolveProvider = true,
-                    triggerCharacters = { "%w" },
-                    allCommitCharacters = { " ", "\n", "," },
                 },
             },
         })
@@ -263,17 +257,10 @@ local function set_compl_region_md()
                 break
             else
                 if
-                    (string.find(lines[i], "^---$") or string.find(lines[i], "^%.%.%.$"))
-                    and i > 1
+                    string.find(lines[i], "^---$") or string.find(lines[i], "^%.%.%.$")
                 then
-                    -- after YAML front matter
+                    -- after or within YAML front matter
                     break
-                else
-                    if string.find(lines[i], "^---$") and i == 1 then
-                        -- within YAML front matter
-                        compl_region = false
-                        break
-                    end
                 end
             end
         end
