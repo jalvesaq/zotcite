@@ -1137,10 +1137,9 @@ function M.info()
     end
 
     local r = {
-        ["zotcite dir"] = debug.getinfo(1, "S").short_src:match("^(.*)/.-/.-"),
         ["attach_dir"] = config.attach_dir,
         ["zotero.sqlite"] = config.zotero_sqlite_path,
-        ["tmpdir"] = config.attach_dir,
+        ["tmpdir"] = config.tmpdir,
         ["docs"] = docs,
         ["citation template"] = cite_template,
         ["banned words"] = table.concat(banned_words, ", "),
