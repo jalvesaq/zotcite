@@ -420,8 +420,7 @@ local function add_most_fields()
     local sql_data = get_sql_data(query)
     if not sql_data then return end
     for _, v in pairs(sql_data) do
-        local item_id = v.itemID
-        if entry[item_id] then entry[item_id][v.fieldName] = v.value end
+        if entry[v.itemID] then entry[v.itemID][v.fieldName] = v.value end
     end
 end
 
@@ -463,28 +462,6 @@ local function add_authors()
                     end
                     table.insert(sought, c)
                 end
-            end
-        end
-    end
-end
-
-local function add_attachments()
-    local query = "SELECT items.key, itemAttachments.parentItemID, itemAttachments.path"
-        .. "  FROM items, itemAttachments"
-        .. "  WHERE items.itemID = itemAttachments.itemID"
-    local sql_data = get_sql_data(query)
-    if not sql_data then return end
-    for _, v in pairs(sql_data) do
-        if
-            entry[v.parentItemID] ~= nil
-            and v.key ~= nil
-            and v.path ~= nil
-            and type(v.path) == "string"
-        then
-            if entry[v.parentItemID].attachment ~= nil then
-                table.insert(entry[v.parentItemID].attachment, v.key .. ":" .. v.path)
-            else
-                entry[v.parentItemID].attachment = { v.key .. ":" .. v.path }
             end
         end
     end
@@ -937,15 +914,33 @@ function M.update_bib(keys, bibf, verbose)
     end
 end
 
+---Return list of attachments associated with the citation key
+---@param zotkey string The citation key
+---@return table | nil, string
 function M.get_attachment(zotkey)
-    -- Tell Vim what attachment is associated with the citation key
+    local attachments = {}
     for k, _ in pairs(entry) do
         if entry[k].zotkey == zotkey then
-            if entry[k].attachment then return entry[k].attachment end
-            return { "nOaTtAChMeNt" }
+            local query = "SELECT items.itemID, items.key, itemAttachments.path"
+                .. " FROM items, itemAttachments"
+                .. " WHERE items.itemID = itemAttachments.itemID and itemAttachments.parentItemID = '"
+                .. k
+                .. "'"
+            local sql_data = get_sql_data(query)
+            if not sql_data then return nil, "SQL query failed" end
+            for _, v in pairs(sql_data) do
+                if type(v.path) == "string" then
+                    table.insert(attachments, v)
+                else
+                    zwarn("Path is not a string: " .. vim.inspect(v.path))
+                end
+            end
+
+            if #attachments == 0 then return nil, "No attachments found" end
+            return attachments, ""
         end
     end
-    return { "nOcItEkEy" }
+    return nil, "Citation key not found"
 end
 
 function M.get_all_citations()
@@ -1161,11 +1156,10 @@ local function load_zotero_data()
 
     get_collections()
     get_items_key_type()
+    delete_items()
     add_most_fields()
     add_authors()
-    add_attachments()
     calculate_citekeys()
-    delete_items()
 end
 
 --- Find citation key and return list of completions

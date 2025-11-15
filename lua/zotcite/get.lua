@@ -14,35 +14,39 @@ local citation = {
 
 local M = {}
 
-local TranslateZPath = function(strg)
-    local fpath = strg
-
+---Convert key and path into valid path
+---@param attachment table
+---@return string | nil
+local TranslateZPath = function(attachment)
     if
         config.open_in_zotero
-        and (string.lower(strg):find("%.pdf$") or string.lower(strg):find("%.html$"))
+        and (attachment.path:lower():find("%.pdf$") or attachment:lower():find("%.html$"))
     then
-        local id = fpath:gsub(":.*", "")
-        return "zotero://open-pdf/library/items/" .. id
+        return "zotero://open-pdf/library/items/" .. attachment.itemID
     end
 
-    if strg:find(":attachments:") then
+    local fpath = tostring(attachment.path)
+    if attachment.path:find("attachments:") then
         -- The user has set Edit / Preferences / Files and Folders / Base directory for linked attachments
         if not config.attach_dir then
             zwarn(
                 "Are you using a base directory for linked attachments? "
                     .. "The config option `attach_dir` is not defined."
             )
+            return nil
         else
-            fpath = strg:gsub(".*:attachments:", "/" .. config.attach_dir .. "/")
+            fpath =
+                attachment.path:gsub(".*attachments:", "/" .. config.attach_dir .. "/")
         end
-    elseif strg:find(":/") then
+    elseif attachment.path:find(":/") then
         -- Absolute file path
-        fpath = strg:gsub(".*:/", "/")
-    elseif strg:find(":storage:") then
+        fpath = attachment.path:gsub(".*:/", "/")
+    elseif attachment.path:find("storage:") then
         -- Default path
         fpath = config.zotero_sqlite_path:match("(.*)/.-")
-            .. strg:gsub("(.*):storage:", "/storage/%1/")
+            .. attachment.path:gsub("storage:", "/storage/" .. attachment.key .. "/")
     end
+
     if vim.fn.filereadable(fpath) == 0 then
         zwarn('Could not find "' .. fpath .. '"')
         fpath = ""
@@ -51,37 +55,32 @@ local TranslateZPath = function(strg)
 end
 
 M.PDFPath = function(zotkey, cb)
-    local repl = zotero.get_attachment(zotkey)
-    if #repl == 0 then
-        zwarn("Got empty list")
+    local repl, err = zotero.get_attachment(zotkey)
+    if not repl then
+        zwarn(err)
         return
     end
-    if repl[1] == "nOaTtAChMeNt" then
-        zwarn("Attachment not found")
-    elseif repl[1] == "nOcItEkEy" then
-        zwarn("Citation key not found")
+
+    local fpaths = {}
+    local item
+    for _, v in pairs(repl) do
+        item = TranslateZPath(v)
+        if item then table.insert(fpaths, item) end
+    end
+    if #repl == 1 then
+        return fpaths[1]
     else
-        local fpaths = {}
-        local item = ""
-        for _, v in pairs(repl) do
-            item = TranslateZPath(v):gsub(".*storage:", "")
-            table.insert(fpaths, item)
+        local idx = 1
+        local items = {}
+        sel_list = {}
+        for _, v in pairs(fpaths) do
+            item = v:gsub(".*/", "")
+            item = vim.fn.slice(item, 0, 60)
+            table.insert(items, item)
+            table.insert(sel_list, v)
+            idx = idx + 1
         end
-        if #repl == 1 then
-            return fpaths[1]
-        else
-            local idx = 1
-            local items = {}
-            sel_list = {}
-            for _, v in pairs(fpaths) do
-                item = v:gsub(".*/", "")
-                item = vim.fn.slice(item, 0, 60)
-                table.insert(items, item)
-                table.insert(sel_list, v)
-                idx = idx + 1
-            end
-            vim.schedule(function() vim.ui.select(items, {}, cb) end)
-        end
+        vim.schedule(function() vim.ui.select(items, {}, cb) end)
     end
 end
 
