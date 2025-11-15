@@ -475,7 +475,12 @@ local function add_attachments()
     local sql_data = get_sql_data(query)
     if not sql_data then return end
     for _, v in pairs(sql_data) do
-        if entry[v.parentItemID] ~= nil and v.key ~= nil and v.path ~= nil then
+        if
+            entry[v.parentItemID] ~= nil
+            and v.key ~= nil
+            and v.path ~= nil
+            and type(v.path) == "string"
+        then
             if entry[v.parentItemID].attachment ~= nil then
                 table.insert(entry[v.parentItemID].attachment, v.key .. ":" .. v.path)
             else
