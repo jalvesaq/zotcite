@@ -1,5 +1,4 @@
 local zwarn = require("zotcite").zwarn
-local config = require("zotcite.config").get_config()
 
 local M = {}
 
@@ -12,9 +11,7 @@ local find_tex_bib = function()
             return bib
         end
     end
-    if config.bib_and_vt[vim.o.filetype] then
-        zwarn("Could not find the '\\addbibresource' command.")
-    end
+    zwarn("Could not find the '\\addbibresource' command.")
     return nil
 end
 
@@ -27,18 +24,14 @@ local find_typst_bib = function()
             return bib
         end
     end
-    if config.bib_and_vt[vim.o.filetype] then
-        zwarn("Could not find the '#bibliography' identifier.")
-    end
+    zwarn("Could not find the '#bibliography' identifier.")
     return nil
 end
 
 local find_markdown_bib = function()
     local ybib = require("zotcite.get").yaml_field("bibliography", 0)
     if not ybib then
-        if config.bib_and_vt[vim.o.filetype] then
-            zwarn("Could not find 'bibliography' field in YAML header.")
-        end
+        zwarn("Could not find 'bibliography' field in YAML header.")
         return nil
     end
 
@@ -123,9 +116,6 @@ local get_tex_citations = function()
 end
 
 M.update = function()
-    local bib = find_bib_fn()
-    if not bib then return end
-
     local ckeys
     if vim.o.filetype == "tex" or vim.o.filetype == "rnoweb" then
         ckeys = get_tex_citations()
@@ -138,20 +128,12 @@ M.update = function()
             table.insert(ckeys, v)
         end
     end
-    if #ckeys == 0 then
-        if bib:find(".*zotcite.bib$") and vim.fn.filereadable(bib) == 0 then
-            -- Ensure that `quarto preview` will work
-            vim.fn.writefile({}, bib)
-        end
-    else
-        vim.fn.py3eval(
-            'ZotCite.UpdateBib(["'
-                .. table.concat(ckeys, '", "')
-                .. '"], "'
-                .. bib
-                .. '", False)'
-        )
-    end
+    if #ckeys == 0 then return end
+
+    local bib = find_bib_fn()
+    if not bib then return end
+
+    require("zotcite.zotero").update_bib(ckeys, bib, false)
     vim.schedule(require("zotcite.hl").citations)
 end
 

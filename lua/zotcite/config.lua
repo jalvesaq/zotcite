@@ -1,23 +1,10 @@
----@class BibVirtTxt
----@field latex? boolean
----@field markdown? boolean
----@field pandoc? boolean
----@field quarto? boolean
----@field rmd? boolean
----@field rnoweb? boolean
----@field typst? boolean
----@field vimwiki? boolean
-
 ---@class ZotciteUserOpts
 ---Whether to syntax highlight citation keys
 ---@field hl_cite_key? boolean
----Save and update a bib file; add the
----zotcite complement as virtual text
----@field bib_and_vt? BibVirtTxt
 ---Reference field to as sorting key by :Zseek
 ---@field sort_key? string
 ---Value to set the Vim option 'conceallevel'
----@field conceallevel? 0 | 1 | 2
+---@field conceallevel? -1 | 0 | 1 | 2 | 3
 ---Freeze Neovim after opening a PDF attachment
 ---@field wait_attachment? boolean
 ---Open PDF attachments in Zotero
@@ -34,12 +21,16 @@
 ---Template for citation keys
 ---@field citation_template? string
 ---Path to `zotero.sqlite`
----@field SQL_path? string
+---@field zotero_sqlite_path? string
+---Path to attachments directory (if any)
+---@field attach_dir? string
+---Temporary directory
+---@field tmpdir? string
+---Directory of zotcite's Python scripts
+---@field python_scripts_path? string
 ---Zotero encoding (by default, "utf-8" on Linux
 ---and "latin1" on Windows)
 ---@field zotero_encoding? string
----Temporary directory
----@field tmpdir? string
 ---Fields to be excluded from Zotero references
 ---@field exclude_fields? string
 ---String used to separate the year from the
@@ -53,18 +44,8 @@
 ---@type ZotciteUserOpts
 local config = {
     hl_cite_key = true,
-    bib_and_vt = {
-        latex = true,
-        markdown = false,
-        pandoc = false,
-        quarto = false,
-        rmd = false,
-        rnoweb = true,
-        typst = false,
-        vimwiki = false,
-    },
     sort_key = "dateModified",
-    conceallevel = 2,
+    conceallevel = -1,
     wait_attachment = false,
     open_in_zotero = false,
     filetypes = {
@@ -78,11 +59,8 @@ local config = {
         "vimwiki",
     },
     register_treesitter = true,
-    zrunning = false,
-    zotcite_home = nil,
     python_path = "python3",
     pdf_extractor = "pdfnotes.py", -- Default: "pdfnotes.py", alternative: "pdfnotes2.py"
-    log = {},
 }
 
 local did_global_init = false
@@ -93,6 +71,8 @@ local zwarn = require("zotcite").zwarn
 local M = {}
 
 local b = {}
+
+M.info = {}
 
 M.show = function()
     local info = {}
@@ -112,24 +92,6 @@ local update_config = function()
         end
     end
 
-    config.bib_and_vt.latex = true
-    config.bib_and_vt.tex = true
-    config.bib_and_vt.rnoweb = true
-
-    if config.citation_template then
-        vim.env.ZCitationTemplate = config.citation_template
-    end
-    if config.banned_words then vim.env.ZBannedWords = config.banned_words end
-    if config.SQL_path then vim.env.ZoteroSQLpath = config.SQL_path end
-    if config.tmpdir then vim.env.Zotcite_tmpdir = config.tmpdir end
-    if config.exclude_fields then vim.env.Zotcite_exclude = config.exclude_fields end
-    if config.year_page_sep then vim.env.ZYearPageSep = config.year_page_sep end
-    if vim.env.Zotero_encoding then
-        zwarn(
-            "The environment variable `Zotero_encoding` now is a config option: `zotero_encoding`."
-        )
-    end
-    if config.zotero_encoding then vim.env.ZoteroEncoding = config.zotero_encoding end
     if config.register_treesitter then
         vim.treesitter.language.register("markdown", { "quarto", "rmd" })
     end
@@ -144,57 +106,38 @@ end
 
 M.get_b = function() return b end
 
-M.set_collection = function(bufnr, collection)
-    for k, v in pairs(b) do
-        if v.bufnr == bufnr then
-            b[k].zotcite_cllctn = collection
-            return
-        end
-    end
-end
-
-local new_buffer = function(bnr) table.insert(b, { bufnr = bnr, zotcite_cllctn = "" }) end
-
 local set_path = function()
-    config.zotcite_home = debug.getinfo(1, "S").source:match("^@(.*)/lua.*") .. "/python3"
+    if not config.python_scripts_path then
+        config.python_scripts_path = debug.getinfo(1, "S").source:match("^@(.*)/lua.*")
+            .. "/scripts"
+    end
     if vim.fn.has("win32") == 1 then
-        local zpath = config.zotcite_home:gsub("/", "\\")
+        local zpath = config.python_scripts_path:gsub("/", "\\")
         if not vim.env.PATH:find(zpath) then
             vim.env.PATH = zpath .. ";" .. vim.env.PATH
         end
     else
-        if not vim.env.PATH:find(config.zotcite_home) then
-            vim.env.PATH = config.zotcite_home .. ":" .. vim.env.PATH
+        if not vim.env.PATH:find(config.python_scripts_path) then
+            vim.env.PATH = config.python_scripts_path .. ":" .. vim.env.PATH
         end
     end
 end
 
 local global_init = function()
-    if vim.fn.has("python3") == 0 then
-        zwarn("zotcite requires python3")
-        table.insert(config.log, "Python3 provider not working.")
+    if vim.fn.executable("sqlite3") == 0 then
+        zwarn("`sqlite3` executable not found. Please, install it.", true)
         return false
     end
-
+    -- Get Zotero data
     local t1 = vim.uv.hrtime()
-    vim.cmd("py3 import os")
-
-    -- Start ZoteroEntries
-    vim.cmd.py3("from zotero import ZoteroEntries")
-    vim.cmd.py3("ZotCite = ZoteroEntries()")
+    require("zotcite.zotero").init()
     local t2 = vim.uv.hrtime()
-    M.init_time = math.floor(((t2 - t1) / 1000000) + 0.5)
-    local info = vim.fn.py3eval("ZotCite.Info()")
-    if info == vim.NIL then
-        zwarn("Failed to run the Python command `ZotCite.Info()`")
+    M.info["Zotero init time (ms)"] = math.floor(0.5 + (t2 - t1) / 1000000)
+    local info = require("zotcite.zotero").info()
+    if not info then
+        zwarn("Failed to get information from Zotero", true)
         return false
     end
-
-    config.zrunning = true
-
-    vim.env.Zotcite_tmpdir = vim.fn.expand(info["tmpdir"])
-    config.data_dir = vim.fn.expand(info["data dir"])
-    config.attach_dir = vim.fn.expand(info["attachments dir"])
 
     require("zotcite.hl").citations()
     require("zotcite.lsp").start()
@@ -267,7 +210,6 @@ M.init = function()
 
     -- But repeat this for every buffer
     if not vim.tbl_contains(config.filetypes, vim.bo[bnr].filetype) then return end
-    new_buffer(bnr)
 
     local create_map = function(m, p, s, c, d)
         local opts = { silent = true, noremap = true, expr = false, desc = d }
@@ -327,14 +269,12 @@ M.init = function()
         "<Cmd>lua require('zotcite.get').abstract()<CR>",
         "Zotcite: Paste abstract note in current buffer"
     )
-    vim.o.conceallevel = config.conceallevel
+    if config.conceallevel >= 0 then vim.o.conceallevel = config.conceallevel end
     vim.treesitter.start(bnr)
-    if config.bib_and_vt[vim.o.filetype] then
-        vim.api.nvim_create_autocmd(
-            "InsertLeave",
-            { buffer = bnr, callback = require("zotcite.hl").citations }
-        )
-    end
+    vim.api.nvim_create_autocmd(
+        "InsertLeave",
+        { buffer = bnr, callback = require("zotcite.hl").citations }
+    )
     vim.api.nvim_create_autocmd(
         "BufWritePre",
         { buffer = bnr, callback = require("zotcite.bib").update }

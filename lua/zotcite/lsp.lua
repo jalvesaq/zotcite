@@ -1,4 +1,5 @@
 local zwarn = require("zotcite").zwarn
+local zotero = require("zotcite.zotero")
 
 local last_line = 0
 local z_ls = {
@@ -13,7 +14,7 @@ local compl_region = true
 --- Resolve selected menu item
 ---@param zkey string
 local resolve = function(zkey)
-    local ref = vim.fn.py3eval('ZotCite.GetRefData("' .. zkey .. '")')
+    local ref = zotero.get_ref_data(zkey)
     if not ref then return nil end
 
     local doc = ""
@@ -54,7 +55,7 @@ local complete = function(lnum, char)
     local compl_items = {}
     local bnm = vim.api.nvim_buf_get_name(0)
     if vim.fn.has("win32") == 1 then bnm = string.gsub(tostring(bnm), "\\", "/") end
-    local itms = vim.fn.py3eval('ZotCite.GetMatch("' .. word .. '", "' .. bnm .. '")')
+    local itms = zotero.get_match(word, bnm)
     local text_edit_range = {
         start = {
             line = lnum,
@@ -67,20 +68,15 @@ local complete = function(lnum, char)
     }
     if itms then
         for _, v in pairs(itms) do
-            local txt = v[2] .. " " .. v[3]
+            local txt = string.format("%s (%s) %s", v.alastnm, v.year, v.title)
             if vim.fn.strwidth(txt) > 58 then
                 txt = vim.fn.strcharpart(txt, 0, 58) .. "⋯"
             end
-            local nt = v[1]
-            if vim.bo.filetype == "rnoweb" or vim.bo.filetype == "latex" then
-                nt = nt:match("^(.-)%-")
-            end
-
             table.insert(compl_items, {
                 label = txt,
                 kind = vim.lsp.protocol.CompletionItemKind.Variable,
                 textEdit = {
-                    newText = nt,
+                    newText = v.zotkey,
                     range = text_edit_range,
                 },
             })
