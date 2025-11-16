@@ -269,14 +269,19 @@ local M = {}
 --- and `attachment_dir`.
 ---@return string?, string?
 local function get_zotero_prefs()
-    local zp = expand_tilde("~/.zotero/zotero/profiles.ini")
-    if not vim.uv.fs_access(zp, "r") then
-        zp = expand_tilde("~/Library/Application Support/Zotero/profiles.ini")
-        if not vim.uv.fs_access(zp, "r") then
-            local msg = 'Could not find "~/.zotero/zotero/profiles.ini" or "' .. zp .. '"'
-            zwarn(msg, true)
-            return
+    local p1 = vim.env.APPDATA and vim.env.APPDATA .. "/Zotero/Zotero/profiles.ini"
+        or expand_tilde("~/.zotero/zotero/profiles.ini")
+    local zps = { p1, expand_tilde("~/Library/Application Support/Zotero/profiles.ini") }
+    local zp = nil
+    for _, p in pairs(zps) do
+        if vim.uv.fs_access(p, "r") then
+            zp = p
+            break
         end
+    end
+    if not zp then
+        zwarn("Could not find Zotero's `profiles.ini`", true)
+        return
     end
 
     local adir
