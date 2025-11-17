@@ -470,6 +470,10 @@ local function add_authors()
             end
         end
     end
+
+    for _, v in pairs(entry) do
+        v.alastnm = v.alastnm:gsub("^, ", "")
+    end
 end
 
 local function calculate_citekeys()
@@ -555,10 +559,6 @@ local function delete_items()
                 end
             end
         end
-    end
-
-    for k, _ in pairs(entry) do
-        entry[k].alastnm = string.gsub(entry[k].alastnm, "^, ", "")
     end
 end
 
