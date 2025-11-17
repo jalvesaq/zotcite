@@ -40,8 +40,12 @@ end
 --- Fill completion menu
 ---@param lnum integer Line number
 ---@param char integer Cursor column
----@return table | nil
-local complete = function(lnum, char)
+local complete = function(callback, lnum, char)
+    if not compl_region then
+        callback(nil, { isIncomplete = false, items = {} })
+        return
+    end
+
     local line = vim.api.nvim_buf_get_lines(0, lnum, lnum + 1, true)[1]
     local subline = line:sub(1, char)
     local word
@@ -50,7 +54,10 @@ local complete = function(lnum, char)
     else
         word = subline:match(".*@(%S+)$")
     end
-    if not word then return end
+    if not word then
+        callback(nil, { isIncomplete = false, items = {} })
+        return
+    end
 
     local compl_items = {}
     local bnm = vim.api.nvim_buf_get_name(0)
@@ -82,7 +89,7 @@ local complete = function(lnum, char)
             })
         end
     end
-    return compl_items
+    callback(nil, { isIncomplete = false, items = compl_items })
 end
 
 --- Hover implementation
@@ -138,13 +145,9 @@ end
 --- This function receives 4 arguments: method, params, callback, notify_callback
 local function lsp_request(method, params, callback, _)
     if method == "textDocument/completion" then
-        if not compl_region then
-            callback(nil, { result = nil })
-            return
-        end
-        local compl_items = complete(params.position.line, params.position.character)
-        if not compl_items then callback(nil, { result = nil }) end
-        callback(nil, { isIncomplete = false, items = compl_items })
+        vim.schedule(
+            function() complete(callback, params.position.line, params.position.character) end
+        )
     elseif method == "completionItem/resolve" then
         local zotkey = params.textEdit.newText:gsub("%-.*", "")
         local detail = resolve(zotkey)
@@ -168,6 +171,8 @@ local function lsp_request(method, params, callback, _)
                 },
                 hoverProvider = true,
                 completionProvider = {
+                    -- would work only if we could reset the completion
+                    -- triggerCharacters = { "@" },
                     resolveProvider = true,
                 },
             },
