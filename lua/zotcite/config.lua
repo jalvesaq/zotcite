@@ -20,6 +20,8 @@
 ---@field pdf_extractor? '"pdfnotes.py"' | '"pdfnotes2.py"'
 ---Template for citation keys
 ---@field citation_template? string
+---Type of citation key (internal Zotero key or template based)
+---@field key_type? '"zotero"' | '"template"' | '"better-bibtex"'
 ---Path to `zotero.sqlite`
 ---@field zotero_sqlite_path? string
 ---Path to attachments directory (if any)
@@ -43,6 +45,7 @@
 
 ---@type ZotciteUserOpts
 local config = {
+    key_type = "zotero",
     hl_cite_key = true,
     sort_key = "dateModified",
     conceallevel = -1,

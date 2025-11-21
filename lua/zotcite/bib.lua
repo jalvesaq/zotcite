@@ -60,8 +60,9 @@ local find_bib_fn = function()
     return find_markdown_bib()
 end
 
-local get_typ_citations = function()
-    local kp = "<[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]>"
+local get_typ_citations = function(kz)
+    local kp = kz and "<[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]>"
+        or "<[%w%-\192-\244\128-\191]+>"
     local ckeys = {}
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
     for _, v in pairs(lines) do
@@ -76,8 +77,9 @@ local get_typ_citations = function()
     return ckeys
 end
 
-local get_md_citations = function()
-    local kp = "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
+local get_md_citations = function(kz)
+    local kp = kz and "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
+        or "@[%w%-\192-\244\128-\191]+"
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
     local ckeys = {}
     for _, v in pairs(lines) do
@@ -92,9 +94,10 @@ local get_md_citations = function()
     return ckeys
 end
 
-local get_tex_citations = function()
+local get_tex_citations = function(kz)
     local kp1 = "\\%w*cit.*{"
-    local kp2 = "[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
+    local kp2 = kz and "[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
+        or "[%w%-\192-\244\128-\191]+"
     local ckeys = {}
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
     for _, v in pairs(lines) do
@@ -116,14 +119,15 @@ local get_tex_citations = function()
 end
 
 M.update = function()
+    local kz = require("zotcite.config").get_config().key_type == "zotero"
     local ckeys
     if vim.o.filetype == "tex" or vim.o.filetype == "rnoweb" then
-        ckeys = get_tex_citations()
+        ckeys = get_tex_citations(kz)
     else
-        ckeys = get_md_citations()
+        ckeys = get_md_citations(kz)
     end
     if vim.o.filetype == "typst" then
-        local ck2 = get_typ_citations()
+        local ck2 = get_typ_citations(kz)
         for _, v in pairs(ck2) do
             table.insert(ckeys, v)
         end
@@ -133,7 +137,8 @@ M.update = function()
     local bib = find_bib_fn()
     if not bib then return end
 
-    require("zotcite.zotero").update_bib(ckeys, bib, false)
+    local config = require("zotcite.config").get_config()
+    require("zotcite.zotero").update_bib(ckeys, bib, config.key_type, false)
     vim.schedule(require("zotcite.hl").citations)
 end
 

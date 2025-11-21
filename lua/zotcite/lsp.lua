@@ -74,6 +74,7 @@ local complete = function(callback, lnum, char)
         },
     }
     if itms then
+        local config = require("zotcite.config").get_config()
         for _, v in pairs(itms) do
             local txt = string.format("%s (%s) %s", v.alastnm, v.year, v.title)
             if vim.fn.strwidth(txt) > 58 then
@@ -83,7 +84,7 @@ local complete = function(callback, lnum, char)
                 label = txt,
                 kind = vim.lsp.protocol.CompletionItemKind.Variable,
                 textEdit = {
-                    newText = v.zotkey,
+                    newText = config.key_type == "zotero" and v.zotkey or v.citekey,
                     range = text_edit_range,
                 },
             })

@@ -13,6 +13,7 @@ local config = require("zotcite.config").get_config()
 local cite_template
 local banned_words = {}
 local zcopy
+local bbtcopy
 local ztime
 local exclude_fields = {}
 local entry = {}
@@ -348,32 +349,30 @@ local function getmtime(path)
 end
 
 local function copy_zotero_data()
-    ztime = getmtime(config.zotero_sqlite_path)
+    local zf = config.zotero_sqlite_path
+    if not zf then return end
+    ztime = getmtime(zf)
     zcopy = config.tmpdir .. "/copy_of_zotero.sqlite"
     local zcopy_time = getmtime(zcopy)
 
     -- Make a copy of zotero.sqlite to avoid locks
-    if ztime > zcopy_time then
-        local f = io.open(config.zotero_sqlite_path, "rb")
-        local b = nil
-        if f then
-            b = f:read("*all")
-            f:close()
-        end
-        local f2 = io.open(zcopy, "wb")
-        if f2 and b then
-            f2:write(b)
-            f2:close()
-        end
-    end
+    if ztime > zcopy_time then vim.uv.fs_copyfile(zf, zcopy) end
+    if config.key_type ~= "better-bibtex" then return end
+
+    local bbt_f = zf:gsub("zotero%.sqlite$", "better-bibtex.sqlite")
+    bbtcopy = config.tmpdir .. "/bbt.sqlite"
+    local btime1 = getmtime(bbt_f)
+    local btime2 = getmtime(bbtcopy)
+    if btime1 > btime2 then vim.uv.fs_copyfile(bbt_f, bbtcopy) end
 end
 
 --- Run sqlite3 and get the output
 ---@param query string The SQL query
+---@param sqlfile string | nil The path to the SQL data base
 ---@return table | nil
-local function get_sql_data(query)
-    local obj = vim.system({ "sqlite3", "-json", zcopy, query }, { text = true })
-        :wait(3000)
+local function get_sql_data(query, sqlfile)
+    local sf = sqlfile and sqlfile or zcopy
+    local obj = vim.system({ "sqlite3", "-json", sf, query }, { text = true }):wait(3000)
     if obj.code ~= 0 then
         if obj.stderr then zwarn(obj.stderr) end
         return nil
@@ -398,7 +397,7 @@ local function get_collections()
 end
 
 local function get_items_key_type()
-    local query = "SELECT items.itemID, items.key, itemTypes.typeName"
+    local query = "SELECT items.itemID, items.dateAdded, items.key, itemTypes.typeName"
         .. " FROM items, itemTypes"
         .. " WHERE items.itemTypeID = itemTypes.itemTypeID"
 
@@ -411,7 +410,8 @@ local function get_items_key_type()
             and v.typeName ~= "annotation"
             and v.typeName ~= "note"
         then
-            entry[v.itemID] = { zotkey = v.key, etype = v.typeName, alastnm = "" }
+            entry[v.itemID] =
+                { zotkey = v.key, etype = v.typeName, added = v.dateAdded, alastnm = "" }
         end
     end
 end
@@ -476,20 +476,24 @@ local function add_authors()
     end
 end
 
+local function get_year(e)
+    local year = "????"
+    if e.date then
+        local y = e.date:match("^([0-9][0-9][0-9][0-9])")
+        if y then
+            year = y
+        elseif e.issueDate then
+            y = e.issueDate:match("^([0-9][0-9][0-9][0-9])")
+            if y then year = y end
+        end
+    end
+    return year
+end
+
 local function calculate_citekeys()
     local ptrn = "^(" .. table.concat(banned_words, " |") .. " )"
     for _, v in pairs(entry) do
-        local year = "????"
-        if v.date then
-            local y = v.date:match("^([0-9][0-9][0-9][0-9])")
-            if y then
-                year = y
-            elseif v.issueDate then
-                y = v.issueDate:match("^([0-9][0-9][0-9][0-9])")
-                if y then year = y end
-            end
-        end
-        v.year = year
+        v.year = get_year(v)
         local titlew
         if v.title then
             ---@type string
@@ -534,8 +538,8 @@ local function calculate_citekeys()
         key = key:gsub("%{authors%}", lastnames:lower(), 1)
         -- key = key:gsub("%{Authors%}", lastnames:title(), 1)
         key = key:gsub("%{Authors%}", lastnames, 1)
-        key = key:gsub("%{year%}", year:gsub("^[0-9][0-9]", ""))
-        key = key:gsub("%{Year%}", year)
+        key = key:gsub("%{year%}", v.year:gsub("^[0-9][0-9]", ""))
+        key = key:gsub("%{Year%}", v.year)
         key = key:gsub("%{title%}", titlew:lower())
         -- key = key:gsub("{Title}", titlew:title(), 1)
         key = key:gsub("{Title}", titlew, 1)
@@ -543,6 +547,58 @@ local function calculate_citekeys()
         key = key:gsub("'", "")
         key = key:gsub("’", "")
         v.citekey = key
+    end
+end
+
+local function add_bbt_keys()
+    local sql_data = get_sql_data("SELECT itemID, citationKey FROM citationkey", bbtcopy)
+    if not sql_data then return end
+    for _, v in pairs(sql_data) do
+        local e = entry[v.itemID]
+        if e then
+            e.citekey = v.citationKey
+            e.year = get_year(e)
+        else
+            zwarn("Entry with Better BibTeX itemID " .. v.itemID .. " not found")
+        end
+    end
+end
+
+local function get_sequence_string(n)
+    local alphabet = "abcdefghijklmnopqrstuvwxyz"
+    local s = ""
+    while n > 0 do
+        local remainder = (n - 1) % 26
+        s = string.sub(alphabet, remainder + 1, remainder + 1) .. s
+        n = math.floor((n - 1) / 26)
+    end
+    return s
+end
+
+local function add_citekeys()
+    if config.key_type == "better-bibtex" then
+        add_bbt_keys()
+    else
+        calculate_citekeys()
+        if config.key_type == "template" then
+            -- Fix duplicates
+            for k1, v1 in pairs(entry) do
+                local dup = { v1 }
+                for k2, v2 in pairs(entry) do
+                    if k1 ~= k2 and v1.citekey == v2.citekey then
+                        table.insert(dup, v2)
+                    end
+                end
+                if #dup > 1 then
+                    table.sort(dup, function(a, b) return a.added > b.added end)
+                    local i = 1
+                    for _, v in pairs(dup) do
+                        v.citekey = v.citekey .. get_sequence_string(i)
+                        i = i + 1
+                    end
+                end
+            end
+        end
     end
 end
 
@@ -736,7 +792,9 @@ function M.get_yaml_refs(keys)
     return ref
 end
 
-local function get_bib_ref(item, citekey)
+---@param item table The Zotero item
+---@param ktype string Type of citation key
+local function get_bib_ref(item, ktype)
     local e = {}
     e = vim.tbl_extend("force", e, item)
 
@@ -795,7 +853,8 @@ local function get_bib_ref(item, citekey)
         end
     end
 
-    local ref = { "@" .. e["etype"] .. "{" .. citekey:gsub("[-#].*", "") .. "," }
+    local ekey = ktype == "zotero" and e.zotkey or e.citekey
+    local ref = { "@" .. e["etype"] .. "{" .. ekey .. "," }
     for _, aa in pairs({
         "author",
         "editor",
@@ -833,8 +892,6 @@ local function get_bib_ref(item, citekey)
         "etype",
         "issued",
         "abstract",
-        "citekey",
-        "zotkey",
         "collection",
         "author",
         "editor",
@@ -868,22 +925,25 @@ end
 
 --- Build the contents of a .bib file
 ---@param keys string[] List of Zotero keys
+---@param ktype string Type of citation key
 ---@return table
-local function get_bib(keys)
+local function get_bib(keys, ktype)
     local ref = {}
     for _, k in pairs(keys) do
         for e, _ in pairs(entry) do
-            if k == entry[e]["zotkey"] then ref[k] = get_bib_ref(entry[e], k) end
+            local key = ktype == "zotero" and entry[e]["zotkey"] or entry[e]["citekey"]
+            if k == key then ref[k] = get_bib_ref(entry[e], ktype) end
         end
     end
     return ref
 end
 
 --- Build the contents of a .bib file
----@param keys string[] List of Zotero keys
+---@param zkeys string[] List of Zotero keys
 ---@param bibf string Name of bib file
+---@param ktype string Type of citation key
 ---@param verbose boolean Whether to print debugging information or not
-function M.update_bib(keys, bibf, verbose)
+function M.update_bib(zkeys, bibf, ktype, verbose)
     local bib = {}
 
     local f = io.open(bibf, "r")
@@ -897,17 +957,17 @@ function M.update_bib(keys, bibf, verbose)
                 bib[key] = {}
             end
             if key then table.insert(bib[key], line) end
-
-            -- Replace existing references and add new ones
-            local newbib = get_bib(keys)
-            for k, v in pairs(newbib) do
-                bib[k] = v
-            end
         end
         f:close()
     else
         if verbose then zwarn('zotcite: writing "' .. tostring(bibf) .. '"\n') end
-        bib = get_bib(keys)
+        bib = get_bib(zkeys, ktype)
+    end
+
+    -- Replace existing references and add new ones
+    local newbib = get_bib(zkeys, ktype)
+    for k, v in pairs(newbib) do
+        bib[k] = v
     end
 
     f = io.open(bibf, "w")
@@ -951,18 +1011,42 @@ end
 function M.get_all_citations()
     -- Return a list of all [zotkey, citekey].
     local res = {}
-    for k, _ in pairs(entry) do
-        res[entry[k]["zotkey"]] = entry[k]["citekey"]
+    if require("zotcite.config").get_config().key_type == "zotero" then
+        for k, _ in pairs(entry) do
+            res[entry[k]["zotkey"]] = entry[k]["citekey"]
+        end
+    else
+        for k, _ in pairs(entry) do
+            if entry[k].citekey and entry[k].zotkey then
+                res[entry[k]["citekey"]] = entry[k]["zotkey"]
+            else
+                zwarn("Missing citation key for itemID " .. tostring(k))
+            end
+        end
     end
     return res
 end
 
-function M.get_ref_data(zotkey)
-    -- Return the key's dictionary.
+local get_ref_data_template = function(citekey)
+    for k, _ in pairs(entry) do
+        if entry[k]["citekey"] == citekey then return entry[k] end
+    end
+    return nil
+end
+
+local get_ref_data_zotkey = function(zotkey)
     for k, _ in pairs(entry) do
         if entry[k]["zotkey"] == zotkey then return entry[k] end
     end
     return nil
+end
+
+function M.get_ref_data(key)
+    if config.key_type == "zotero" then
+        return get_ref_data_zotkey(key)
+    else
+        return get_ref_data_template(key)
+    end
 end
 
 local function get_ypsep(md)
@@ -1164,7 +1248,7 @@ local function load_zotero_data()
     delete_items()
     add_most_fields()
     add_authors()
-    calculate_citekeys()
+    add_citekeys()
 end
 
 --- Find citation key and return list of completions

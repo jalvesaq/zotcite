@@ -85,10 +85,13 @@ M.PDFPath = function(zotkey, cb)
 end
 
 local is_valid_char = function(c)
-    return (c >= "0" and c <= "9")
-        or (c >= "A" and c <= "z")
-        or (c >= "a" and c <= "z")
-        or c:byte(1, 1) > 127
+    if config.key_type == "zotero" then
+        return (c >= "0" and c <= "9")
+            or (c >= "A" and c <= "z")
+            or (c >= "a" and c <= "z")
+            or c:byte(1, 1) > 127
+    end
+    return c:find("[%w%-\192-\244\128-\191]")
 end
 
 local citation_key_vt = function(line, pos)
@@ -107,8 +110,12 @@ local citation_key_vt = function(line, pos)
         j = j + 1
     end
     local key = line:sub(i + 1, j - 1)
-    if #key == 8 then return key end
-    return ""
+    if config.key_type == "zotero" then
+        if #key == 8 then return key end
+        return ""
+    else
+        return key
+    end
 end
 
 M.citation_key = function()
@@ -159,7 +166,7 @@ end
 local finish_citation = function(ref)
     if not ref then return end
     local rownr = vim.api.nvim_win_get_cursor(0)[1] - 1
-    local cite = ref.value.key
+    local cite = config.key_type == "zotero" and ref.value.key or ref.value.cite
     if not (vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb") then
         cite = "@" .. cite
     end
@@ -508,8 +515,11 @@ local function insert_info(info, ttl, lines)
 end
 
 M.zotero_info = function()
-    if not vim.tbl_contains(config.filetypes, vim.o.filetype) then
-        zwarn("zotcite doesn't support " .. vim.o.filetype .. " filetype.")
+    if
+        not vim.tbl_contains(config.filetypes, vim.bo.filetype)
+        and vim.bo.filetype ~= "bib"
+    then
+        zwarn("zotcite doesn't support " .. vim.bo.filetype .. " filetype.")
         return
     end
 
