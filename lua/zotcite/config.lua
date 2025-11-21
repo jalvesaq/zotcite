@@ -52,7 +52,7 @@ local config = {
     wait_attachment = false,
     open_in_zotero = false,
     filetypes = {
-        "latex",
+        "tex",
         "markdown",
         "pandoc",
         "quarto",

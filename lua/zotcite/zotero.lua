@@ -747,6 +747,7 @@ local function get_yaml_ref(item, citekey)
         "issued",
         "abstract",
         "citekey",
+        "added",
         "zotkey",
         "collection",
         "alastnm",

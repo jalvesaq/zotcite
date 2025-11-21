@@ -49,7 +49,7 @@ local complete = function(callback, lnum, char)
     local line = vim.api.nvim_buf_get_lines(0, lnum, lnum + 1, true)[1]
     local subline = line:sub(1, char)
     local word
-    if vim.bo.filetype == "rnoweb" or vim.bo.filetype == "latex" then
+    if vim.bo.filetype == "rnoweb" or vim.bo.filetype == "tex" then
         word = subline:match(".*{.-(%S+)$")
     else
         word = subline:match(".*@(%S+)$")
@@ -267,7 +267,7 @@ end
 
 --- Call the appropriate function to set the value `compl_region`
 local function on_cursor_move()
-    if vim.bo.filetype == "rnoweb" or vim.bo.filetype == "latex" then
+    if vim.bo.filetype == "rnoweb" or vim.bo.filetype == "tex" then
         set_compl_region_rnw()
     end
     local curpos = vim.api.nvim_win_get_cursor(0)
