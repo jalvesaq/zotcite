@@ -179,11 +179,7 @@ M.refs = function(key, cb)
                         vim.split(preview_text, "\n")
                     )
                     for _, h in pairs(hl) do
-                        if vim.fn.has("nvim-0.11") == 1 then
-                            vim.hl.range(bufnr, ns, h.g, { 0, h.s }, { 0, h.e }, {})
-                        else
-                            vim.api.nvim_buf_add_highlight(bufnr, -1, h.g, 0, h.s, h.e)
-                        end
+                        vim.hl.range(bufnr, ns, h.g, { 0, h.s }, { 0, h.e }, {})
                     end
                 end,
             }),
