@@ -1,17 +1,12 @@
 local config = require("zotcite.config").get_config()
 local ns = vim.api.nvim_create_namespace("ZSeekPreview")
+local zotero = require("zotcite.zotero")
 
 local M = {}
 
 local get_match = function(key)
     local citeptrn = key:gsub(" .*", "")
-    local refs = vim.fn.py3eval(
-        'ZotCite.GetMatch("'
-            .. citeptrn
-            .. '", "'
-            .. vim.fn.escape(vim.fn.expand("%:p"), "\\")
-            .. '", True)'
-    )
+    local refs = zotero.get_match(citeptrn, vim.api.nvim_buf_get_name(0))
     if #refs == 0 then
         vim.schedule(
             function() vim.api.nvim_echo({ { "No matches found." } }, false, {}) end
@@ -184,11 +179,7 @@ M.refs = function(key, cb)
                         vim.split(preview_text, "\n")
                     )
                     for _, h in pairs(hl) do
-                        if vim.fn.has("nvim-0.11") == 1 then
-                            vim.hl.range(bufnr, ns, h.g, { 0, h.s }, { 0, h.e }, {})
-                        else
-                            vim.api.nvim_buf_add_highlight(bufnr, -1, h.g, 0, h.s, h.e)
-                        end
+                        vim.hl.range(bufnr, ns, h.g, { 0, h.s }, { 0, h.e }, {})
                     end
                 end,
             }),
