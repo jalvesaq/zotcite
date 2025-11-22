@@ -694,9 +694,9 @@ end
 local function get_bib(keys, ktype)
     local ref = {}
     for _, k in pairs(keys) do
-        for e, _ in pairs(entry) do
-            local key = ktype == "zotero" and entry[e]["zotkey"] or entry[e]["citekey"]
-            if k == key then ref[k] = get_bib_ref(entry[e], ktype) end
+        for _, e in pairs(entry) do
+            local key = ktype == "zotero" and e.zotkey or e.citekey
+            if k == key then ref[k] = get_bib_ref(e, ktype) end
         end
     end
     return ref
@@ -777,13 +777,13 @@ function M.get_all_citations()
     -- Return a list of all [zotkey, citekey].
     local res = {}
     if require("zotcite.config").get_config().key_type == "zotero" then
-        for k, _ in pairs(entry) do
-            res[entry[k]["zotkey"]] = entry[k]["citekey"]
+        for _, e in pairs(entry) do
+            res[e.zotkey] = e.citekey
         end
     else
-        for k, _ in pairs(entry) do
-            if entry[k].citekey and entry[k].zotkey then
-                res[entry[k]["citekey"]] = entry[k]["zotkey"]
+        for k, e in pairs(entry) do
+            if e.citekey and e.zotkey then
+                res[e.citekey] = e.zotkey
             else
                 zwarn("Missing citation key for itemID " .. tostring(k))
             end
@@ -793,15 +793,15 @@ function M.get_all_citations()
 end
 
 local get_ref_data_template = function(citekey)
-    for k, _ in pairs(entry) do
-        if entry[k]["citekey"] == citekey then return entry[k] end
+    for _, v in pairs(entry) do
+        if v.citekey == citekey then return v end
     end
     return nil
 end
 
 local get_ref_data_zotkey = function(zotkey)
-    for k, _ in pairs(entry) do
-        if entry[k]["zotkey"] == zotkey then return entry[k] end
+    for _, v in pairs(entry) do
+        if v.zotkey == zotkey then return v end
     end
     return nil
 end

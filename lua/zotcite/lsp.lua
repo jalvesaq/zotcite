@@ -12,9 +12,9 @@ local z_ls = {
 local compl_region = true
 
 --- Resolve selected menu item
----@param zkey string
-local resolve = function(zkey)
-    local ref = zotero.get_ref_data(zkey)
+---@param key string
+local resolve = function(key)
+    local ref = zotero.get_ref_data(key)
     if not ref then return nil end
 
     local doc = ""
@@ -96,24 +96,31 @@ end
 --- Hover implementation
 ---@param lnum integer Line number
 ---@param char integer Cursor column
----@return table | nil
+---@return table
 local hover = function(lnum, char)
     local line = vim.api.nvim_buf_get_lines(0, lnum, lnum + 1, true)[1]
 
     -- Find zotero key
     local k = char
     local pre = line:sub(1, k):match(".*@(.*)")
-    if not pre then return end
+    if not pre then return {} end
     local pos = line:sub(k + 1, -1):match("^(%S*).*")
-    if not pos then return end
+    if not pos then return {} end
     local subline = pre .. pos
-    local zkey = subline:match(
-        "^([0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z])"
-    )
-    if not zkey then return end
-    local res = resolve(zkey)
-    if not res then return end
-    local i, j = line:find(zkey .. "[%w%-0-9]*")
+    local ktnz = require("zotcite.config").get_config().key_type ~= "zotero"
+    local key = ktnz and subline:match("^([%w%-\192-\244\128-\191]+)")
+        or subline:match(
+            "^([0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z])"
+        )
+    if not key then return {} end
+    local res = resolve(key)
+    if #res == 0 then return {} end
+    local i, j
+    if ktnz then
+        i, j = line:find(key)
+    else
+        i, j = line:find(key .. "[%w%-0-9]*")
+    end
     if i then
         return {
             range = {
