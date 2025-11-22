@@ -54,8 +54,8 @@ local TranslateZPath = function(attachment)
     return fpath
 end
 
-M.PDFPath = function(zotkey, cb)
-    local repl, err = zotero.get_attachment(zotkey)
+M.PDFPath = function(key, cb)
+    local repl, err = zotero.get_attachment(key)
     if not repl then
         zwarn(err)
         return
@@ -543,8 +543,8 @@ local finish_open_attachment = function(_, idx)
 end
 
 M.open_attachment = function()
-    local zotkey = M.citation_key()
-    local apath = M.PDFPath(zotkey, finish_open_attachment)
+    local key = M.citation_key()
+    local apath = M.PDFPath(key, finish_open_attachment)
     if type(apath) == "string" then require("zotcite.utils").open(apath) end
 end
 

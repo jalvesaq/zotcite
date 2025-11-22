@@ -981,12 +981,13 @@ function M.update_bib(zkeys, bibf, ktype, verbose)
 end
 
 ---Return list of attachments associated with the citation key
----@param zotkey string The citation key
+---@param key string The citation key
 ---@return table | nil, string
-function M.get_attachment(zotkey)
+function M.get_attachment(key)
     local attachments = {}
+    local field = config.key_type == "zotero" and "zotkey" or "citekey"
     for k, _ in pairs(entry) do
-        if entry[k].zotkey == zotkey then
+        if entry[k][field] == key then
             local query = "SELECT items.itemID, items.key, itemAttachments.path"
                 .. " FROM items, itemAttachments"
                 .. " WHERE items.itemID = itemAttachments.itemID and itemAttachments.parentItemID = '"
