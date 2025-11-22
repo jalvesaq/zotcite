@@ -18,8 +18,7 @@ Markdown, Quarto, Rmd, vimwiki, Typst, LaTeX, and Rnoweb file types. With
 _zotcite_ you can:
 
   - Do auto-completion of citation keys from Zotero database in
-    Markdown, RMarkdown, Quarto, and Typst (requires `cmp-zotcite` if Neovim <
-    0.12).
+    Markdown, RMarkdown, Quarto, and Typst.
 
     ![Auto-completion](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_completion.gif "auto-completion")
 
@@ -31,9 +30,6 @@ _zotcite_ you can:
 
     ![Complete reference information](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_more_info.gif "Complete reference information")
 
-  - Use the `zotref.py` filter to pre-process the Markdown document before the
-    citations are processed by `pandoc`, avoiding the need of `bib` files.
-
   - Open the PDF attachment of the reference associated with the citation key
     under the cursor.
 
@@ -41,8 +37,6 @@ _zotcite_ you can:
     references.
 
   - Extract Zotero notes and annotations from Zotero database.
-
-  - Add all cited references to the YAML header of the Markdown document.
 
 _Zotcite_ is being developed and tested on Linux and should work flawlessly on
 other Unix systems, such as Mac OS X. It may require additional configuration
@@ -68,7 +62,7 @@ on Windows.
 
   - Python 3 is required if are going to convert an OpenDocument text (`odt`)
     to markdown or extract annotations inserted in a PDF document by a PDF
-    viewer other than Zotero. Please, see Zotcite documentation for details).
+    viewer other than Zotero. Please, see the Zotcite documentation for details).
 
 Zotcite can be installed as any Neovim plugin. Below is an example of how to
 install `zotcite` with [lazy.nvim](https://github.com/folke/lazy.nvim):
@@ -89,7 +83,7 @@ install `zotcite` with [lazy.nvim](https://github.com/folke/lazy.nvim):
 ```
 
 > [!Note]
-> You don't need to lazy load zotcite because it is a filetype plugin which
+> You don't need to lazy load zotcite because it is a filetype plugin. This
 > means that it already lazy loads its modules, which will be enabled only for
 > the supported file types.
 
@@ -104,6 +98,6 @@ for further instructions.
 Zotcite's original Python code was based on the
 [citation.vim](https://github.com/rafaqz/citation.vim) project.
 
-Similar project, but depending on BetterBibtex:
+Similar project:
 
 [telescope-zotero.nvim](https://github.com/jmbuhr/telescope-zotero.nvim)
