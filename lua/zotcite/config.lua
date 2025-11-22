@@ -148,7 +148,6 @@ local global_init = function()
     set_path()
     vim.env.RmdFile = vim.fn.expand("%:p")
 
-    vim.api.nvim_create_user_command("Zrefs", require("zotcite.utils").add_yaml_refs, {})
     vim.api.nvim_create_user_command(
         "Zseek",
         function(tbl)
@@ -257,13 +256,6 @@ M.init = function()
         "<Leader>za",
         "<Cmd>lua require('zotcite.get').reference_data('raw')<CR>",
         "Zotcite: show reference info (complete)"
-    )
-    create_map(
-        "n",
-        "<Plug>ZCitationYamlRef",
-        "<Leader>zy",
-        "<Cmd>lua require('zotcite.get').yaml_ref()<CR>",
-        "Zotcite: show reference as YAML"
     )
     create_map(
         "n",

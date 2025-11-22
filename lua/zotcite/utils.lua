@@ -2,29 +2,6 @@ local config = require("zotcite.config").get_config()
 
 local M = {}
 
-M.add_yaml_refs = function()
-    local bigstr = vim.fn.join(vim.api.nvim_buf_get_lines(0, 0, -1, true))
-    local rlist = vim.fn.uniq(vim.fn.sort(vim.fn.split(bigstr)))
-    if rlist and type(rlist) == "table" and #rlist > 0 then
-        local list2 = {}
-        for _, v in pairs(rlist) do
-            if
-                v:find(
-                    "^@[A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9][A-Z0-9]"
-                )
-            then
-                table.insert(list2, v)
-            end
-        end
-        if #list2 > 0 then
-            local refs = require("zotcite.zotero").get_yaml_refs(list2)
-            local rlines = vim.fn.split(refs, "\n")
-            local lnum = vim.api.nvim_win_get_cursor(0)[1]
-            vim.api.nvim_buf_set_lines(0, lnum, lnum, true, rlines)
-        end
-    end
-end
-
 M.ODTtoMarkdown = function(odt)
     require("zotcite.config").set_path()
     local mdf = vim.system({ config.python_path, "odt2md.py", odt }, { text = true })

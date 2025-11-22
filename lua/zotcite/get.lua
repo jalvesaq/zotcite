@@ -125,19 +125,6 @@ M.citation_key = function()
     return citation_key_vt(line, pos)
 end
 
-M.yaml_ref = function()
-    local wrd = M.citation_key()
-    if wrd ~= "" then
-        local repl = zotero.get_yaml_refs(wrd)
-        repl = repl:gsub("^references:[\n\r]*", "")
-        if repl == "" then
-            zwarn("Citation key not found")
-        else
-            vim.schedule(function() vim.api.nvim_echo({ { repl } }, false, {}) end)
-        end
-    end
-end
-
 M.reference_data = function(btype)
     local wrd = M.citation_key()
     if wrd ~= "" then
