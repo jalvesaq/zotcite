@@ -18,8 +18,8 @@ end
 local find_typst_bib = function()
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
     for _, v in pairs(lines) do
-        if v and v:find('#bibliography%("%S-"%)') then
-            return v:match('#bibliography%("(%S-)"%)')
+        if v and v:find("#bibliography%(") then
+            return v:match('#bibliography%(%s*"(%S-)".*')
         end
     end
     zwarn("Could not find the `#bibliography` identifier.")
