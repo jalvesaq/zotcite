@@ -18,11 +18,10 @@ local resolve = function(key)
     if not ref then return nil end
 
     local doc = ""
-    local ttl = " "
-    if ref.title then ttl = ref.title end
+    local ttl = ref.title and ref.title or nil
     local etype = string.gsub(ref.etype, "([A-Z])", " %1")
     etype = string.lower(etype)
-    doc = "`" .. etype .. "`" .. "\n\n**" .. ttl .. "**\n\n"
+    doc = "**" .. ttl .. "**\n\n"
     if ref.etype == "journalArticle" and ref.publicationTitle then
         doc = doc .. "*" .. ref.publicationTitle .. "*\n\n"
     elseif ref.etype == "bookSection" and ref.bookTitle then
@@ -34,7 +33,7 @@ local resolve = function(key)
     else
         doc = doc .. " (????) "
     end
-    return doc
+    return etype, doc
 end
 
 --- Fill completion menu
@@ -102,7 +101,13 @@ local hover = function(lnum, char)
 
     -- Find zotero key
     local k = char
-    local pre = line:sub(1, k):match(".*@(.*)")
+    local pre
+    if vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb" then
+        pre = line:sub(1, k):match(".-([%w%-\192-\244\128-\191]-)$")
+    else
+        pre = line:sub(1, k):match(".*@(.*)")
+    end
+    vim.notify(pre)
     if not pre then return {} end
     local pos = line:sub(k + 1, -1):match("^(%S*).*")
     if not pos then return {} end
@@ -113,8 +118,8 @@ local hover = function(lnum, char)
             "^([0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z])"
         )
     if not key then return {} end
-    local res = resolve(key)
-    if #res == 0 then return {} end
+    local ttl, doc = resolve(key)
+    if not ttl then return {} end
     local i, j
     if ktnz then
         i, j = line:find(key)
@@ -133,10 +138,10 @@ local hover = function(lnum, char)
                     character = j,
                 },
             },
-            contents = res,
+            contents = { kind = "markdown", value = ttl .. "\n\n---\n\n" .. doc },
         }
     end
-    return { contents = res }
+    return { contents = { kind = "markdown", value = ttl .. "\n\n---\n\n" .. doc } }
 end
 
 --- Get list of "zotero_ls" servers attached to current buffer
@@ -161,11 +166,12 @@ local function lsp_request(method, params, callback, _)
         if require("zotcite.config").get_config().key_type == "zotero" then
             key = key:gsub("%-.*", "")
         end
-        local detail = resolve(key)
-        if detail then
-            params.detail = detail
-            callback(nil, params)
+        local ttl, doc = resolve(key)
+        if ttl then
+            params.detail = ttl
+            params.documentation = { kind = "zinfo", value = doc }
         end
+        callback(nil, params)
         vim.schedule(require("zotcite.hl").citations)
     elseif method == "textDocument/hover" then
         if not compl_region then
