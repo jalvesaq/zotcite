@@ -344,8 +344,13 @@ end
 
 local finish_note = function(sel)
     local key = sel.value.key
-    local is_markdown = not vim.tbl_contains({ "tex", "rnoweb" }, vim.o.filetype)
-    local repl = zotero.get_notes(key, is_markdown)
+    local lang = "markdown"
+    if vim.tbl_contains({ "tex", "rnoweb" }, vim.o.filetype) then
+        lang = "latex"
+    elseif vim.bo.filetype == "typst" then
+        lang = "typst"
+    end
+    local repl = zotero.get_notes(key, lang)
     if not repl then
         zwarn("No note found.")
     else

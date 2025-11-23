@@ -917,32 +917,56 @@ function M.get_annotations(key, offset, md)
     return lines
 end
 
--- Return user notes from a reference.
----@param key string The Zotero key
----@param md boolean Whether the document has Markdown syntax
----@return string | nil
-function M.get_notes(key, md)
-    if not config.zotero_sqlite_path then return end
-    copy_zotero_data()
-
-    local key_id = get_key_id(key)
-    if not key_id then return end
-
-    local query = "SELECT parentItemID, note FROM itemNotes WHERE parentItemID = "
-        .. tostring(key_id)
-    local sql_data = get_sql_data(query)
-    if not sql_data then return end
-
-    local notes = ""
-    for _, v in pairs(sql_data) do
-        notes = notes .. v.note
-    end
-    if notes == "" then return nil end
-
+local notes_to_tex = function(notes)
     -- Year-page separator
     local ypsep = get_ypsep(true)
 
-    notes = sanitize(notes, md)
+    notes = notes:gsub("<h1>(.-)</h1>", "\\section{%1}\n")
+    notes = notes:gsub("<h2>(.-)</h2>", "\\subsection{%1}\n")
+    notes = notes:gsub("<h3>(.-)</h3>", "\\subsubsection{%1}\n")
+    notes = notes:gsub("<h4>(.-)</h4>", "\\subsubsection{%1}\n")
+    notes = notes:gsub("<h5>(.-)</h5>", "\\subsubsection{%1}\n")
+    notes = notes:gsub("<strong>(.-)</strong>", "\\textbf{%1}")
+    notes = notes:gsub("<em>(.-)</em>", "\\em{%1}")
+    notes = notes:gsub(
+        '<span style="text%-decoration: line%-through">(.-)</span>',
+        "\\strikethrough{%1}"
+    )
+    notes = notes:gsub(' rel="noopener noreferrer nofollow"', "")
+    notes = notes:gsub('<a href="(.-)">(.-)</a>', "\\href{%1}{%2}")
+    notes = notes:gsub('%(<span class="citation%-item">.-</span>%)', "")
+    notes = notes:gsub(
+        '<span class="citation" data%-citation=".-items%%2F(.-)%%.-locator%%22%%3A%%22(.-)%%22.-">.-</span>',
+        "\\cite[" .. ypsep .. "%2]{%1}"
+    )
+    notes = notes:gsub(
+        '<span class="citation" data%-citation=".-items%%2F(.-)%%.-">',
+        "\\cite{%1}"
+    )
+    notes = notes:gsub("<li>%s*(.-)%s*</li>", "\n  \\item %1")
+    notes = notes:gsub("<ul>(.-)</ul>", "\n\\begin{itemize}%1\\end{itemize}\n")
+    notes = notes:gsub("<ol>(.-)</ol>", "\n\\begin{enumerate}%1\\end{enumerate}\n")
+    notes = notes:gsub(
+        "<blockquote>%s*(.-)%s*</blockquote>",
+        "\n\\begin{quote}\n%1\n\\end{quote}\n"
+    )
+    notes = notes:gsub('<pre class="math">(.-)</pre>', "\n%1\n")
+    notes = notes:gsub("<pre>(.-)</pre>", "\n\\begin{verbatim}\n%1\nend{verbatim}\n")
+    notes = notes:gsub("<br/>", "\\linebreak\n")
+    notes = notes:gsub("<p>(.-)</p>", "%1\n\n")
+    notes = notes:gsub(' class="highlight" data%-annotation=".-"(.-)', "")
+    notes = notes:gsub("<div .->", "")
+    notes = notes:gsub("</div>", "")
+    notes = notes:gsub("<span>", "")
+    notes = notes:gsub("</span>", "")
+    notes = notes:gsub("\n\n\n", "\n\n")
+    return notes .. "\n"
+end
+
+local notes_to_md = function(notes)
+    -- Year-page separator
+    local ypsep = get_ypsep(true)
+
     notes = notes:gsub("<h1>(.-)</h1>", "# %1\n")
     notes = notes:gsub("<h2>(.-)</h2>", "## %1\n")
     notes = notes:gsub("<h3>(.-)</h3>", "### %1\n")
@@ -976,6 +1000,78 @@ function M.get_notes(key, md)
     notes = notes:gsub("</span>", "")
     notes = notes:gsub("\n\n\n", "\n\n")
     return notes .. "\n"
+end
+
+local notes_to_typ = function(notes)
+    -- Year-page separator
+    local ypsep = get_ypsep(true)
+
+    notes = notes:gsub("<h1>(.-)</h1>", "= %1\n")
+    notes = notes:gsub("<h2>(.-)</h2>", "== %1\n")
+    notes = notes:gsub("<h3>(.-)</h3>", "=== %1\n")
+    notes = notes:gsub("<h4>(.-)</h4>", "==== %1\n")
+    notes = notes:gsub("<h5>(.-)</h5>", "===== %1\n")
+    notes = notes:gsub("<strong>(.-)</strong>", "*%1*")
+    notes = notes:gsub("<em>(.-)</em>", "_%1_")
+    notes =
+        notes:gsub('<span style="text%-decoration: line%-through">(.-)</span>', "~~%1~~")
+    notes = notes:gsub(' rel="noopener noreferrer nofollow"', "")
+    notes = notes:gsub('<a href="(.-)">(.-)</a>', '#link("%1")[%2]')
+    notes = notes:gsub('%(<span class="citation%-item">.-</span>%)', "")
+    notes = notes:gsub(
+        '<span class="citation" data%-citation=".-items%%2F(.-)%%.-locator%%22%%3A%%22(.-)%%22.-">.-</span>',
+        '#cite(<%1>, supplement: "' .. ypsep .. '%2", form: "normal")'
+    )
+    notes =
+        notes:gsub('<span class="citation" data%-citation=".-items%%2F(.-)%%.-">', "@%1")
+    notes = notes:gsub("<li>%s*(.-)%s*</li>", "\n  - %1")
+    notes = notes:gsub("<ul>(.-)</ul>", "\n%1\n")
+    notes = notes:gsub("<ol>(.-)</ol>", "\n%1\n")
+    notes = notes:gsub("<blockquote>%s*(.-)%s*</blockquote>", "\n#quote[%1]\n")
+    notes = notes:gsub('<pre class="math">(.-)</pre>', "\n%1\n")
+    notes = notes:gsub("<pre>(.-)</pre>", "\n```\n%1\n```\n")
+    notes = notes:gsub("<br/>", "\n\n")
+    notes = notes:gsub("<p>(.-)</p>", "%1\n\n")
+    notes = notes:gsub(' class="highlight" data%-annotation=".-"(.-)', "")
+    notes = notes:gsub("<div .->", "")
+    notes = notes:gsub("</div>", "")
+    notes = notes:gsub("<span>", "")
+    notes = notes:gsub("</span>", "")
+    notes = notes:gsub("\n\n\n", "\n\n")
+    return notes .. "\n"
+end
+
+-- Return user notes from a reference.
+---@param key string The Zotero key
+---@param lang string The document language
+---@return string | nil
+function M.get_notes(key, lang)
+    if not config.zotero_sqlite_path then return end
+    copy_zotero_data()
+
+    local key_id = get_key_id(key)
+    if not key_id then return end
+
+    local query = "SELECT parentItemID, note FROM itemNotes WHERE parentItemID = "
+        .. tostring(key_id)
+    local sql_data = get_sql_data(query)
+    if not sql_data then return end
+
+    local notes = ""
+    for _, v in pairs(sql_data) do
+        notes = notes .. v.note
+    end
+    if notes == "" then return nil end
+
+    notes = sanitize(notes, lang)
+    if lang == "typst" then
+        notes = notes_to_typ(notes)
+    elseif lang == "latex" then
+        notes = notes_to_tex(notes)
+    else
+        notes = notes_to_md(notes)
+    end
+    return notes
 end
 
 --- Return information useful for debugging the application
