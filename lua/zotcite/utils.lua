@@ -15,7 +15,9 @@ M.ODTtoMarkdown = function(odt)
 end
 
 local get_output_ext = function()
-    if vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb" then return "pdf" end
+    if vim.tbl_contains({ "tex", "rnoweb", "typst" }, vim.bo.filetype) then
+        return "pdf"
+    end
     local ext = "html"
     local fmt
     if vim.bo.filetype == "quarto" then

@@ -18,13 +18,11 @@ end
 local find_typst_bib = function()
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
     for _, v in pairs(lines) do
-        if v and v:find("#bibliography%(['\"]") then
-            local bib = v:gsub("#bibliography%(['\"]", "")
-            bib = bib:gsub("['\"].*", "")
-            return bib
+        if v and v:find('#bibliography%("%S-"%)') then
+            return v:match('#bibliography%("(%S-)"%)')
         end
     end
-    zwarn("Could not find the '#bibliography' identifier.")
+    zwarn("Could not find the `#bibliography` identifier.")
     return nil
 end
 
@@ -53,8 +51,8 @@ local find_markdown_bib = function()
 end
 
 local find_bib_fn = function()
-    if vim.o.filetype == "typst" then return find_typst_bib() end
-    if vim.o.filetype == "tex" or vim.o.filetype == "rnoweb" then
+    if vim.bo.filetype == "typst" then return find_typst_bib() end
+    if vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb" then
         return find_tex_bib()
     end
     return find_markdown_bib()
