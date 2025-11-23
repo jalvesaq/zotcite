@@ -456,6 +456,9 @@ M.yaml_field = function(field, bn)
                     table.insert(value, get_yaml_string(line))
                     i = i + 1
                 end
+                if lines[i]:find("^%s*%w*:$") then
+                    return lines[i]:match("^%s*(%w-):$")
+                end
             elseif lines[i]:find(field .. ":%s%[.*%]%s*$") then
                 -- bracketed list in a single line
                 value = vim.split(lines[i]:match("^" .. field .. ":%s*%[(.-)%]%s*$"), ",")

@@ -1,4 +1,5 @@
 local config = require("zotcite.config").get_config()
+local zwarn = require("zotcite").zwarn
 
 local M = {}
 
@@ -9,7 +10,7 @@ M.ODTtoMarkdown = function(odt)
     if mdf.code == 0 then
         vim.cmd("tabnew " .. mdf.stdout)
     else
-        M.zwarn(mdf.stderr:gsub("\n", " "))
+        zwarn(mdf.stderr:gsub("\n", " "))
     end
 end
 
@@ -21,24 +22,24 @@ M.view_document = function()
     else
         fmt = require("zotcite.get").yaml_field("output", vim.api.nvim_get_current_buf())
     end
-    if type(fmt) == "table" then
-        for k, _ in pairs(fmt) do
-            ext = tostring(k)
-            break
+    if fmt then
+        if type(fmt) == "table" then
+            for k, _ in pairs(fmt) do
+                ext = tostring(k)
+                break
+            end
+        else
+            ext = tostring(fmt)
         end
-    else
-        ext = tostring(fmt)
-    end
-    if ext == "html_document" or ext == "revealjs" then
-        ext = "html"
-    elseif ext == "pdf_document" or ext == "beamer" then
-        ext = "pdf"
-    elseif ext == "odf_document" then
-        ext = "odt"
+        if ext == "pdf_document" or ext == "beamer" then
+            ext = "pdf"
+        elseif ext == "odf_document" then
+            ext = "odt"
+        end
     end
     local doc = vim.fn.expand("%:p:r") .. "." .. ext
     if vim.fn.filereadable(doc) == 0 then
-        M.zwarn('File "' .. doc .. '" not found.')
+        zwarn('File "' .. doc .. '" not found.')
         return
     end
     M.open(doc)
@@ -59,7 +60,7 @@ M.open = function(fpath)
             em = em .. ":\n  exit code: " .. tostring(obj.code)
             if obj.stdout and obj.stdout ~= "" then em = em .. "\n  " .. obj.stdout end
             if obj.stderr and obj.stderr ~= "" then em = em .. "\n  " .. obj.stderr end
-            M.zwarn(em)
+            zwarn(em)
         end
         return
     end
