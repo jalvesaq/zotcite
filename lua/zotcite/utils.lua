@@ -14,20 +14,18 @@ M.ODTtoMarkdown = function(odt)
     end
 end
 
-M.view_document = function()
+local get_output_ext = function()
+    if vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb" then return "pdf" end
     local ext = "html"
     local fmt
-    if vim.o.filetype == "quarto" then
+    if vim.bo.filetype == "quarto" then
         fmt = require("zotcite.get").yaml_field("format", vim.api.nvim_get_current_buf())
     else
         fmt = require("zotcite.get").yaml_field("output", vim.api.nvim_get_current_buf())
     end
     if fmt then
         if type(fmt) == "table" then
-            for k, _ in pairs(fmt) do
-                ext = tostring(k)
-                break
-            end
+            ext = tostring(fmt[1])
         else
             ext = tostring(fmt)
         end
@@ -37,6 +35,11 @@ M.view_document = function()
             ext = "odt"
         end
     end
+    return ext
+end
+
+M.view_document = function()
+    local ext = get_output_ext()
     local doc = vim.fn.expand("%:p:r") .. "." .. ext
     if vim.fn.filereadable(doc) == 0 then
         zwarn('File "' .. doc .. '" not found.')
