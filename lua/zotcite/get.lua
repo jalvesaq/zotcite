@@ -394,19 +394,23 @@ local finish_pdfnote_2 = function(_, idx)
 end
 
 local finish_pdfnote = function(sel)
-    local zotkey = sel.value.key
-    local repl = zotero.get_ref_data(zotkey)
+    local key = config.key_type == "zotero" and sel.value.key or sel.value.cite
+    local repl = zotero.get_ref_data(key)
     if type(repl) ~= "table" then
         zwarn("Citation key not found")
         return
     end
-    local citekey
-    citekey = "@" .. zotkey
+    local citekey = "@"
+    if config.key_type == "zotero" then
+        citekey = citekey .. sel.value.key
+    else
+        citekey = citekey .. sel.value.cite
+    end
     local pg = "1"
     if repl.pages and repl.pages:find("[0-9]-") then pg = repl.pages end
     pdfnote_data = { citekey = citekey, pg = pg }
 
-    local apath = M.PDFPath(zotkey, finish_pdfnote_2)
+    local apath = M.PDFPath(key, finish_pdfnote_2)
     if type(apath) == "string" then
         sel_list = { apath }
         finish_pdfnote_2(nil, 1)

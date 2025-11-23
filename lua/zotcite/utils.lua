@@ -14,30 +14,27 @@ M.ODTtoMarkdown = function(odt)
     end
 end
 
+---@return string
 local get_output_ext = function()
     if vim.tbl_contains({ "tex", "rnoweb", "typst" }, vim.bo.filetype) then
         return "pdf"
     end
-    local ext = "html"
-    local fmt
-    if vim.bo.filetype == "quarto" then
-        fmt = require("zotcite.get").yaml_field("format", vim.api.nvim_get_current_buf())
-    else
-        fmt = require("zotcite.get").yaml_field("output", vim.api.nvim_get_current_buf())
-    end
+    local field = vim.bo.filetype == "quarto" and "format" or "output"
+    local fmt = require("zotcite.get").yaml_field(field, vim.api.nvim_get_current_buf())
     if fmt then
         if type(fmt) == "table" then
-            ext = tostring(fmt[1])
+            fmt = #fmt > 0 and tostring(fmt[1]) or "html"
         else
-            ext = tostring(fmt)
+            fmt = tostring(fmt)
         end
-        if ext == "pdf_document" or ext == "beamer" then
-            ext = "pdf"
-        elseif ext == "odf_document" then
-            ext = "odt"
+        if fmt == "pdf_document" or fmt == "beamer" then
+            return "pdf"
+        elseif fmt == "odf_document" then
+            return "odt"
         end
+        return fmt
     end
-    return ext
+    return "html"
 end
 
 M.view_document = function()

@@ -857,6 +857,7 @@ function M.get_annotations(key, offset, md)
     local sql_data = get_sql_data(query)
     if not sql_data then return end
 
+    local ckey = config.key_type == "zotero" and key or entry[key_id].citekey
     -- Year-page separator
     local s = get_ypsep(md)
 
@@ -891,9 +892,10 @@ function M.get_annotations(key, offset, md)
         if v.c then
             local txt = sanitize(v.c, md)
             if md then
-                txt = string.format("%s [comment on @%s%s%s]", txt, key, s, v.p)
+                txt = string.format("%s [comment on @%s%s%s]", txt, ckey, s, v.p)
             else
-                txt = string.format("%s [comment on \\citet[%s%s]{%s}]", txt, s, v.p, key)
+                txt =
+                    string.format("%s [comment on \\citet[%s%s]{%s}]", txt, s, v.p, ckey)
             end
             table.insert(lines, txt)
             table.insert(lines, "")
@@ -901,11 +903,11 @@ function M.get_annotations(key, offset, md)
         if v.t then
             local txt = sanitize(v.t, md)
             if md then
-                txt = string.format("> %s [@%s%s%s]", txt, key, s, v.p)
+                txt = string.format("> %s [@%s%s%s]", txt, ckey, s, v.p)
                 table.insert(lines, txt)
             else
                 table.insert(lines, "\\begin{quote}")
-                txt = string.format("%s \\cite[%s%s]{%s}", txt, s, v.p, key)
+                txt = string.format("%s \\cite[%s%s]{%s}", txt, s, v.p, ckey)
                 table.insert(lines, txt)
                 table.insert(lines, "\\end{quote}")
             end

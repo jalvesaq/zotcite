@@ -157,8 +157,11 @@ local function lsp_request(method, params, callback, _)
             function() complete(callback, params.position.line, params.position.character) end
         )
     elseif method == "completionItem/resolve" then
-        local zotkey = params.textEdit.newText:gsub("%-.*", "")
-        local detail = resolve(zotkey)
+        local key = params.textEdit.newText
+        if require("zotcite.config").get_config().key_type == "zotero" then
+            key = key:gsub("%-.*", "")
+        end
+        local detail = resolve(key)
         if detail then
             params.detail = detail
             callback(nil, params)
