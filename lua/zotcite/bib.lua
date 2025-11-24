@@ -117,7 +117,8 @@ local get_tex_citations = function(kz)
 end
 
 M.update = function()
-    local kz = require("zotcite.config").get_config().key_type == "zotero"
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    local kz = kt == "zotero"
     local ckeys
     if vim.o.filetype == "tex" or vim.o.filetype == "rnoweb" then
         ckeys = get_tex_citations(kz)
@@ -135,8 +136,7 @@ M.update = function()
     local bib = find_bib_fn()
     if not bib then return end
 
-    local config = require("zotcite.config").get_config()
-    require("zotcite.zotero").update_bib(ckeys, bib, config.key_type, false)
+    require("zotcite.zotero").update_bib(ckeys, bib, kt, false)
     vim.schedule(require("zotcite.hl").citations)
 end
 

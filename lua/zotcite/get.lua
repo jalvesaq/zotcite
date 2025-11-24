@@ -88,7 +88,8 @@ M.PDFPath = function(key, cb)
 end
 
 local is_valid_char = function(c)
-    if config.key_type == "zotero" then
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    if kt == "zotero" then
         return (c >= "0" and c <= "9")
             or (c >= "A" and c <= "z")
             or (c >= "a" and c <= "z")
@@ -113,7 +114,8 @@ local citation_key_vt = function(line, pos)
         j = j + 1
     end
     local key = line:sub(i + 1, j - 1)
-    if config.key_type == "zotero" then
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    if kt == "zotero" then
         if #key == 8 then return key end
         return ""
     else
@@ -156,7 +158,8 @@ end
 local finish_citation = function(ref)
     if not ref then return end
     local rownr = vim.api.nvim_win_get_cursor(0)[1] - 1
-    local cite = config.key_type == "zotero" and ref.value.key or ref.value.cite
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    local cite = kt == "zotero" and ref.value.key or ref.value.cite
     if not (vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb") then
         cite = "@" .. cite
     end
@@ -427,14 +430,15 @@ local finish_pdfnote_2 = function(_, idx)
 end
 
 local finish_pdfnote = function(sel)
-    local key = config.key_type == "zotero" and sel.value.key or sel.value.cite
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    local key = kt == "zotero" and sel.value.key or sel.value.cite
     local repl = zotero.get_ref_data(key)
     if type(repl) ~= "table" then
         zwarn("Citation key not found")
         return
     end
     local citekey = "@"
-    if config.key_type == "zotero" then
+    if kt == "zotero" then
         citekey = citekey .. sel.value.key
     else
         citekey = citekey .. sel.value.cite

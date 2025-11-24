@@ -11,7 +11,8 @@ local M = {}
 local vt_citation = function(ns, i, s, e, c, a)
     if not a then return end
     local set_m = vim.api.nvim_buf_set_extmark
-    if config.key_type == "zotero" then
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    if kt == "zotero" then
         a = a:gsub("%-", "_")
         set_m(0, ns, i - 1, s - 1, { end_col = e, hl_group = "Ignore", conceal = "" })
         set_m(
@@ -51,7 +52,9 @@ local vt_citations_bib = function(lines, ns)
         end
         if key and citekey and zotkey then
             local grd = require("zotcite.zotero").get_ref_data
-            local r = config.key_type == "zotero" and grd(zotkey) or grd(citekey)
+            local kt =
+                require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+            local r = kt == "zotero" and grd(zotkey) or grd(citekey)
             if not r or r.zotkey ~= zotkey then
                 local s, e = lines[zlnum]:find(zotkey)
                 if s and e then
@@ -72,7 +75,8 @@ local vt_citations_bib = function(lines, ns)
 end
 
 local vt_citations_md = function(ac, ns, lines)
-    local kp = config.key_type == "zotero"
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    local kp = kt == "zotero"
             and "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
         or "@[%w%-\192-\244\128-\191]+"
     local a = ""
@@ -89,7 +93,8 @@ local vt_citations_md = function(ac, ns, lines)
 end
 
 local vt_citations_typ = function(ac, ns, lines)
-    local kp = config.key_type == "zotero"
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    local kp = kt == "zotero"
             and "<[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]>"
         or "<[%w%-\192-\244\128-\191]+>"
     local a = ""
@@ -106,8 +111,9 @@ local vt_citations_typ = function(ac, ns, lines)
 end
 
 local vt_citations_tex = function(ac, ns, lines)
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
     local kp1 = "\\%w*cit.*{"
-    local kp2 = config.key_type == "zotero"
+    local kp2 = kt == "zotero"
             and "[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
         or "[%w%-\192-\244\128-\191]+"
     local a = ""

@@ -263,7 +263,8 @@ local function copy_zotero_data()
 
     -- Make a copy of zotero.sqlite to avoid locks
     if ztime > zcopy_time then vim.uv.fs_copyfile(zf, zcopy) end
-    if config.key_type ~= "better-bibtex" then return end
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    if kt ~= "better-bibtex" then return end
 
     local bbt_f = zf:gsub("zotero%.sqlite$", "better-bibtex.sqlite")
     bbtcopy = config.tmpdir .. "/bbt.sqlite"
@@ -482,11 +483,12 @@ local function get_sequence_string(n)
 end
 
 local function add_citekeys()
-    if config.key_type == "better-bibtex" then
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    if kt == "better-bibtex" then
         add_bbt_keys()
     else
         calculate_citekeys()
-        if config.key_type == "template" then
+        if kt == "template" then
             -- Fix duplicates
             for k1, v1 in pairs(entry) do
                 local dup = { v1 }
@@ -747,7 +749,8 @@ end
 ---@return table | nil, string
 function M.get_attachment(key)
     local attachments = {}
-    local field = config.key_type == "zotero" and "zotkey" or "citekey"
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    local field = kt == "zotero" and "zotkey" or "citekey"
     for k, _ in pairs(entry) do
         if entry[k][field] == key then
             local query = "SELECT items.itemID, items.key, itemAttachments.path"
@@ -775,7 +778,8 @@ end
 function M.get_all_citations()
     -- Return a list of all [zotkey, citekey].
     local res = {}
-    if require("zotcite.config").get_config().key_type == "zotero" then
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    if kt == "zotero" then
         for _, e in pairs(entry) do
             res[e.zotkey] = e.citekey
         end
@@ -806,7 +810,8 @@ local get_ref_data_zotkey = function(zotkey)
 end
 
 function M.get_ref_data(key)
-    if config.key_type == "zotero" then
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    if kt == "zotero" then
         return get_ref_data_zotkey(key)
     else
         return get_ref_data_template(key)
@@ -874,7 +879,8 @@ function M.get_annotations(key, offset)
     local sql_data = get_sql_data(query)
     if not sql_data then return end
 
-    local ckey = config.key_type == "zotero" and key or entry[key_id].citekey
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    local ckey = kt == "zotero" and key or entry[key_id].citekey
     -- Year-page separator
     local s = get_ypsep(lang)
 

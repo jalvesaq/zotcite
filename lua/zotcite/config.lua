@@ -68,6 +68,7 @@ local config = {
 
 local did_global_init = false
 local first_buf
+local key_type = {}
 
 local zwarn = require("zotcite").zwarn
 
@@ -86,6 +87,35 @@ M.show = function()
     end
     vim.schedule(function() vim.api.nvim_echo(info, false, {}) end)
 end
+
+local set_buffer_key_type = function()
+    local bn = vim.api.nvim_get_current_buf()
+    if vim.tbl_contains({ "tex", "rnoweb", "typst" }, vim.bo.filetype) then
+        local ptrn = vim.bo.filetype == "typst" and "^%s*//" or "^%s*%%"
+        ptrn = ptrn .. "%s*zotcite%-key%-type%s*=%s*"
+        local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+        for _, v in pairs(lines) do
+            if v:find(ptrn) then
+                local kt = v:match(".*zotcite%-key%-type%s*=%s*(%S*)")
+                if vim.tbl_contains({ "zotero", "template", "better-bibtex" }, kt) then
+                    key_type[bn] = kt
+                    return
+                end
+            end
+        end
+    else
+        local kt = require("zotcite.get").yaml_field("zotcite-key-type", bn)
+        if kt and type(kt) == "string" then
+            if vim.tbl_contains({ "zotero", "template", "better-bibtex" }, kt) then
+                key_type[bn] = kt
+                return
+            end
+        end
+    end
+    key_type[bn] = config.key_type
+end
+
+M.get_key_type = function(bufnr) return key_type[bufnr] end
 
 local update_config = function()
     local zotcite = require("zotcite")
@@ -189,6 +219,8 @@ end
 M.init = function()
     -- Disable for LSP popup windows
     if vim.o.buftype == "nofile" then return end
+
+    set_buffer_key_type()
 
     -- Do this only once
     if did_global_init then

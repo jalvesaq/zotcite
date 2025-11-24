@@ -73,17 +73,18 @@ local complete = function(callback, lnum, char)
         },
     }
     if itms then
-        local config = require("zotcite.config").get_config()
         for _, v in pairs(itms) do
             local txt = string.format("%s (%s) %s", v.alastnm, v.year, v.title)
             if vim.fn.strwidth(txt) > 58 then
                 txt = vim.fn.strcharpart(txt, 0, 58) .. "⋯"
             end
+            local kt =
+                require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
             table.insert(compl_items, {
                 label = txt,
                 kind = vim.lsp.protocol.CompletionItemKind.Variable,
                 textEdit = {
-                    newText = config.key_type == "zotero" and v.zotkey or v.citekey,
+                    newText = kt == "zotero" and v.zotkey or v.citekey,
                     range = text_edit_range,
                 },
             })
@@ -111,7 +112,8 @@ local hover = function(lnum, char)
     local pos = line:sub(k + 1, -1):match("^(%S*).*")
     if not pos then return {} end
     local subline = pre .. pos
-    local ktnz = require("zotcite.config").get_config().key_type ~= "zotero"
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    local ktnz = kt ~= "zotero"
     local key = ktnz and subline:match("^([%w%-\192-\244\128-\191]+)")
         or subline:match(
             "^([0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z])"
@@ -162,9 +164,9 @@ local function lsp_request(method, params, callback, _)
         )
     elseif method == "completionItem/resolve" then
         local key = params.textEdit.newText
-        if require("zotcite.config").get_config().key_type == "zotero" then
-            key = key:gsub("%-.*", "")
-        end
+
+        local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+        if kt == "zotero" then key = key:gsub("%-.*", "") end
         local ttl, doc = resolve(key)
         if ttl then
             params.detail = ttl

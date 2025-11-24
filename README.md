@@ -93,6 +93,4 @@ for further instructions.
 Zotcite's original Python code was based on the
 [citation.vim](https://github.com/rafaqz/citation.vim) project.
 
-Similar project:
-
-[telescope-zotero.nvim](https://github.com/jmbuhr/telescope-zotero.nvim)
+Similar project: [telescope-zotero.nvim](https://github.com/jmbuhr/telescope-zotero.nvim)

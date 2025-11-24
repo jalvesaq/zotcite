@@ -277,6 +277,21 @@ are "template" (the default), "better-bibtex", and "zotero". Example:
 >lua
  key_type = "zotero",
 <
+You can also set a different value for each document. For a Markdown,
+RMarkdown or Quarto document, add the key `zotcite-key-type` to the YAML
+header. Example:
+>yaml
+ zotcite-key-type: better-bibtex
+<
+For LaTeX, Rnoweb, or Tpyst, it should be within a commented line with the
+comment string at the beginning of the line. Example for LaTeX:
+>tex
+ % zotcite-key-type = zotero
+<
+and for Typst:
+>typst
+ // zotcite-key-type = template
+<
 							   *citation_template*
 When the `key_type` is "zotero", zotcite complements the citation key with a
 virtual text in the format `Author_Year`. The citation key is the key
