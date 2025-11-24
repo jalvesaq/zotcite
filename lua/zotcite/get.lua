@@ -226,6 +226,9 @@ end
 
 local finish_annotations_selection = function(sel)
     if not sel then return end
+    local lang = "markdown"
+    if vim.bo.filetype == "typst" then lang = "typst" end
+    if vim.bo.filetype == "tex" or vim.bo.filetype == "noweb" then lang = "latex" end
     local raw_annotations = get_annotations(sel)
     if raw_annotations then
         local grouped_annotations = {}
@@ -233,7 +236,11 @@ local finish_annotations_selection = function(sel)
         local last_was_quote = false
 
         for _, line in ipairs(raw_annotations) do
-            if line:sub(1, 1) == ">" then
+            if
+                (lang == "markdown" and line:sub(1, 1) == ">")
+                or (lang == "typst" and line:find("^#quote"))
+                or (lang == "latex" and line:find("^\\begin%{quote%}"))
+            then
                 if #current_group > 0 and not last_was_quote then
                     table.insert(current_group, line)
                     table.insert(grouped_annotations, table.concat(current_group, "\n"))
@@ -329,7 +336,10 @@ M.annotations = function(ko, use_selection)
     if ko:find(" ") then
         ko = vim.fn.split(ko)
         argmt = ko[1]
-        offset = tonumber(ko[2])
+        if ko[2] then
+            local ko2 = tonumber(ko[2])
+            if ko2 then offset = ko2 end
+        end
     else
         argmt = ko
         offset = 0
