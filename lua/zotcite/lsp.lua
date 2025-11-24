@@ -107,7 +107,6 @@ local hover = function(lnum, char)
     else
         pre = line:sub(1, k):match(".*@(.*)")
     end
-    vim.notify(pre)
     if not pre then return {} end
     local pos = line:sub(k + 1, -1):match("^(%S*).*")
     if not pos then return {} end
