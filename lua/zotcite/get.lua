@@ -390,7 +390,29 @@ local finish_pdfnote_2 = function(_, idx)
     }, { text = true }):wait()
     if notes.code == 0 then
         local lines = vim.fn.split(notes.stdout, "\n")
-        vim.api.nvim_buf_set_lines(0, lnum, lnum, true, lines)
+        if vim.bo.filetype == "typst" then
+            local tlines = {}
+            for _, v in pairs(lines) do
+                v = v:gsub(
+                    "^> (.-) %[@(%S-), (.-)%]$",
+                    '#quote[%1] #cite(<%2>, supplement: "%3")'
+                )
+                table.insert(tlines, v)
+            end
+            vim.api.nvim_buf_set_lines(0, lnum, lnum, true, tlines)
+        elseif vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb" then
+            local tlines = {}
+            for _, v in pairs(lines) do
+                v = v:gsub(
+                    "^> (.-) %[@(%S-), (.-)%]$",
+                    "\\begin{quote}%1 \\cite[%3]{%2}\\end{quote}"
+                )
+                table.insert(tlines, v)
+            end
+            vim.api.nvim_buf_set_lines(0, lnum, lnum, true, tlines)
+        else
+            vim.api.nvim_buf_set_lines(0, lnum, lnum, true, lines)
+        end
         require("zotcite.hl").citations()
     elseif notes.code == 33 then
         zwarn('Failed to load "' .. fpath .. '" as a valid PDF document.')
