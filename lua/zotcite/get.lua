@@ -3,7 +3,7 @@ local zwarn = require("zotcite").zwarn
 local seek = require("zotcite.seek")
 local zotero = require("zotcite.zotero")
 
-local offset = "0"
+local offset = 0
 local pdfnote_data = {}
 local sel_list = {}
 
@@ -207,9 +207,8 @@ M.abstract = function()
 end
 
 local get_annotations = function(sel)
-    local is_markdown = not vim.tbl_contains({ "tex", "rnoweb" }, vim.o.filetype)
     local key = sel.value.key
-    local repl = zotero.get_annotations(key, offset, is_markdown)
+    local repl = zotero.get_annotations(key, offset)
     if not repl then zwarn("No annotation found.") end
     return repl
 end
@@ -330,10 +329,10 @@ M.annotations = function(ko, use_selection)
     if ko:find(" ") then
         ko = vim.fn.split(ko)
         argmt = ko[1]
-        offset = ko[2]
+        offset = tonumber(ko[2])
     else
         argmt = ko
-        offset = "0"
+        offset = 0
     end
     if use_selection then
         seek.refs(argmt, finish_annotations_selection)
@@ -344,13 +343,7 @@ end
 
 local finish_note = function(sel)
     local key = sel.value.key
-    local lang = "markdown"
-    if vim.tbl_contains({ "tex", "rnoweb" }, vim.o.filetype) then
-        lang = "latex"
-    elseif vim.bo.filetype == "typst" then
-        lang = "typst"
-    end
-    local repl = zotero.get_notes(key, lang)
+    local repl = zotero.get_notes(key)
     if not repl then
         zwarn("No note found.")
     else

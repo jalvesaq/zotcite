@@ -548,12 +548,11 @@ local function sanitize_latex(s)
     return s
 end
 
-local function sanitize(s, md)
-    if md then
-        return sanitize_markdown(s)
-    else
+local function sanitize(s)
+    if vim.tbl_contains({ "tex", "rnoweb" }, vim.bo.filetype) then
         return sanitize_latex(s)
     end
+    return sanitize_markdown(s)
 end
 
 ---@param item table The Zotero item
@@ -814,11 +813,25 @@ function M.get_ref_data(key)
     end
 end
 
-local function get_ypsep(md)
+local get_ft_lang = function()
+    if vim.tbl_contains({ "tex", "rnoweb" }, vim.bo.filetype) then
+        return "latex"
+    elseif vim.bo.filetype == "typst" then
+        return "typst"
+    end
+    return "markdown"
+end
+
+--- Get year-page separator
+---@param lang string
+---@return string
+local function get_ypsep(lang)
     local ypsep = config.year_page_sep
     if not ypsep then
-        if md then
+        if lang == "markdown" then
             ypsep = ", p. "
+        elseif lang == "typst" then
+            ypsep = "p. "
         else
             ypsep = "p.~"
         end
@@ -837,8 +850,12 @@ local get_key_id = function(zotkey)
     return key_id
 end
 
--- Return user annotations made using Zotero's PDF viewer.
-function M.get_annotations(key, offset, md)
+--- Return user annotations made using Zotero's PDF viewer.
+---@param key string
+---@param offset integer
+---@return string[] | nil
+function M.get_annotations(key, offset)
+    local lang = get_ft_lang()
     if not config.zotero_sqlite_path then return end
     copy_zotero_data()
 
@@ -859,7 +876,7 @@ function M.get_annotations(key, offset, md)
 
     local ckey = config.key_type == "zotero" and key or entry[key_id].citekey
     -- Year-page separator
-    local s = get_ypsep(md)
+    local s = get_ypsep(lang)
 
     local notes = {}
     for _, v in pairs(sql_data) do
@@ -890,26 +907,43 @@ function M.get_annotations(key, offset, md)
     local lines = {}
     for _, v in pairs(notes) do
         if v.c then
-            local txt = sanitize(v.c, md)
-            if md then
-                txt = string.format("%s [comment on @%s%s%s]", txt, ckey, s, v.p)
-            else
+            local txt = sanitize(v.c)
+            if lang == "latex" then
                 txt =
                     string.format("%s [comment on \\citet[%s%s]{%s}]", txt, s, v.p, ckey)
+            elseif lang == "typst" then
+                txt = string.format(
+                    '%s [comment on #cite(<%s>, supplement: "%s%s")]',
+                    txt,
+                    ckey,
+                    s,
+                    v.p
+                )
+            else
+                txt = string.format("%s [comment on @%s%s%s]", txt, ckey, s, v.p)
             end
             table.insert(lines, txt)
             table.insert(lines, "")
         end
         if v.t then
-            local txt = sanitize(v.t, md)
-            if md then
-                txt = string.format("> %s [@%s%s%s]", txt, ckey, s, v.p)
-                table.insert(lines, txt)
-            else
+            local txt = sanitize(v.t)
+            if lang == "latex" then
                 table.insert(lines, "\\begin{quote}")
                 txt = string.format("%s \\cite[%s%s]{%s}", txt, s, v.p, ckey)
                 table.insert(lines, txt)
                 table.insert(lines, "\\end{quote}")
+            elseif lang == "typst" then
+                txt = string.format(
+                    '#quote[%s] #cite(<%s>, supplement: "%s%s")',
+                    txt,
+                    ckey,
+                    s,
+                    v.p
+                )
+                table.insert(lines, txt)
+            else
+                txt = string.format("> %s [@%s%s%s]", txt, ckey, s, v.p)
+                table.insert(lines, txt)
             end
             table.insert(lines, "")
         end
@@ -917,9 +951,11 @@ function M.get_annotations(key, offset, md)
     return lines
 end
 
+--- Convert HTML to LaTeX
+---@param notes string
 local notes_to_tex = function(notes)
     -- Year-page separator
-    local ypsep = get_ypsep(true)
+    local ypsep = get_ypsep("latex")
 
     notes = notes:gsub("<h1>(.-)</h1>", "\\section{%1}\n")
     notes = notes:gsub("<h2>(.-)</h2>", "\\subsection{%1}\n")
@@ -927,7 +963,9 @@ local notes_to_tex = function(notes)
     notes = notes:gsub("<h4>(.-)</h4>", "\\subsubsection{%1}\n")
     notes = notes:gsub("<h5>(.-)</h5>", "\\subsubsection{%1}\n")
     notes = notes:gsub("<strong>(.-)</strong>", "\\textbf{%1}")
+    notes = notes:gsub("<b>(.-)</b>", "\\textbf{%1}")
     notes = notes:gsub("<em>(.-)</em>", "\\em{%1}")
+    notes = notes:gsub("<i>(.-)</i>", "\\em{%1}")
     notes = notes:gsub(
         '<span style="text%-decoration: line%-through">(.-)</span>',
         "\\strikethrough{%1}"
@@ -953,6 +991,7 @@ local notes_to_tex = function(notes)
     notes = notes:gsub('<pre class="math">(.-)</pre>', "\n%1\n")
     notes = notes:gsub("<pre>(.-)</pre>", "\n\\begin{verbatim}\n%1\nend{verbatim}\n")
     notes = notes:gsub("<br/>", "\\linebreak\n")
+    notes = notes:gsub("<br>", "\\linebreak\n")
     notes = notes:gsub("<p>(.-)</p>", "%1\n\n")
     notes = notes:gsub(' class="highlight" data%-annotation=".-"(.-)', "")
     notes = notes:gsub("<div .->", "")
@@ -963,9 +1002,11 @@ local notes_to_tex = function(notes)
     return notes .. "\n"
 end
 
+--- Convert HTML to Markdown
+---@param notes string
 local notes_to_md = function(notes)
     -- Year-page separator
-    local ypsep = get_ypsep(true)
+    local ypsep = get_ypsep("markdown")
 
     notes = notes:gsub("<h1>(.-)</h1>", "# %1\n")
     notes = notes:gsub("<h2>(.-)</h2>", "## %1\n")
@@ -973,6 +1014,7 @@ local notes_to_md = function(notes)
     notes = notes:gsub("<h4>(.-)</h4>", "#### %1\n")
     notes = notes:gsub("<h5>(.-)</h5>", "##### %1\n")
     notes = notes:gsub("<strong>(.-)</strong>", "**%1**")
+    notes = notes:gsub("<b>(.-)</b>", "**%1**")
     notes = notes:gsub("<em>(.-)</em>", "*%1*")
     notes =
         notes:gsub('<span style="text%-decoration: line%-through">(.-)</span>', "~~%1~~")
@@ -1002,9 +1044,11 @@ local notes_to_md = function(notes)
     return notes .. "\n"
 end
 
+--- Convert HTML to Typst
+---@param notes string
 local notes_to_typ = function(notes)
     -- Year-page separator
-    local ypsep = get_ypsep(true)
+    local ypsep = get_ypsep("typst")
 
     notes = notes:gsub("<h1>(.-)</h1>", "= %1\n")
     notes = notes:gsub("<h2>(.-)</h2>", "== %1\n")
@@ -1012,7 +1056,9 @@ local notes_to_typ = function(notes)
     notes = notes:gsub("<h4>(.-)</h4>", "==== %1\n")
     notes = notes:gsub("<h5>(.-)</h5>", "===== %1\n")
     notes = notes:gsub("<strong>(.-)</strong>", "*%1*")
+    notes = notes:gsub("<b>(.-)</b>", "*%1*")
     notes = notes:gsub("<em>(.-)</em>", "_%1_")
+    notes = notes:gsub("<i>(.-)</i>", "_%1_")
     notes =
         notes:gsub('<span style="text%-decoration: line%-through">(.-)</span>', "~~%1~~")
     notes = notes:gsub(' rel="noopener noreferrer nofollow"', "")
@@ -1031,6 +1077,7 @@ local notes_to_typ = function(notes)
     notes = notes:gsub('<pre class="math">(.-)</pre>', "\n%1\n")
     notes = notes:gsub("<pre>(.-)</pre>", "\n```\n%1\n```\n")
     notes = notes:gsub("<br/>", "\n\n")
+    notes = notes:gsub("<br>", "\n\n")
     notes = notes:gsub("<p>(.-)</p>", "%1\n\n")
     notes = notes:gsub(' class="highlight" data%-annotation=".-"(.-)', "")
     notes = notes:gsub("<div .->", "")
@@ -1043,9 +1090,8 @@ end
 
 -- Return user notes from a reference.
 ---@param key string The Zotero key
----@param lang string The document language
 ---@return string | nil
-function M.get_notes(key, lang)
+function M.get_notes(key)
     if not config.zotero_sqlite_path then return end
     copy_zotero_data()
 
@@ -1063,7 +1109,8 @@ function M.get_notes(key, lang)
     end
     if notes == "" then return nil end
 
-    notes = sanitize(notes, lang)
+    local lang = get_ft_lang()
+    notes = sanitize(notes)
     if lang == "typst" then
         notes = notes_to_typ(notes)
     elseif lang == "latex" then
