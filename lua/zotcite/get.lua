@@ -20,9 +20,12 @@ local M = {}
 local TranslateZPath = function(attachment)
     if
         config.open_in_zotero
-        and (attachment.path:lower():find("%.pdf$") or attachment.path:lower():find("%.html$"))
+        and (
+            attachment.path:lower():find("%.pdf$")
+            or attachment.path:lower():find("%.html$")
+        )
     then
-        return "zotero://open-pdf/library/items/" .. attachment.itemID
+        return "zotero://open-pdf/library/items/" .. attachment.key
     end
 
     local fpath = tostring(attachment.path)
