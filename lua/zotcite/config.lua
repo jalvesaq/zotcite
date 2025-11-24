@@ -21,7 +21,7 @@
 ---Template for citation keys
 ---@field citation_template? string
 ---Type of citation key (internal Zotero key or template based)
----@field key_type? '"zotero"' | '"template"' | '"better-bibtex"'
+---@field key_type? '"template"' | '"better-bibtex"' | '"zotero"'
 ---Path to `zotero.sqlite`
 ---@field zotero_sqlite_path? string
 ---Path to attachments directory (if any)
@@ -45,7 +45,7 @@
 
 ---@type ZotciteUserOpts
 local config = {
-    key_type = "zotero",
+    key_type = "template",
     hl_cite_key = true,
     sort_key = "dateModified",
     conceallevel = -1,

@@ -273,9 +273,9 @@ What is the best for you:
     course, you have no choice but to use Better BibTeX keys too.
 
 The type of citation key is defined with the option `key_type`. Valid values
-are "zotero", "template", and "better-bibtex". Example:
+are "template" (the default), "better-bibtex", and "zotero". Example:
 >lua
- key_type = "template",
+ key_type = "zotero",
 <
 							   *citation_template*
 When the `key_type` is "zotero", zotcite complements the citation key with a
