@@ -4,21 +4,22 @@
 > Users of Vim and Neovim < 0.10.4 have to switch to the "vim" branch.
 
 > [!Note]
-> Users of Neovim < 0.11.5 have to switch to the "no_pynvim" branch.
+> Users of Neovim < 0.11.5 have to switch to the "pynvim" branch.
 
 > [!Note]
-> Zotcite now updates a bib file and inserts the "Author-Year" part of the
-> citation key as virtual text. Consequently, it no longer requires the
-> `zotref` filter. Alternatively, it can use a conventional citation key based
-> on a citation template or a Better BibTeX citation key. If you prefer the
-> old system, please, switch to the "no_pynvim" branch.
+> Zotcite now uses conventional citation keys based on a citation template
+> and no longer requires the `zotref` filter. Alternatively, it can use Better
+> BibTeX citation keys. There is also an option to use the internal Zotero
+> item keys and insert the "Author-Year" part of the citation key as virtual
+> text. If you have documents using the old system, and don't want to manually
+> convert then, you can use the "pynvim" branch.
 
 _Zotcite_ is a Neovim plugin that provides integration with Zotero for
 Markdown, Quarto, Rmd, vimwiki, Typst, LaTeX, and Rnoweb file types. With
 _zotcite_ you can:
 
   - Do auto-completion of citation keys from Zotero database in
-    Markdown, RMarkdown, Quarto, and Typst.
+    Markdown, RMarkdown, Quarto, LaTeX, Rnoweb, and Typst documents.
 
     ![Auto-completion](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_completion.gif "auto-completion")
 
@@ -33,14 +34,10 @@ _zotcite_ you can:
   - Open the PDF attachment of the reference associated with the citation key
     under the cursor.
 
-  - Extract highlighted text and text notes from PDF attachments of
+  - Extract notes and highlighted text from PDF attachments of
     references.
 
   - Extract Zotero notes and annotations from Zotero database.
-
-_Zotcite_ is being developed and tested on Linux and should work flawlessly on
-other Unix systems, such as Mac OS X. It may require additional configuration
-on Windows.
 
 
 ## Installation
@@ -51,18 +48,20 @@ on Windows.
 
   - Zotero >= 5
 
+  - The `sqlite3` command line application.
+
   - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) as
     well as tree-sitter parsers for `markdown`, `markdown_inline`, and `yaml`.
-    If editing LaTeX or Rnoweb files, you will also need their parsers.
+    If editing LaTeX, Rnoweb, or Typst files, you will also need their parsers.
 
 - Optional:
 
-  - [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) as an
+  - [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) for an
     alternative way of inserting citation keys.
 
-  - Python 3 is required if are going to convert an OpenDocument text (`odt`)
+  - Python 3 is required if you are going to convert OpenDocument texts (`odt`)
     to markdown or extract annotations inserted in a PDF document by a PDF
-    viewer other than Zotero. Please, see the Zotcite documentation for details).
+    viewer other than Zotero. Please, see the Zotcite documentation for details.
 
 Zotcite can be installed as any Neovim plugin. Below is an example of how to
 install `zotcite` with [lazy.nvim](https://github.com/folke/lazy.nvim):
