@@ -21,15 +21,7 @@ _zotcite_ you can:
   - Do auto-completion of citation keys from Zotero database in
     Markdown, RMarkdown, Quarto, LaTeX, Rnoweb, and Typst documents.
 
-    ![Auto-completion](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_completion.gif "auto-completion")
-
-    ![Citation key highlighting](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_conceal.gif "Citation key highlighting")
-
   - Quickly see on the status bar information on the reference under the cursor.
-
-    ![Reference brief information](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_info.gif "Reference brief information")
-
-    ![Complete reference information](https://raw.githubusercontent.com/jalvesaq/zotcite/master/zotcite_more_info.gif "Complete reference information")
 
   - Open the PDF attachment of the reference associated with the citation key
     under the cursor.
@@ -91,6 +83,17 @@ install `zotcite` with [lazy.nvim](https://github.com/folke/lazy.nvim):
 Please, read the plugin's
 [documentation](https://raw.githubusercontent.com/jalvesaq/zotcite/master/doc/zotcite.txt)
 for further instructions.
+
+## Screenshots
+
+
+[Completion](https://private-user-images.githubusercontent.com/891655/518084427-a0686eaa-935b-4a06-9a85-42e1954de90e.gif)
+
+[Insert annotations from PDF attachment](https://private-user-images.githubusercontent.com/891655/518084306-c7a3e078-fce3-414a-a89a-f863290520c7.gif)
+
+[Select what annotations to insert](https://private-user-images.githubusercontent.com/891655/518084554-1e4816e9-f6eb-41fe-95e9-c2273f83fdcf.gif)
+
+[Inser abstract from attachment](https://private-user-images.githubusercontent.com/891655/518084491-b01a5d8c-4a99-4aff-8aa5-934ed5c40f98.gif)
 
 ## See also:
 
