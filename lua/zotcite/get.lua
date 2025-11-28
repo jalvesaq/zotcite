@@ -1,8 +1,9 @@
 local config = require("zotcite.config").get_config()
 local zwarn = require("zotcite").zwarn
 local seek = require("zotcite.seek")
+local zotero = require("zotcite.zotero")
 
-local offset = "0"
+local offset = 0
 local pdfnote_data = {}
 local sel_list = {}
 
@@ -13,31 +14,42 @@ local citation = {
 
 local M = {}
 
-local TranslateZPath = function(strg)
-    local fpath = strg
-
+---Convert key and path into valid path
+---@param attachment table
+---@return string | nil
+local TranslateZPath = function(attachment)
     if
         config.open_in_zotero
-        and (string.lower(strg):find("%.pdf$") or string.lower(strg):find("%.html$"))
+        and (
+            attachment.path:lower():find("%.pdf$")
+            or attachment.path:lower():find("%.html$")
+        )
     then
-        local id = fpath:gsub(":.*", "")
-        return "zotero://open-pdf/library/items/" .. id
+        return "zotero://open-pdf/library/items/" .. attachment.key
     end
 
-    if strg:find(":attachments:") then
+    local fpath = tostring(attachment.path)
+    if attachment.path:find("attachments:") then
         -- The user has set Edit / Preferences / Files and Folders / Base directory for linked attachments
-        if config.attach_dir == "" then
-            zwarn("Attachments dir is not defined")
+        if not config.attach_dir then
+            zwarn(
+                "Are you using a base directory for linked attachments? "
+                    .. "The config option `attach_dir` is not defined."
+            )
+            return nil
         else
-            fpath = strg:gsub(".*:attachments:", "/" .. config.attach_dir .. "/")
+            fpath =
+                attachment.path:gsub(".*attachments:", "/" .. config.attach_dir .. "/")
         end
-    elseif strg:find(":/") then
+    elseif attachment.path:find(":/") then
         -- Absolute file path
-        fpath = strg:gsub(".*:/", "/")
-    elseif strg:find(":storage:") then
+        fpath = attachment.path:gsub(".*:/", "/")
+    elseif attachment.path:find("storage:") then
         -- Default path
-        fpath = config.data_dir .. strg:gsub("(.*):storage:", "/storage/%1/")
+        fpath = config.zotero_sqlite_path:match("(.*)/.-")
+            .. attachment.path:gsub("storage:", "/storage/" .. attachment.key .. "/")
     end
+
     if vim.fn.filereadable(fpath) == 0 then
         zwarn('Could not find "' .. fpath .. '"')
         fpath = ""
@@ -45,46 +57,45 @@ local TranslateZPath = function(strg)
     return fpath
 end
 
-M.PDFPath = function(zotkey, cb)
-    local repl = vim.fn.py3eval('ZotCite.GetAttachment("' .. zotkey .. '")')
-    if #repl == 0 then
-        zwarn("Got empty list")
+M.PDFPath = function(key, cb)
+    local repl, err = zotero.get_attachment(key)
+    if not repl then
+        zwarn(err)
         return
     end
-    if repl[1] == "nOaTtAChMeNt" then
-        zwarn("Attachment not found")
-    elseif repl[1] == "nOcItEkEy" then
-        zwarn("Citation key not found")
+
+    local fpaths = {}
+    local item
+    for _, v in pairs(repl) do
+        item = TranslateZPath(v)
+        if item then table.insert(fpaths, item) end
+    end
+    if #repl == 1 then
+        return fpaths[1]
     else
-        local fpaths = {}
-        local item = ""
-        for _, v in pairs(repl) do
-            item = TranslateZPath(v):gsub(".*storage:", "")
-            table.insert(fpaths, item)
+        local idx = 1
+        local items = {}
+        sel_list = {}
+        for _, v in pairs(fpaths) do
+            item = v:gsub(".*/", "")
+            item = vim.fn.slice(item, 0, 60)
+            table.insert(items, item)
+            table.insert(sel_list, v)
+            idx = idx + 1
         end
-        if #repl == 1 then
-            return fpaths[1]
-        else
-            local idx = 1
-            local items = {}
-            sel_list = {}
-            for _, v in pairs(fpaths) do
-                item = v:gsub(".*/", "")
-                item = vim.fn.slice(item, 0, 60)
-                table.insert(items, item)
-                table.insert(sel_list, v)
-                idx = idx + 1
-            end
-            vim.schedule(function() vim.ui.select(items, {}, cb) end)
-        end
+        vim.schedule(function() vim.ui.select(items, {}, cb) end)
     end
 end
 
 local is_valid_char = function(c)
-    return (c >= "0" and c <= "9")
-        or (c >= "A" and c <= "z")
-        or (c >= "a" and c <= "z")
-        or c:byte(1, 1) > 127
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    if kt == "zotero" then
+        return (c >= "0" and c <= "9")
+            or (c >= "A" and c <= "z")
+            or (c >= "a" and c <= "z")
+            or c:byte(1, 1) > 127
+    end
+    return c:find("[%w%-\192-\244\128-\191]")
 end
 
 local citation_key_vt = function(line, pos)
@@ -103,59 +114,26 @@ local citation_key_vt = function(line, pos)
         j = j + 1
     end
     local key = line:sub(i + 1, j - 1)
-    if #key == 8 then return key end
-    return ""
-end
-
-local citation_key_hl = function(line, pos)
-    pos = pos + 1
-    if line:sub(pos, pos) == "@" then pos = pos + 1 end
-    local i = pos
-    local k = line:sub(i, i)
-    while i > 0 and (k == "#" or k == "+" or k == "-" or is_valid_char(k)) do
-        i = i - 1
-        if line:sub(i, i) == "@" then
-            local j = i + 1
-            k = line:sub(j, j)
-            while j <= #line and is_valid_char(k) do
-                j = j + 1
-                k = line:sub(j, j)
-            end
-            local key = line:sub(i + 1, j - 1)
-            if #key == 8 then return key end
-            break
-        end
-        k = line:sub(i, i)
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    if kt == "zotero" then
+        if #key == 8 then return key end
+        return ""
+    else
+        return key
     end
-    return ""
 end
 
 M.citation_key = function()
     local lnum = vim.api.nvim_win_get_cursor(0)[1]
     local line = vim.api.nvim_buf_get_lines(0, lnum - 1, lnum, true)[1]
     local pos = vim.api.nvim_win_get_cursor(0)[2]
-
-    if config.bib_and_vt[vim.o.filetype] then return citation_key_vt(line, pos) end
-    return citation_key_hl(line, pos)
-end
-
-M.yaml_ref = function()
-    local wrd = M.citation_key()
-    if wrd ~= "" then
-        local repl = vim.fn.py3eval('ZotCite.GetYamlRefs(["' .. wrd .. '"])')
-        repl = repl:gsub("^references:[\n\r]*", "")
-        if repl == "" then
-            zwarn("Citation key not found")
-        else
-            vim.schedule(function() vim.api.nvim_echo({ { repl } }, false, {}) end)
-        end
-    end
+    return citation_key_vt(line, pos)
 end
 
 M.reference_data = function(btype)
     local wrd = M.citation_key()
     if wrd ~= "" then
-        local repl = vim.fn.py3eval('ZotCite.GetRefData("' .. wrd .. '")')
+        local repl = zotero.get_ref_data(wrd)
         if type(repl) ~= "table" then
             zwarn("Citation key not found")
             return
@@ -180,11 +158,10 @@ end
 local finish_citation = function(ref)
     if not ref then return end
     local rownr = vim.api.nvim_win_get_cursor(0)[1] - 1
-    local cite
-    if config.bib_and_vt[vim.o.filetype] then
-        cite = ref.value.key
-    else
-        cite = "@" .. ref.value.key .. "-" .. ref.value.cite
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    local cite = kt == "zotero" and ref.value.key or ref.value.cite
+    if not (vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb") then
+        cite = "@" .. cite
     end
     vim.api.nvim_buf_set_text(
         0,
@@ -197,7 +174,7 @@ local finish_citation = function(ref)
     local colnr = citation.start_col + #cite
     vim.api.nvim_win_set_cursor(0, { rownr + 1, colnr })
     vim.api.nvim_feedkeys("a", "n", false)
-    require("zotcite.hl").citations()
+    vim.schedule(require("zotcite.hl").citations)
 end
 
 M.citation = function()
@@ -222,7 +199,7 @@ end
 M.abstract = function()
     local wrd = M.citation_key()
     if wrd ~= "" then
-        local repl = vim.fn.py3eval('ZotCite.GetRefData("' .. wrd .. '")')
+        local repl = zotero.get_ref_data(wrd)
         if type(repl) ~= "table" then
             zwarn("Citation key not found")
             return
@@ -236,44 +213,40 @@ M.abstract = function()
 end
 
 local get_annotations = function(sel)
-    local clean = config.bib_and_vt[vim.o.filetype] and "True" or "False"
-    local md = vim.tbl_contains({ "tex", "rnoweb" }, vim.o.filetype) and "False" or "True"
     local key = sel.value.key
-    local repl = vim.fn.py3eval(
-        'ZotCite.GetAnnotations("'
-            .. key
-            .. '", '
-            .. offset
-            .. ", "
-            .. clean
-            .. ", "
-            .. md
-            .. ")"
-    )
-    if #repl == 0 then zwarn("No annotation found.") end
+    local repl = zotero.get_annotations(key, offset)
+    if not repl then zwarn("No annotation found.") end
     return repl
 end
 
 local finish_annotations = function(sel)
     if not sel then return end
+
     local repl = get_annotations(sel)
-    if #repl > 0 then
-        local lnum = vim.api.nvim_win_get_cursor(0)[1]
-        vim.api.nvim_buf_set_lines(0, lnum, lnum, true, repl)
-        require("zotcite.hl").citations()
-    end
+    if not repl then return end
+
+    local lnum = vim.api.nvim_win_get_cursor(0)[1]
+    vim.api.nvim_buf_set_lines(0, lnum, lnum, true, repl)
+    require("zotcite.hl").citations()
 end
 
 local finish_annotations_selection = function(sel)
     if not sel then return end
+    local lang = "markdown"
+    if vim.bo.filetype == "typst" then lang = "typst" end
+    if vim.bo.filetype == "tex" or vim.bo.filetype == "noweb" then lang = "latex" end
     local raw_annotations = get_annotations(sel)
-    if #raw_annotations > 0 then
+    if raw_annotations then
         local grouped_annotations = {}
         local current_group = {}
         local last_was_quote = false
 
         for _, line in ipairs(raw_annotations) do
-            if line:sub(1, 1) == ">" then
+            if
+                (lang == "markdown" and line:sub(1, 1) == ">")
+                or (lang == "typst" and line:find("^#quote"))
+                or (lang == "latex" and line:find("^\\begin%{quote%}"))
+            then
                 if #current_group > 0 and not last_was_quote then
                     table.insert(current_group, line)
                     table.insert(grouped_annotations, table.concat(current_group, "\n"))
@@ -369,10 +342,13 @@ M.annotations = function(ko, use_selection)
     if ko:find(" ") then
         ko = vim.fn.split(ko)
         argmt = ko[1]
-        offset = ko[2]
+        if ko[2] then
+            local ko2 = tonumber(ko[2])
+            if ko2 then offset = ko2 end
+        end
     else
         argmt = ko
-        offset = "0"
+        offset = 0
     end
     if use_selection then
         seek.refs(argmt, finish_annotations_selection)
@@ -382,10 +358,9 @@ M.annotations = function(ko, use_selection)
 end
 
 local finish_note = function(sel)
-    local clean = config.bib_and_vt[vim.o.filetype] and "True" or "False"
     local key = sel.value.key
-    local repl = vim.fn.py3eval('ZotCite.GetNotes("' .. key .. '", ' .. clean .. ")")
-    if repl == "" then
+    local repl = zotero.get_notes(key)
+    if not repl then
         zwarn("No note found.")
     else
         local lines = vim.fn.split(repl, "\n")
@@ -411,13 +386,39 @@ local finish_pdfnote_2 = function(_, idx)
     -- Determine which PDF extractor to use
     local pdf_extractor = config.pdf_extractor or "pdfnotes.py"
 
-    local notes = vim.system(
-        { config.python_path, config.zotcite_home .. "/" .. pdf_extractor, fpath, key, p },
-        { text = true }
-    ):wait()
+    vim.env.ZYearPageSep = config.year_page_sep
+    local notes = vim.system({
+        config.python_path,
+        config.python_scripts_path .. "/" .. pdf_extractor,
+        fpath,
+        key,
+        p,
+    }, { text = true }):wait()
     if notes.code == 0 then
         local lines = vim.fn.split(notes.stdout, "\n")
-        vim.api.nvim_buf_set_lines(0, lnum, lnum, true, lines)
+        if vim.bo.filetype == "typst" then
+            local tlines = {}
+            for _, v in pairs(lines) do
+                v = v:gsub(
+                    "^> (.-) %[@(%S-), (.-)%]$",
+                    '#quote[%1] #cite(<%2>, supplement: "%3")'
+                )
+                table.insert(tlines, v)
+            end
+            vim.api.nvim_buf_set_lines(0, lnum, lnum, true, tlines)
+        elseif vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb" then
+            local tlines = {}
+            for _, v in pairs(lines) do
+                v = v:gsub(
+                    "^> (.-) %[@(%S-), (.-)%]$",
+                    "\\begin{quote}%1 \\cite[%3]{%2}\\end{quote}"
+                )
+                table.insert(tlines, v)
+            end
+            vim.api.nvim_buf_set_lines(0, lnum, lnum, true, tlines)
+        else
+            vim.api.nvim_buf_set_lines(0, lnum, lnum, true, lines)
+        end
         require("zotcite.hl").citations()
     elseif notes.code == 33 then
         zwarn('Failed to load "' .. fpath .. '" as a valid PDF document.')
@@ -429,23 +430,24 @@ local finish_pdfnote_2 = function(_, idx)
 end
 
 local finish_pdfnote = function(sel)
-    local zotkey = sel.value.key
-    local repl = vim.fn.py3eval('ZotCite.GetRefData("' .. zotkey .. '")')
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    local key = kt == "zotero" and sel.value.key or sel.value.cite
+    local repl = zotero.get_ref_data(key)
     if type(repl) ~= "table" then
         zwarn("Citation key not found")
         return
     end
-    local citekey
-    if config.bib_and_vt[vim.o.filetype] then
-        citekey = "@" .. zotkey
+    local citekey = "@"
+    if kt == "zotero" then
+        citekey = citekey .. sel.value.key
     else
-        citekey = "@" .. zotkey .. "-" .. repl["citekey"]
+        citekey = citekey .. sel.value.cite
     end
     local pg = "1"
     if repl.pages and repl.pages:find("[0-9]-") then pg = repl.pages end
     pdfnote_data = { citekey = citekey, pg = pg }
 
-    local apath = M.PDFPath(zotkey, finish_pdfnote_2)
+    local apath = M.PDFPath(key, finish_pdfnote_2)
     if type(apath) == "string" then
         sel_list = { apath }
         finish_pdfnote_2(nil, 1)
@@ -454,99 +456,117 @@ end
 
 M.PDFNote = function(key) seek.refs(key, finish_pdfnote) end
 
+--- Strip string from empty spaces and quotes
+---@param line string The string to be stripped
+---@return string
+local get_yaml_string = function(line)
+    local str
+    if line:find("^'.*'$") then
+        str = line:match("^%s*'(.-)'%s*$")
+    elseif line:find('^%s*".*"%s*$') then
+        str = line:match('^%s*"(.-)"%s*$')
+    else
+        str = line:match("^%s*(.-)%s*$")
+    end
+    return str
+end
+
+--- Get the value of a YAML field
+---@param field string Field name
+---@param bn integer Buffer number
+---@return string | string[] | nil
 M.yaml_field = function(field, bn)
     if vim.tbl_contains({ "tex", "rnoweb" }, vim.bo.filetype) then return nil end
     local line1 = vim.api.nvim_buf_get_lines(bn, 0, 1, true)[1]
-    if not line1 == "---" then return end
-
-    -- FIXME: use treesitter to avoid dependence on PyYAML
-    -- local node = vim.treesitter.get_node({ bufnr = bn, pos = { 0, 0 } })
-    -- if not node or node:type() ~= "minus_metadata" then return nil end
+    if line1 ~= "---" then return end
 
     local lines = vim.api.nvim_buf_get_lines(bn, 0, -1, true)
     local nlines = #lines
-    local ylines = {}
     local i = 2
-    local line = ""
-    local has_field = false
+    local value
     while i < nlines do
-        if lines[i]:find("^%s*%-%-%-%s*$") then break end
-        if lines[i]:find(field .. ":") then has_field = true end
-        line = lines[i]:gsub("\\", "\\\\")
-        line = string.gsub(line, '"', '\\"')
-        table.insert(ylines, line)
+        if lines[i] == "---" then break end
+        if lines[i]:find(field .. ":") then
+            if lines[i]:find(field .. ":%s*$") then
+                -- multiline list
+                value = {}
+                i = i + 1
+                while lines[i]:find("^%s*%-") do
+                    if lines[i] == "---" then break end
+                    local line = lines[i]:match("^%s*%-%s*(.-)%s*$")
+                    table.insert(value, get_yaml_string(line))
+                    i = i + 1
+                end
+                if lines[i]:find("^%s*%w*:$") then
+                    return lines[i]:match("^%s*(%w-):$")
+                end
+            elseif lines[i]:find(field .. ":%s%[.*%]%s*$") then
+                -- bracketed list in a single line
+                value = vim.split(lines[i]:match("^" .. field .. ":%s*%[(.-)%]%s*$"), ",")
+                for k, v in pairs(value) do
+                    value[k] = get_yaml_string(v)
+                end
+            else
+                -- string
+                value = lines[i]:match("^%s*" .. field .. ":%s*(.-)%s*$")
+                value = get_yaml_string(value)
+            end
+            return value
+        end
         i = i + 1
     end
-    if #ylines == 0 then return nil end
-    if not has_field then return nil end
-
-    local value = vim.fn.py3eval(
-        'ZotCite.GetYamlField("'
-            .. field
-            .. '", "'
-            .. table.concat(ylines, "\002")
-            .. '")'
-    )
-    if value == vim.NIL then return nil end
-
-    return value
+    return nil
 end
 
+--- Get collection names from buffer and set them in zotero.lua
+---@param bn integer Buffer number
 M.collection_name = function(bn)
     local newc = M.yaml_field("collection", bn)
     if not newc then return end
 
-    if type(newc) == "table" then newc = table.concat(newc, "\002") end
+    if type(newc) == "string" then newc = { newc } end
+    zotero.set_collections(vim.api.nvim_buf_get_name(0), newc)
+end
 
-    local buf = require("zotcite.config").has_buffer(bn)
-    if buf then
-        if
-            not buf.zotcite_cllctn
-            or (buf.zotcite_cllctn and buf.zotcite_cllctn ~= newc)
-        then
-            require("zotcite.config").set_collection(buf, newc)
-            local repl = vim.fn.py3eval(
-                'ZotCite.SetCollections("'
-                    .. vim.fn.escape(vim.fn.expand("%:p"), "\\")
-                    .. '", "'
-                    .. newc
-                    .. '")'
-            )
-            if repl ~= "" then zwarn(repl) end
-        end
+--- Insert echo lines into table
+---@param info table The table with echo lines
+---@param ttl string Section title
+---@param lines string[] Lines to insert
+local function insert_info(info, ttl, lines)
+    table.insert(info, { ttl .. "\n", "Statement" })
+    for k, v in pairs(lines) do
+        table.insert(info, { "  " .. k, "Title" })
+        table.insert(info, { ": " })
+        local hl = type(v) == "string" and "String"
+            or type(v) == "number" and "Number"
+            or "Normal"
+        table.insert(info, { vim.inspect(v), hl })
+        table.insert(info, { "\n" })
     end
 end
 
 M.zotero_info = function()
-    local info = {}
-    if not vim.tbl_contains(config.filetypes, vim.o.filetype) then
-        zwarn("zotcite doesn't support " .. vim.o.filetype .. " filetype.")
+    if
+        not vim.tbl_contains(config.filetypes, vim.bo.filetype)
+        and vim.bo.filetype ~= "bib"
+    then
+        zwarn("zotcite doesn't support " .. vim.bo.filetype .. " filetype.")
         return
     end
-    if config.zrunning then
-        local pyinfo = vim.fn.py3eval("ZotCite.Info()")
-        table.insert(info, { "Information from the Python module:\n", "Statement" })
-        for k, v in pairs(pyinfo) do
-            table.insert(info, { "  " .. k, "Title" }) -- FIXME: align output
-            table.insert(info, { ": " .. tostring(v):gsub("\n", "") .. "\n" })
-        end
-    else
-        if vim.tbl_contains(config.filetypes, vim.o.filetype) then
-            table.insert(info, { "ZoteroEntries wasn't created.\n", "WarningMsg" })
-        end
-    end
-    if #config.log > 0 then
-        table.insert(info, { "Know problems:\n", "Statement" })
-        for _, v in pairs(config.log) do
-            table.insert(info, { v .. "\n", "WarningMsg" })
+
+    local out_lines = {}
+    insert_info(out_lines, "Init information", require("zotcite.config").info)
+
+    insert_info(out_lines, "Zotero information", require("zotcite.zotero").info())
+
+    local w = require("zotcite").get_warns()
+    if #w > 0 then
+        table.insert(out_lines, { "Know problems:\n", "Statement" })
+        for _, v in pairs(w) do
+            table.insert(out_lines, { v .. "\n", "WarningMsg" })
         end
     end
-    local itime = require("zotcite.config").init_time
-    if itime then
-        table.insert(info, { "  Time to get Zotero data (ms)", "Title" })
-        table.insert(info, { ": " .. tostring(itime) })
-    end
-    vim.schedule(function() vim.api.nvim_echo(info, false, {}) end)
+    vim.schedule(function() vim.api.nvim_echo(out_lines, false, {}) end)
 end
 
 local finish_open_attachment = function(_, idx)
@@ -554,8 +574,8 @@ local finish_open_attachment = function(_, idx)
 end
 
 M.open_attachment = function()
-    local zotkey = M.citation_key()
-    local apath = M.PDFPath(zotkey, finish_open_attachment)
+    local key = M.citation_key()
+    local apath = M.PDFPath(key, finish_open_attachment)
     if type(apath) == "string" then require("zotcite.utils").open(apath) end
 end
 

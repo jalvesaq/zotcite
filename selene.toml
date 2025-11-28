@@ -1,4 +1,10 @@
-std="vim"
+# Set the base std to your custom library, which you'll put in std_dirs
+std = "vim"
 
 [rules]
 multiple_statements = "allow"
+
+[config]
+# Point Selene to the directory containing your nvim.toml file.
+# Assuming nvim.toml is in the same directory as selene.toml ('.').
+std_dirs = [ "." ]

@@ -1,1 +1,0 @@
-require("zotcite.config").init()

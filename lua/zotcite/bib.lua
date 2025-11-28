@@ -1,5 +1,4 @@
 local zwarn = require("zotcite").zwarn
-local config = require("zotcite.config").get_config()
 
 local M = {}
 
@@ -12,33 +11,25 @@ local find_tex_bib = function()
             return bib
         end
     end
-    if config.bib_and_vt[vim.o.filetype] then
-        zwarn("Could not find the '\\addbibresource' command.")
-    end
+    zwarn("Could not find the '\\addbibresource' command.")
     return nil
 end
 
 local find_typst_bib = function()
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
     for _, v in pairs(lines) do
-        if v and v:find("#bibliography%(['\"]") then
-            local bib = v:gsub("#bibliography%(['\"]", "")
-            bib = bib:gsub("['\"].*", "")
-            return bib
+        if v and v:find("#bibliography%(") then
+            return v:match('#bibliography%(%s*"(%S-)".*')
         end
     end
-    if config.bib_and_vt[vim.o.filetype] then
-        zwarn("Could not find the '#bibliography' identifier.")
-    end
+    zwarn("Could not find the `#bibliography` identifier.")
     return nil
 end
 
 local find_markdown_bib = function()
     local ybib = require("zotcite.get").yaml_field("bibliography", 0)
     if not ybib then
-        if config.bib_and_vt[vim.o.filetype] then
-            zwarn("Could not find 'bibliography' field in YAML header.")
-        end
+        zwarn("Could not find 'bibliography' field in YAML header.")
         return nil
     end
 
@@ -60,15 +51,16 @@ local find_markdown_bib = function()
 end
 
 local find_bib_fn = function()
-    if vim.o.filetype == "typst" then return find_typst_bib() end
-    if vim.o.filetype == "tex" or vim.o.filetype == "rnoweb" then
+    if vim.bo.filetype == "typst" then return find_typst_bib() end
+    if vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb" then
         return find_tex_bib()
     end
     return find_markdown_bib()
 end
 
-local get_typ_citations = function()
-    local kp = "<[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]>"
+local get_typ_citations = function(kz)
+    local kp = kz and "<[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]>"
+        or "<[%w%-\192-\244\128-\191]+>"
     local ckeys = {}
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
     for _, v in pairs(lines) do
@@ -83,8 +75,9 @@ local get_typ_citations = function()
     return ckeys
 end
 
-local get_md_citations = function()
-    local kp = "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
+local get_md_citations = function(kz)
+    local kp = kz and "@[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
+        or "@[%w%-\192-\244\128-\191]+"
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
     local ckeys = {}
     for _, v in pairs(lines) do
@@ -99,9 +92,10 @@ local get_md_citations = function()
     return ckeys
 end
 
-local get_tex_citations = function()
+local get_tex_citations = function(kz)
     local kp1 = "\\%w*cit.*{"
-    local kp2 = "[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
+    local kp2 = kz and "[0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z]"
+        or "[%w%-\192-\244\128-\191]+"
     local ckeys = {}
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
     for _, v in pairs(lines) do
@@ -123,35 +117,26 @@ local get_tex_citations = function()
 end
 
 M.update = function()
-    local bib = find_bib_fn()
-    if not bib then return end
-
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    local kz = kt == "zotero"
     local ckeys
     if vim.o.filetype == "tex" or vim.o.filetype == "rnoweb" then
-        ckeys = get_tex_citations()
+        ckeys = get_tex_citations(kz)
     else
-        ckeys = get_md_citations()
+        ckeys = get_md_citations(kz)
     end
     if vim.o.filetype == "typst" then
-        local ck2 = get_typ_citations()
+        local ck2 = get_typ_citations(kz)
         for _, v in pairs(ck2) do
             table.insert(ckeys, v)
         end
     end
-    if #ckeys == 0 then
-        if bib:find(".*zotcite.bib$") and vim.fn.filereadable(bib) == 0 then
-            -- Ensure that `quarto preview` will work
-            vim.fn.writefile({}, bib)
-        end
-    else
-        vim.fn.py3eval(
-            'ZotCite.UpdateBib(["'
-                .. table.concat(ckeys, '", "')
-                .. '"], "'
-                .. bib
-                .. '", False)'
-        )
-    end
+    if #ckeys == 0 then return end
+
+    local bib = find_bib_fn()
+    if not bib then return end
+
+    require("zotcite.zotero").update_bib(ckeys, bib, kt, false)
     vim.schedule(require("zotcite.hl").citations)
 end
 

@@ -1,4 +1,5 @@
 local zwarn = require("zotcite").zwarn
+local zotero = require("zotcite.zotero")
 
 local last_line = 0
 local z_ls = {
@@ -11,17 +12,16 @@ local z_ls = {
 local compl_region = true
 
 --- Resolve selected menu item
----@param zkey string
-local resolve = function(zkey)
-    local ref = vim.fn.py3eval('ZotCite.GetRefData("' .. zkey .. '")')
+---@param key string
+local resolve = function(key)
+    local ref = zotero.get_ref_data(key)
     if not ref then return nil end
 
     local doc = ""
-    local ttl = " "
-    if ref.title then ttl = ref.title end
+    local ttl = ref.title and ref.title or nil
     local etype = string.gsub(ref.etype, "([A-Z])", " %1")
     etype = string.lower(etype)
-    doc = "`" .. etype .. "`" .. "\n\n**" .. ttl .. "**\n\n"
+    doc = "**" .. ttl .. "**\n\n"
     if ref.etype == "journalArticle" and ref.publicationTitle then
         doc = doc .. "*" .. ref.publicationTitle .. "*\n\n"
     elseif ref.etype == "bookSection" and ref.bookTitle then
@@ -33,28 +33,35 @@ local resolve = function(zkey)
     else
         doc = doc .. " (????) "
     end
-    return doc
+    return etype, doc
 end
 
 --- Fill completion menu
 ---@param lnum integer Line number
 ---@param char integer Cursor column
----@return table | nil
-local complete = function(lnum, char)
+local complete = function(callback, lnum, char)
+    if not compl_region then
+        callback(nil, { isIncomplete = false, items = {} })
+        return
+    end
+
     local line = vim.api.nvim_buf_get_lines(0, lnum, lnum + 1, true)[1]
     local subline = line:sub(1, char)
     local word
-    if vim.bo.filetype == "rnoweb" or vim.bo.filetype == "latex" then
+    if vim.bo.filetype == "rnoweb" or vim.bo.filetype == "tex" then
         word = subline:match(".*{.-(%S+)$")
     else
         word = subline:match(".*@(%S+)$")
     end
-    if not word then return end
+    if not word then
+        callback(nil, { isIncomplete = false, items = {} })
+        return
+    end
 
     local compl_items = {}
     local bnm = vim.api.nvim_buf_get_name(0)
     if vim.fn.has("win32") == 1 then bnm = string.gsub(tostring(bnm), "\\", "/") end
-    local itms = vim.fn.py3eval('ZotCite.GetMatch("' .. word .. '", "' .. bnm .. '")')
+    local itms = zotero.get_match(word, bnm)
     local text_edit_range = {
         start = {
             line = lnum,
@@ -67,49 +74,59 @@ local complete = function(lnum, char)
     }
     if itms then
         for _, v in pairs(itms) do
-            local txt = v[2] .. " " .. v[3]
+            local txt = string.format("%s (%s) %s", v.alastnm, v.year, v.title)
             if vim.fn.strwidth(txt) > 58 then
                 txt = vim.fn.strcharpart(txt, 0, 58) .. "⋯"
             end
-            local nt = v[1]
-            if vim.bo.filetype == "rnoweb" or vim.bo.filetype == "latex" then
-                nt = nt:match("^(.-)%-")
-            end
-
+            local kt =
+                require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
             table.insert(compl_items, {
                 label = txt,
                 kind = vim.lsp.protocol.CompletionItemKind.Variable,
                 textEdit = {
-                    newText = nt,
+                    newText = kt == "zotero" and v.zotkey or v.citekey,
                     range = text_edit_range,
                 },
             })
         end
     end
-    return compl_items
+    callback(nil, { isIncomplete = false, items = compl_items })
 end
 
 --- Hover implementation
 ---@param lnum integer Line number
 ---@param char integer Cursor column
----@return table | nil
+---@return table
 local hover = function(lnum, char)
     local line = vim.api.nvim_buf_get_lines(0, lnum, lnum + 1, true)[1]
 
     -- Find zotero key
     local k = char
-    local pre = line:sub(1, k):match(".*@(.*)")
-    if not pre then return end
+    local pre
+    if vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb" then
+        pre = line:sub(1, k):match(".-([%w%-\192-\244\128-\191]-)$")
+    else
+        pre = line:sub(1, k):match(".*@(.*)")
+    end
+    if not pre then return {} end
     local pos = line:sub(k + 1, -1):match("^(%S*).*")
-    if not pos then return end
+    if not pos then return {} end
     local subline = pre .. pos
-    local zkey = subline:match(
-        "^([0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z])"
-    )
-    if not zkey then return end
-    local res = resolve(zkey)
-    if not res then return end
-    local i, j = line:find(zkey .. "[%w%-0-9]*")
+    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+    local ktnz = kt ~= "zotero"
+    local key = ktnz and subline:match("^([%w%-\192-\244\128-\191]+)")
+        or subline:match(
+            "^([0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z][0-9A-Z])"
+        )
+    if not key then return {} end
+    local ttl, doc = resolve(key)
+    if not ttl then return {} end
+    local i, j
+    if ktnz then
+        i, j = line:find(key)
+    else
+        i, j = line:find(key .. "[%w%-0-9]*")
+    end
     if i then
         return {
             range = {
@@ -122,10 +139,10 @@ local hover = function(lnum, char)
                     character = j,
                 },
             },
-            contents = res,
+            contents = { kind = "markdown", value = ttl .. "\n\n---\n\n" .. doc },
         }
     end
-    return { contents = res }
+    return { contents = { kind = "markdown", value = ttl .. "\n\n---\n\n" .. doc } }
 end
 
 --- Get list of "zotero_ls" servers attached to current buffer
@@ -142,20 +159,20 @@ end
 --- This function receives 4 arguments: method, params, callback, notify_callback
 local function lsp_request(method, params, callback, _)
     if method == "textDocument/completion" then
-        if not compl_region then
-            callback(nil, { result = nil })
-            return
-        end
-        local compl_items = complete(params.position.line, params.position.character)
-        if not compl_items then callback(nil, { result = nil }) end
-        callback(nil, { isIncomplete = false, items = compl_items })
+        vim.schedule(
+            function() complete(callback, params.position.line, params.position.character) end
+        )
     elseif method == "completionItem/resolve" then
-        local zotkey = params.textEdit.newText:gsub("%-.*", "")
-        local detail = resolve(zotkey)
-        if detail then
-            params.detail = detail
-            callback(nil, params)
+        local key = params.textEdit.newText
+
+        local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
+        if kt == "zotero" then key = key:gsub("%-.*", "") end
+        local ttl, doc = resolve(key)
+        if ttl then
+            params.detail = ttl
+            params.documentation = { kind = "zinfo", value = doc }
         end
+        callback(nil, params)
         vim.schedule(require("zotcite.hl").citations)
     elseif method == "textDocument/hover" then
         if not compl_region then
@@ -172,6 +189,8 @@ local function lsp_request(method, params, callback, _)
                 },
                 hoverProvider = true,
                 completionProvider = {
+                    -- would work only if we could reset the completion
+                    -- triggerCharacters = { "@" },
                     resolveProvider = true,
                 },
             },
@@ -182,11 +201,7 @@ local function lsp_request(method, params, callback, _)
         if #zid > 0 then
             for _, v in pairs(zid) do
                 if vim.lsp.buf_is_attached(0, v) then vim.lsp.buf_detach_client(0, v) end
-                if vim.fn.has("nvim-0.12") == 1 then
-                    vim.lsp.get_client_by_id(v):stop()
-                else
-                    vim.lsp.stop_client(v)
-                end
+                vim.lsp.get_client_by_id(v):stop()
             end
         end
     else
@@ -269,7 +284,7 @@ end
 
 --- Call the appropriate function to set the value `compl_region`
 local function on_cursor_move()
-    if vim.bo.filetype == "rnoweb" or vim.bo.filetype == "latex" then
+    if vim.bo.filetype == "rnoweb" or vim.bo.filetype == "tex" then
         set_compl_region_rnw()
     end
     local curpos = vim.api.nvim_win_get_cursor(0)

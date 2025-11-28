@@ -7,7 +7,7 @@
     2.2. Mappings                                           |zotcite_mappings|
     2.3. Compiling documents                          |zotcite_compiling_docs|
  3. Customization                                      |zotcite_customization|
-    3.1. Python path                                     |zotcite_python_path|
+    3.1. Paths                                                 |zotcite_paths|
     3.2. Change default maps                         |zotcite_change_mappings|
     3.3. Zotcite engine                                       |zotcite_engine|
     3.4. Syntax highlighting                            |zotcite_highlighting|
@@ -114,8 +114,6 @@ In Vim's Normal mode, put the cursor over a citation key and press:
 
   - <leader>zb to insert the abstract (if available) into the current buffer.
 
-  - <Leader>zy to see how the reference will be converted into YAML.
-
   - <Leader>zv to view the (pdf or html) document generated from the current
     (Markdown, Rmd, or Quarto) document.
 
@@ -123,127 +121,17 @@ In Vim's Normal mode, put the cursor over a citation key and press:
 ------------------------------------------------------------------------------
 2.3. Compiling documents                              *zotcite_compiling_docs*
 
-No bib file (use the zotref filter instead) ~
-
-To convert a Markdown document with pandoc, use the `zotref.py` filter that comes
-with Zotcite. The Zotcite plugin adds the directory where `zotref.py` is to the
-system `$PATH`. So, from within Neovim, do:
->vim
- :!pandoc file_name.md -s -o file_name.html -F zotref.py --citeproc
-
-Replace `file_name` with the actual name of the markdown document being
-edited, and `html` with the appropriate file extension.
-
-If you add the `filters` field to the YAML header of a Quarto document, the
-filters will be run after the `citeproc` filter. However, the `zotref.py`
-filter must be run before `citeproc`. The best solution for this problem might
-be to create a file named `citeproc.lua` with the following contents and save
-it somewhere:
->lua
- function Pandoc (doc)
-   return pandoc.utils.citeproc(doc)
- end
-
-Then, do not use either the `bibliography` field or the `citeproc` field (if
-you use any of them, `citeproc` will run before `zotref.py`) and put in the
-YAML header of your Quarto document:
->yaml
- filters:
-     - /full/path/to/zotcite/python3/zotref.py
-     - /full/path/to/your/citeproc.lua
-     - /full/path/to/zotcite/python3/apafix.py
-
-Of course, the last filter should be added only if using the APA citation style.
-It will replace "&" with "and" in in-text citations. If using the Brazilian
-citation style, you could try the `abntfix.py` filter to fix in-text citations.
-
-For a Lua filter to fix the APA citation style, see:
-
-  https://github.com/citation-style-language/styles/issues/3748
-
-
-To compile an RMarkdown document with the R.nvim plugin
-(https://github.com/R-nvim/R.nvim), add the following lines to the YAML
-header of the document (replace `pdf_document` with the desired output):
->yaml
- output:
-   pdf_document:
-     pandoc_args: ['-F', 'zotref.py', '--citeproc']
-
-Notes for Windows users:
-
-You might have to replace `zotref.py` with its full path. Example:
->yaml
- output:
-   pdf_document:
-     pandoc_args: ['-F', '/Path/to/zotcite/python3/zotref.py', '--citeproc']
-<
-On Windows, `zotref.py` will convert the bib file from "latin1" to
-"utf-8". If "latin1" is not the Zotero encoding in your region, set
-`zotero_encoding` with the correct value in your `config`. Example:
->lua
- zotero_encoding = 'latin2'
-
-For Typst, the following command should work:
->sh
- pandoc example.typ -F /path/to/zotcite/python3/zotref.py -C -o example.pdf
-<
-
-Bib file + zotref filter ~
-
 Note: Make backup of your bib files because they will be overwritten by
 zotcite.
 
-The goal of Zotcite is to avoid the need for exporting bib files from Zotero.
-The `zotref.py` filter receives the Markdown document from its standard input,
-extracts all citation keys from the document, gets all corresponding
-references from the Zotero database, inserts all references in the YAML header
-of the document, and, finally, returns the enhanced document to `pandoc`. If
-there is a "bibliography" field in the YAML header, it will be used. If one of
-the bib files listed in the "bibliography" field has a name ending with the
-"zotcite.bib" string it will be overwritten. If there is a "bibliography"
-field in the YAML header, but none of the bib files listed ends in
-"zotcite.bib", a temporary one will be created.
-
-It is possible --- but not recommended --- to mix bib files that are generated
-and overwritten by zotcite with other ones because the final document may
-include duplicated references. Anyway, if you have an old bib file and want to
-complement it with Zotero references, you can put in your YAML header:
->yaml
- bibliography:
-   - old.bib
-   - new-zotcite.bib
-
-or, simply:
->yaml
- bibliography: old.bib
-
-
-With bib file (no need of using use the zotref filter) ~
-
-Note: Make backup of your bib files because they will be overwritten by
-zotcite.
-
-If you put in your zotcite config
->lua
- bib_and_vt = { markdown = true, quarto = true, rmd = true },
-<
 zotcite will automatically save the bib file indicated in the YAML header when
-saving the document and will not append the author name and year of
-publication to the Zotero key. That is, instead of the format
-`@ABCDEFGH-Author-Year`, the citation key will have the format `@ABCDEFGH`.
-The `Author-Year` complement will be inserted as a virtual text. This means
-that you will not need the `zotref` filter to remove the `Author-Year`
-complement before compiling the document with `pandoc`. Hence, the name
-`bib_and_vt` means: save and update a bib file, write Zotero keys without the
-zotcite complement, and add the zotcite complement as virtual text.
+saving the document. The citation key will have the format `@ABCDEFGH`, and
+the `Author-Year` complement will be inserted as a virtual text.
 
-This is the only way of using zotcite with LaTeX or Rnoweb.
-
-If you have a markdown document with citations including the `-Author-Year`
-part and want to switch to the clean format, the command below will delete the
-`-Author-Year` complements (but there is no automatic way of getting them back):
->
+If you have an old markdown document with citations including the no longer
+used `-Author-Year` real text, the Vim command below will delete the
+`-Author-Year` complements (with no automatic way of getting them back):
+>vim
  :%s/@\([A-Z0-9]\{8}\)[-#][-:+_[:digit:][:lower:][:upper:]\u00FF-\uFFFF]\+/@\1/g
 <
 Note: make a backup of you Markdown document before running the command to
@@ -254,10 +142,10 @@ Convert from ODT ~
 
 If you have an OpenDocument Text with citations inserted by the Zotero
 extension and want to convert it to Markdown, you can use the `odt2md.py`
-application from the `python3` directory to help you convert the document.
+application from the `scripts` directory to help you convert the document.
 Example:
 >sh
- /path/to/zotcite/python3/odt2md.py Document.odt
+ /path/to/zotcite/scripts/odt2md.py Document.odt
 
 Within Neovim, you can run the command `:Zodt2md` to convert the ODT document
 and see the resulting Markdown document in a new tab:
@@ -276,8 +164,26 @@ of the citation fields.
 3. Customization                                       *zotcite_customization*
 
 ------------------------------------------------------------------------------
-3.1. Python path                                         *zotcite_python_path*
+3.1. Paths                                                     |zotcite_paths|
 
+							  *zotero_sqlite_path*
+If Zotcite cannot find the path to Zotero's database (`zotero.sqlite`), put
+the correct path in your `config`. Example:
+>lua
+ zotero_sqlite_path = '~/.zotero/zotero.sqlite'
+<
+								      *tmpdir*
+If Zotcite is trying to use a non-writable directory as its temporary and
+cache directory, set the value of `tmpdir`. Example:
+>lua
+ tmpdir = '/dev/shm/zotcite-user_name'
+
+Zotcite adds its `scripts` directory to the environment variable `PATH`. If
+it's not correctly finding the directory, you can set it manually:
+>lua
+ python_scripts_path = "/path/to/zotcite/scripts"
+<
+							 *zotcite_python_path*
 Zotcite runs "python3" when extracting notes from PDF documents annotated by
 PDF viewers other than Zotero (`:Zpdfnote`) and when converting ODT to
 Markdown (`:Zodt2md`). If "python3" is not in your path or if you are running
@@ -286,6 +192,154 @@ zotcite config. Example:
 >lua
  python_path = "/home/user_name/.py3env/bin/python3"
 <
+
+------------------------------------------------------------------------------
+3.2. Change default maps                             *zotcite_change_mappings*
+
+Below are examples of how to change the available key bindings:
+>lua
+ -- Insert citation key:
+ vim.keymap.set("i", "<c-b>", "<Plug>ZCite")
+
+ -- Open reference attachment:
+ vim.keymap.set("n", "<c-]>", "<Plug>ZOpenAttachment")
+
+ -- See basic information on the reference of a citation key:
+ vim.keymap.set("n", "<Leader>I", "<Plug>ZCitationInfo")
+
+ -- See how the reference of a citation key is stored by Zotcite:
+ vim.keymap.set("n", "<Leader>C", "<Plug>ZCitationCompleteInfo")
+
+ -- Extract the abstract into the current buffer from the citation under cursor:
+ vim.keymap.set("n", "<Leader>A", "<Plug>ZExtractAbstract")
+
+ -- View the (pdf or html) document generated from the
+ -- current (Markdown, Rmd, or Quarto) document:
+ vim.keymap.set("n", "<Leader>V", "<Plug>ZViewDocument")
+<
+
+------------------------------------------------------------------------------
+3.3. Zotcite engine                                           *zotcite_engine*
+							    *zotcite_key_type*
+You can use three different types of citation keys with Zotcite:
+
+  - Zotero keys.
+  - Keys based on the citation template.
+  - Better BibTeX citation keys.
+
+Zotero keys are sequences of random upper case letters and numbers with
+length eight, such as `A1B2C3D4` or `ABCD1234`. These keys are generated by
+Zotero.
+
+Keys based on the citation template are generated by zotcite according to the
+`citation_template` option explained below. Duplicates are fixed by appending
+alphabetic letters `a`, `b`, `c`, and so on. The letter that is appended
+follows the chronological order of addition of references to Zotero's
+database. This type of citation key is similar to what you get from Better
+BibTex.
+
+The Better BibTeX citation keys are generated by Zotero's extension Better
+BibTex.
+
+Advantages of each type:
+
+  - Zotero key: It is guaranteed to be unique. You will never get a duplicate.
+    But they are meaningless for humans because it is not based on an author
+    name, reference title, or year of publication. As a workaround, zotcite
+    conceals the Zotero key and inserts a virtual text based on the citation
+    template. The problem is that the cursor movement becomes strange as it
+    jumps over the virtual text.
+
+  - Key based on the citation template: You see the real text of the citation
+    key, and you see the cursor moving as usual. The problem is that if you
+    delete from Zotero's database a reference that was resulting in duplicate
+    citation key, the letters appended to the remaining references will change
+    unless the deleted reference was the last one added.
+
+  - Better BibTeX citation key: Same advantages and disadvantages of citation
+    keys based on a template.
+
+What is the best for you:
+
+  - If you are writing a book or paper alone (or if everyone is using Neovim
+    and zotcite) and the strange cursor movements isn't annoying to you,
+    then, the Zotero key is the best option.
+
+  - If you are writing alone (or if everyone is using Neovim and zotcite), but
+    you want normal cursor movements, and don't want to install Better BibTex,
+    then, a citation key based on the citation template is the best option.
+
+  - If you are writing with other people who use Better BibTeX, than, of
+    course, you have no choice but to use Better BibTeX keys too.
+
+The type of citation key is defined with the option `key_type`. Valid values
+are "template" (the default), "better-bibtex", and "zotero". Example:
+>lua
+ key_type = "zotero",
+<
+You can also set a different value for each document. For a Markdown,
+RMarkdown or Quarto document, add the key `zotcite-key-type` to the YAML
+header. Example:
+>yaml
+ zotcite-key-type: better-bibtex
+<
+For LaTeX, Rnoweb, or Tpyst, it should be within a commented line with the
+comment string at the beginning of the line. Example for LaTeX:
+>tex
+ % zotcite-key-type = zotero
+<
+and for Typst:
+>typst
+ // zotcite-key-type = template
+<
+							   *citation_template*
+When the `key_type` is "zotero", zotcite complements the citation key with a
+virtual text in the format `Author_Year`. The citation key is the key
+attributed by Zotero to the references stored in its database, `Author` is the
+last name of the first author, and `Year` is the full year (four digits). You
+can define whether it will include or not the first author's last name (in
+either lower case `{author}` or title case `{Author}`), the last names of the
+first three authors (either `{authors}` or `{Authors}`), and the year (with
+either four digits `{Year}` or only two `{year}`). Example:
+>lua
+ citation_template = '{Author}-{year}'
+<
+When Zotero's SQLite3 database is updated, zotcite copies it to its temporary
+directory. While copying, the slowest operation is writing the copy of the
+file to disk. If you have enough RAM, you may want to set `tmpdir` as a
+directory in a file system mounted in virtual memory, as in the second example
+above.
+							      *exclude_fields*
+If you want to exclude some of Zotero's fields from the bib file
+generated by Zotcite, set the value of `exclude_fields` to a white-separated
+list of fields to be excluded. For example, if you want to exclude the fields
+"Extra" (which appears as `note` in the bib file) and "file" field, put
+this in your `config`:
+>lua
+ exclude_fields = "note file"
+<
+								    *sort_key*
+By default, zotcite uses the field "dateModified" to sort the results
+displayed by `:Zseek`. You can use a different field, such as "date", "title",
+"alastnm" or other fields whose values are strings or numbers (do
+`<Leader>za` over some citation keys to see the available fields):
+>lua
+ sort_key = "date"
+<
+							   *Zotero_collection*
+If you want to restrict the search for references to specific collections
+while completing citation keys, set the value `collection` in the YAML header
+of the Markdown document, as in the examples:
+>
+ ---
+ collection: ['New Paper']
+ ---
+
+ ---
+ collection: ['PhD Thesis', 'New Paper']
+ ---
+
+
 The Python script `pdfnote.py` imports the modules `PyQt5` and `popplerqt5`.
 On Debian systems they can be installed with the command:
 >sh
@@ -312,101 +366,6 @@ or with `pip`:
 <
 
 ------------------------------------------------------------------------------
-3.2. Change default maps                             *zotcite_change_mappings*
-
-Below are examples of how to change the available key bindings:
->lua
- -- Insert citation key:
- vim.keymap.set("i", "<c-b>", "<Plug>ZCite")
-
- -- Open reference attachment:
- vim.keymap.set("n", "<c-]>", "<Plug>ZOpenAttachment")
-
- -- See basic information on the reference of a citation key:
- vim.keymap.set("n", "<Leader>I", "<Plug>ZCitationInfo")
-
- -- See how the reference of a citation key is stored by Zotcite:
- vim.keymap.set("n", "<Leader>C", "<Plug>ZCitationCompleteInfo")
-
- -- See how the reference is converted into YAML:
- vim.keymap.set("n", "<Leader>Y", "<Plug>ZCitationYamlRef")
-
- -- Extract the abstract into the current buffer from the citation under cursor:
- vim.keymap.set("n", "<Leader>A", "<Plug>ZExtractAbstract")
-
- -- View the (pdf or html) document generated from the
- -- current (Markdown, Rmd, or Quarto) document:
- vim.keymap.set("n", "<Leader>V", "<Plug>ZViewDocument")
-<
-
-------------------------------------------------------------------------------
-3.3. Zotcite engine                                           *zotcite_engine*
-
-							   *citation_template*
-The citation keys inserted by Zotcite have the format `@ZoteroKey-Author_Year`
-where `ZoteroKey` is the key attributed by Zotero to the references stored in
-its database, `Author` is the last name of the first author, and `Year` is the
-full year (four digits). The `@ZoteroKey-` part of the citation key is
-mandatory because `zotref.py` uses it to add the bibliographic data that is
-parsed by `citeproc`, but it will be concealed by Neovim. The remainder of the
-key is customizable. You can define whether it will include or not the first
-author's last name (in either lower case `{author}` or title case `{Author}`),
-the last names of the first three authors (either `{authors}` or `{Authors}`),
-and the year (with either four digits `{Year}` or only two `{year}`). Example:
->lua
- citation_template = '{Author}-{year}'
-<
-								    *SQL_path*
-If Zotcite cannot find the path to Zotero's database (`zotero.sqlite`), put
-the correct path in your `config`:
->lua
- SQL_path = '/path/to/zotero.sqlite'
-<
-								      *tmpdir*
-If Zotcite is trying to use a non-writable directory as its temporary and
-cache directory, or if for any reason you want to change this directory,
-follow the examples:
->lua
- tmpdir = '/path/to/temporary_and_cache_directory'
- tmpdir = '/dev/shm/zotcite-user_name'
-
-When Zotero's SQLite3 database is updated, zotcite copies it to its temporary
-directory. While copying, the slowest operation is writing the copy of the
-file to disk. If you have enough RAM, you may want to set `tmpdir` as a
-directory in a file system mounted in virtual memory, as in the second example
-above.
-							      *exclude_fields*
-If you want to exclude some of Zotero's fields from the YAML references
-generated by Zotcite, set the value of `exclude_fields` to a white-separated
-list of fields to be excluded. For example, if you want to exclude the fields
-"Extra" (which appears as `note` in the YAML references) and "attachment", put
-this in your `config`:
->lua
- exclude_fields = "note attachment"
-<
-								    *sort_key*
-By default, zotcite uses the field "dateModified" to sort the results
-displayed by `:Zseek`. You can use a different field, such as "date", "title",
-"alastnm" or other fields whose values are strings or numbers (do
-`<Leader>za` over some citation keys to see the available fields):
->lua
- sort_key = "date"
-<
-							   *Zotero_collection*
-If you want to restrict the search for references to specific collections
-while completing citation keys, set the value `collection` in the YAML header
-of the Markdown document, as in the examples:
->
- ---
- collection: ['New Paper']
- ---
-
- ---
- collection: ['PhD Thesis', 'New Paper']
- ---
-
-
-------------------------------------------------------------------------------
 3.4. Syntax Highlighting                                *zotcite_highlighting*
 
 Syntax highlighting customization is done with Vim variables.
@@ -418,10 +377,12 @@ your `config`:
  hl_cite_key = false
 <
 							*zotcite_conceallevel*
-Zotcite sets the 'conceallevel' of the Markdown document to 2. If you want a
-different value, follow the example:
+Zotcite will set the 'conceallevel' of the document if you set the value
+`conceallevel` in its config:
 >lua
  conceallevel = 0
+
+if `conceallevel` is a negative integer (the default), zotcite will do nothing.
 
 
 ------------------------------------------------------------------------------
@@ -489,15 +450,5 @@ some internal variables, do the following command:
 Note that, unless you are editing Quarto documents, Zotcite will not enable
 omni completion if any of the buffer's lines matches the regular pattern
 `^bibliography:.*\.bib` when the markdown file is read.
-								      *:Zrefs*
-You can check the YAML references generated by Zotcite with the command
-`:Zrefs` which will insert in the document the list of references. This is
-useful if `citeproc` fails to parse the references.
-
-If you cannot make the `zotref.py` script work you have to manually add the
-references to the YAML header of your document with the command `:Zrefs` and
-delete and add the references again each time that you either cite or remove
-the citation to a reference. Then, if there are only ASCII characters in the
-references you will have a chance of successfully compiling the document.
 
 			 vim:tw=78:ts=8:ft=help:norl
