@@ -1200,7 +1200,7 @@ function M.get_match(ptrn, d)
             table.insert(p1, e)
         elseif e.alastnm and e.alastnm[1] and e.alastnm[1][1]:lower():find(ptrn) == 1 then
             table.insert(p2, e)
-        elseif e.title:lower():find(ptrn) == 1 then
+        elseif e.title and e.title:lower():find(ptrn) == 1 then
             table.insert(p3, e)
         elseif e.citekey:lower():find(ptrn) and e.citekey:lower():find(ptrn) > 1 then
             table.insert(p4, e)
@@ -1211,7 +1211,11 @@ function M.get_match(ptrn, d)
             and e.alastnm[1][1]:lower():find(ptrn) > 1
         then
             table.insert(p5, e)
-        elseif e.title:lower():find(ptrn) and e.title:lower():find(ptrn) > 1 then
+        elseif
+            e.title
+            and e.title:lower():find(ptrn)
+            and e.title:lower():find(ptrn) > 1
+        then
             table.insert(p6, e)
         end
     end
