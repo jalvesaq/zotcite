@@ -47,6 +47,11 @@ local complete = function(callback, lnum, char)
 
     local line = vim.api.nvim_buf_get_lines(0, lnum, lnum + 1, true)[1]
     local subline = line:sub(1, char)
+    local i = char
+    while vim.fn.strchars(subline) < char do
+        i = i + 1
+        subline = line:sub(1, i)
+    end
     local word
     if vim.bo.filetype == "rnoweb" or vim.bo.filetype == "tex" then
         word = subline:match(".*{.-(%S+)$")
