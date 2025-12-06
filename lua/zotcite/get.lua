@@ -17,9 +17,10 @@ local M = {}
 ---Convert key and path into valid path
 ---@param attachment table
 ---@return string | nil
-local TranslateZPath = function(attachment)
+local translate_zpath = function(attachment, real_path)
     if
-        config.open_in_zotero
+        not real_path
+        and config.open_in_zotero
         and (
             attachment.path:lower():find("%.pdf$")
             or attachment.path:lower():find("%.html$")
@@ -57,7 +58,7 @@ local TranslateZPath = function(attachment)
     return fpath
 end
 
-M.PDFPath = function(key, cb)
+local pdf_path = function(key, cb, real_path)
     local repl, err = zotero.get_attachment(key)
     if not repl then
         zwarn(err)
@@ -67,7 +68,7 @@ M.PDFPath = function(key, cb)
     local fpaths = {}
     local item
     for _, v in pairs(repl) do
-        item = TranslateZPath(v)
+        item = translate_zpath(v, real_path)
         if item then table.insert(fpaths, item) end
     end
     if #repl == 1 then
@@ -447,7 +448,7 @@ local finish_pdfnote = function(sel)
     if repl.pages and repl.pages:find("[0-9]-") then pg = repl.pages end
     pdfnote_data = { citekey = citekey, pg = pg }
 
-    local apath = M.PDFPath(key, finish_pdfnote_2)
+    local apath = pdf_path(key, finish_pdfnote_2, true)
     if type(apath) == "string" then
         sel_list = { apath }
         finish_pdfnote_2(nil, 1)
@@ -575,7 +576,7 @@ end
 
 M.open_attachment = function()
     local key = M.citation_key()
-    local apath = M.PDFPath(key, finish_open_attachment)
+    local apath = pdf_path(key, finish_open_attachment, false)
     if type(apath) == "string" then require("zotcite.utils").open(apath) end
 end
 
