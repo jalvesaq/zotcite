@@ -220,14 +220,14 @@ M.init = function()
     -- Disable for LSP popup windows
     if vim.o.buftype == "nofile" then return end
 
-    set_buffer_key_type()
-
     -- Do this only once
     if did_global_init then
+        set_buffer_key_type()
         require("zotcite.hl").citations()
         require("zotcite.lsp").start()
     else
         update_config()
+        set_buffer_key_type()
         did_global_init = true
         if vim.v.vim_did_enter == 0 then
             vim.api.nvim_create_autocmd("VimEnter", {
