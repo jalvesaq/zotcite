@@ -954,7 +954,20 @@ function M.get_annotations(key, offset)
             table.insert(lines, "")
         end
     end
-    return lines
+
+    local repl = {}
+    for _, v in pairs(lines) do
+        if v:find("\n") then
+            local vlist = vim.split(v, "\n")
+            for _, v2 in pairs(vlist) do
+                table.insert(repl, v2)
+            end
+        else
+            table.insert(repl, v)
+        end
+    end
+
+    return repl
 end
 
 --- Convert HTML to LaTeX
