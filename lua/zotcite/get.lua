@@ -101,7 +101,7 @@ end
 
 local citation_key_vt = function(line, pos)
     pos = pos + 1
-    if line:sub(pos, pos) == "<" then
+    if line:sub(pos, pos) == "@" or line:sub(pos, pos) == "<" then
         pos = pos + 1
     elseif line:sub(pos, pos) == ">" then
         pos = pos - 1
