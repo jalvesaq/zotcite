@@ -147,7 +147,10 @@ local function lsp_request(method, params, callback, _)
             return
         end
         local compl_items = complete(params.position.line, params.position.character)
-        if not compl_items then callback(nil, { result = nil }) end
+        if not compl_items then
+            callback(nil, { result = nil })
+            return
+        end
         callback(nil, { isIncomplete = false, items = compl_items })
     elseif method == "completionItem/resolve" then
         local zotkey = params.textEdit.newText:gsub("%-.*", "")
