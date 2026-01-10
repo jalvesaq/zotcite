@@ -453,6 +453,7 @@ local function calculate_citekeys()
         key = key:gsub(" ", "")
         key = key:gsub("'", "")
         key = key:gsub("’", "")
+        key = key:gsub("/", "-")
         v.citekey = key
     end
 end

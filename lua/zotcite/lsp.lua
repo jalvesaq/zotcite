@@ -40,11 +40,6 @@ end
 ---@param lnum integer Line number
 ---@param char integer Cursor column
 local complete = function(callback, lnum, char)
-    if not compl_region then
-        callback(nil, { isIncomplete = false, items = {} })
-        return
-    end
-
     local line = vim.api.nvim_buf_get_lines(0, lnum, lnum + 1, true)[1]
     local subline = line:sub(1, char)
     local i = char
@@ -164,6 +159,11 @@ end
 --- This function receives 4 arguments: method, params, callback, notify_callback
 local function lsp_request(method, params, callback, _)
     if method == "textDocument/completion" then
+        if not compl_region then
+            callback(nil, { isIncomplete = false, items = {} })
+            return
+        end
+
         vim.schedule(
             function() complete(callback, params.position.line, params.position.character) end
         )
