@@ -395,13 +395,6 @@ want to disable it for some of these file types, you should set the value of
 >lua
  filetypes = { 'markdown', 'pandoc', 'rmd', 'vimwiki' }
 
-Zotcite registers the Markdown parser to both Quarto and RMarkdown documents.
-This will change in the future if dedicated parsers are written for them.
-You can disable this feature in your zotcite config:
->lua
- register_treesitter = false
-
-
 
 ------------------------------------------------------------------------------
 3.6. Open attachment                                  *zotcite_open_in_zotero*

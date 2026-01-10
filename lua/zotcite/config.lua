@@ -12,8 +12,6 @@
 ---Space separated list of file types
 ---for which Zotcite is enabled
 ---@field filetypes? string[]
----Register Markdown parser for Quarto and RMarkdown
----@field register_treesitter? boolean
 ---Absolute path to `python3` executable
 ---@field python_path? string
 ---Application to extract notes from PDF documents
@@ -61,7 +59,6 @@ local config = {
         "typst",
         "vimwiki",
     },
-    register_treesitter = true,
     python_path = "python3",
     pdf_extractor = "pdfnotes.py", -- Default: "pdfnotes.py", alternative: "pdfnotes2.py"
 }
@@ -123,10 +120,6 @@ local update_config = function()
         for k, v in pairs(zotcite.user_opts) do
             config[k] = v
         end
-    end
-
-    if config.register_treesitter then
-        vim.treesitter.language.register("markdown", { "quarto", "rmd" })
     end
 end
 
@@ -297,7 +290,6 @@ M.init = function()
         "Zotcite: Paste abstract note in current buffer"
     )
     if config.conceallevel >= 0 then vim.o.conceallevel = config.conceallevel end
-    vim.treesitter.start(bnr)
     vim.api.nvim_create_autocmd(
         "InsertLeave",
         { buffer = bnr, callback = require("zotcite.hl").citations }

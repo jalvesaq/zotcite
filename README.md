@@ -43,8 +43,7 @@ _zotcite_ you can:
   - The `sqlite3` command line application.
 
   - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) as
-    well as tree-sitter parsers for `markdown`, `markdown_inline`, and `yaml`.
-    If editing LaTeX, Rnoweb, or Typst files, you will also need their parsers.
+    well as the tree-sitter parser for `yaml`.
 
 - Optional:
 
