@@ -440,20 +440,15 @@ local function calculate_citekeys()
         titlew = titlew:gsub("%W", "")
         local key = cite_template
         key = key:gsub("%{author%}", lastname:lower(), 1)
-        -- key = key:gsub("%{Author%}", lastname:title(), 1)
         key = key:gsub("%{Author%}", lastname, 1)
         key = key:gsub("%{authors%}", lastnames:lower(), 1)
-        -- key = key:gsub("%{Authors%}", lastnames:title(), 1)
         key = key:gsub("%{Authors%}", lastnames, 1)
         key = key:gsub("%{year%}", v.year:gsub("^[0-9][0-9]", ""))
         key = key:gsub("%{Year%}", v.year)
         key = key:gsub("%{title%}", titlew:lower())
-        -- key = key:gsub("{Title}", titlew:title(), 1)
         key = key:gsub("{Title}", titlew, 1)
-        key = key:gsub(" ", "")
-        key = key:gsub("'", "")
-        key = key:gsub("’", "")
-        key = key:gsub("/", "-")
+        -- Delete punctuation marks
+        key = key:gsub("[%./ -,:-@\\[-`{-~]", "")
         v.citekey = key
     end
 end

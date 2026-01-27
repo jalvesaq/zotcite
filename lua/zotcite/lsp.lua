@@ -175,7 +175,6 @@ local function lsp_request(method, params, callback, _)
             params.documentation = { kind = "zinfo", value = doc }
         end
         callback(nil, params)
-        vim.schedule(require("zotcite.hl").citations)
     elseif method == "textDocument/hover" then
         if not compl_region then
             callback(nil, { result = nil })
@@ -307,6 +306,10 @@ function M.start()
     vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
         buffer = vim.api.nvim_get_current_buf(),
         callback = on_cursor_move,
+    })
+    vim.api.nvim_create_autocmd("CompleteDone", {
+        buffer = vim.api.nvim_get_current_buf(),
+        callback = require("zotcite.hl").citations,
     })
 
     local config = require("zotcite.config").get_config()
