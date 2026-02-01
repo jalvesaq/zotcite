@@ -281,7 +281,11 @@ local function get_sql_data(query, sqlfile)
     local sf = sqlfile and sqlfile or zcopy
     local obj = vim.system({ "sqlite3", "-json", sf, query }, { text = true }):wait(3000)
     if obj.code ~= 0 then
-        if obj.stderr then zwarn(obj.stderr) end
+        if sf and obj.code == 11 then
+            vim.uv.fs_utime(sf, 0, 0)
+            copy_zotero_data()
+        end
+        if obj.stderr then zwarn(string.format("[%d] %s", obj.code, obj.stderr)) end
         return nil
     end
     if not obj.stdout then return nil end
