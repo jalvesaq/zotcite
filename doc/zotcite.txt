@@ -96,9 +96,9 @@ of letters before the cursor will be used to filter the references (see
 ------------------------------------------------------------------------------
 2.2. Mappings                                               *zotcite_mappings*
 
-If you have installed `cmp-zotcite`, then, in Insert mode, type the `@` letter
-and one or more letters of either the last name of the first author or the
-reference title. The matching of citation keys is case-insensitive.
+In Insert mode, type the `@` letter and one or more letters of either the last
+name of the first author or the reference title. The matching of citation keys
+is case-insensitive.
 
 In Vim's Insert mode, <c-x><c-b> inserts citation keys (requires Telescope).
 
