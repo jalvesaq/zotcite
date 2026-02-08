@@ -281,7 +281,11 @@ local function get_sql_data(query, sqlfile)
     local sf = sqlfile and sqlfile or zcopy
     local obj = vim.system({ "sqlite3", "-json", sf, query }, { text = true }):wait(3000)
     if obj.code ~= 0 then
-        if obj.stderr then zwarn(obj.stderr) end
+        if sf and obj.code == 11 then
+            vim.uv.fs_utime(sf, 0, 0)
+            copy_zotero_data()
+        end
+        if obj.stderr then zwarn(string.format("[%d] %s", obj.code, obj.stderr)) end
         return nil
     end
     if not obj.stdout then return nil end
@@ -440,20 +444,15 @@ local function calculate_citekeys()
         titlew = titlew:gsub("%W", "")
         local key = cite_template
         key = key:gsub("%{author%}", lastname:lower(), 1)
-        -- key = key:gsub("%{Author%}", lastname:title(), 1)
         key = key:gsub("%{Author%}", lastname, 1)
         key = key:gsub("%{authors%}", lastnames:lower(), 1)
-        -- key = key:gsub("%{Authors%}", lastnames:title(), 1)
         key = key:gsub("%{Authors%}", lastnames, 1)
         key = key:gsub("%{year%}", v.year:gsub("^[0-9][0-9]", ""))
         key = key:gsub("%{Year%}", v.year)
         key = key:gsub("%{title%}", titlew:lower())
-        -- key = key:gsub("{Title}", titlew:title(), 1)
         key = key:gsub("{Title}", titlew, 1)
-        key = key:gsub(" ", "")
-        key = key:gsub("'", "")
-        key = key:gsub("’", "")
-        key = key:gsub("/", "-")
+        -- Delete punctuation marks
+        key = key:gsub("[%./ -,:-@\\[-`{-~]", "")
         v.citekey = key
     end
 end

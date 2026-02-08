@@ -82,7 +82,8 @@ local vt_citations_md = function(ac, ns, lines)
     local a = ""
     for k, v in pairs(lines) do
         local i = 1
-        while true do
+        local imax = #v
+        while i < imax do
             local s, e = v:find(kp, i)
             if not s or not e then break end
             a = ac[v:sub(s + 1, e)]
@@ -100,7 +101,8 @@ local vt_citations_typ = function(ac, ns, lines)
     local a = ""
     for k, v in pairs(lines) do
         local i = 1
-        while true do
+        local imax = #v
+        while i < imax do
             local s, e = v:find(kp, i)
             if not s or not e then break end
             a = ac[v:sub(s + 1, e - 1)]
@@ -119,7 +121,8 @@ local vt_citations_tex = function(ac, ns, lines)
     local a = ""
     for k, v in pairs(lines) do
         local i = 1
-        while true do
+        local imax = #v
+        while i < imax do
             local s, e = v:find(kp1, i)
             if not s or not e then break end
             local j = e
