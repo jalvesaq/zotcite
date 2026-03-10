@@ -13,7 +13,6 @@ local config = require("zotcite.config").get_config()
 local cite_template
 local banned_words = {}
 local zcopy
-local bbtcopy
 local ztime
 local exclude_fields = {}
 local entry = {}
@@ -263,14 +262,6 @@ local function copy_zotero_data()
 
     -- Make a copy of zotero.sqlite to avoid locks
     if ztime > zcopy_time then vim.uv.fs_copyfile(zf, zcopy) end
-    local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
-    if kt ~= "better-bibtex" then return end
-
-    local bbt_f = zf:gsub("zotero%.sqlite$", "better-bibtex.sqlite")
-    bbtcopy = config.tmpdir .. "/bbt.sqlite"
-    local btime1 = getmtime(bbt_f)
-    local btime2 = getmtime(bbtcopy)
-    if btime1 > btime2 then vim.uv.fs_copyfile(bbt_f, bbtcopy) end
 end
 
 --- Run sqlite3 and get the output
@@ -388,35 +379,19 @@ local function add_authors()
 end
 
 local function get_year(e)
-    local year = "????"
-    if e.date then
-        local y = e.date:match("^([0-9][0-9][0-9][0-9])")
-        if y then
-            year = y
-        elseif e.issueDate then
-            y = e.issueDate:match("^([0-9][0-9][0-9][0-9])")
-            if y then year = y end
-        end
+    local y
+    if e.date then y = e.date:match("^([0-9][0-9][0-9][0-9])") end
+    if not y and e.issueDate then y = e.issueDate:match("^([0-9][0-9][0-9][0-9])") end
+    if y then
+        return y
+    else
+        return "????"
     end
-    return year
 end
 
-local function calculate_citekeys()
-    local ptrn = "^(" .. table.concat(banned_words, " |") .. " )"
-    for _, v in pairs(entry) do
-        v.year = get_year(v)
-        local titlew
-        if v.title then
-            ---@type string
-            local title = v.title
-            title = title:gsub(ptrn, "")
-            title = title:lower()
-            title = title:gsub("^[a-z] ", "")
-            titlew = title:gsub("[ ,;:\\.!?].*", "")
-        else
-            v.title = ""
-            titlew = ""
-        end
+local function calculate_ck(v, has_a, has_t, has_y)
+    local key = cite_template
+    if has_a then
         local lastname = "No_author"
         local lastnames = "No_author"
         local creators = { "author" }
@@ -441,33 +416,46 @@ local function calculate_citekeys()
             if n > 0 then lastnames = table.concat(lnms, "-") end
         end
         lastname = lastname:gsub("%W", "")
-        titlew = titlew:gsub("%W", "")
-        local key = cite_template
         key = key:gsub("%{author%}", lastname:lower(), 1)
         key = key:gsub("%{Author%}", lastname, 1)
         key = key:gsub("%{authors%}", lastnames:lower(), 1)
         key = key:gsub("%{Authors%}", lastnames, 1)
+    end
+
+    if has_t then
+        local ttl = v.title:gsub("[,;:\\.!?].*", "")
+        ttl = ttl:gsub("%s%s*", " ")
+        local titlew = ""
+        local ttl_ls = vim.split(ttl, " ")
+        for _, t in pairs(ttl_ls) do
+            if not vim.tbl_contains(banned_words, t:lower()) then
+                titlew = t
+                break
+            end
+        end
+        key = key:gsub("%{title%}", titlew:lower())
+        key = key:gsub("%{Title%}", titlew)
+    end
+
+    if has_y then
         key = key:gsub("%{year%}", v.year:gsub("^[0-9][0-9]", ""))
         key = key:gsub("%{Year%}", v.year)
-        key = key:gsub("%{title%}", titlew:lower())
-        key = key:gsub("{Title}", titlew, 1)
-        -- Delete punctuation marks
-        key = key:gsub("[%./ -,:-@\\[-`{-~]", "")
-        v.citekey = key
     end
+
+    -- Delete punctuation marks
+    key = key:gsub("[%./ -,:-@\\[-`{-~]", "")
+    return key
 end
 
-local function add_bbt_keys()
-    local sql_data = get_sql_data("SELECT itemID, citationKey FROM citationkey", bbtcopy)
-    if not sql_data then return end
-    for _, v in pairs(sql_data) do
-        local e = entry[v.itemID]
-        if e then
-            e.citekey = v.citationKey
-            e.year = get_year(e)
-        else
-            zwarn("Entry with Better BibTeX itemID " .. v.itemID .. " not found")
-        end
+local function calculate_citekeys()
+    local ct = cite_template:lower()
+    local has_a = ct:find("author") and true or false
+    local has_t = ct:find("title") and true or false
+    local has_y = ct:find("year") and true or false
+    for _, v in pairs(entry) do
+        v.year = get_year(v)
+        if not v.title then v.title = "???" end
+        if not v.citekey then v.citekey = calculate_ck(v, has_a, has_t, has_y) end
     end
 end
 
@@ -485,25 +473,39 @@ end
 local function add_citekeys()
     local kt = require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
     if kt == "better-bibtex" then
-        add_bbt_keys()
-    else
-        calculate_citekeys()
-        if kt == "template" then
-            -- Fix duplicates
-            for k1, v1 in pairs(entry) do
-                local dup = { v1 }
-                for k2, v2 in pairs(entry) do
-                    if k1 ~= k2 and v1.citekey == v2.citekey then
-                        table.insert(dup, v2)
-                    end
-                end
-                if #dup > 1 then
-                    table.sort(dup, function(a, b) return a.added > b.added end)
-                    local i = 1
-                    for _, v in pairs(dup) do
-                        v.citekey = v.citekey .. get_sequence_string(i)
-                        i = i + 1
-                    end
+        local missing_ck = {}
+        for _, v in pairs(entry) do
+            if v.citationKey then
+                v.citekey = v.citationKey
+            else
+                table.insert(
+                    missing_ck,
+                    vim.inspect(v.author) .. " " .. vim.inspect(v.title)
+                )
+            end
+        end
+
+        if #missing_ck > 40 then
+            zwarn("Missing 'Citation Key' for " .. tostring(#missing_ck) .. " entries")
+        elseif #missing_ck > 0 then
+            zwarn("Missing 'Citation Key' for:\n" .. table.concat(missing_ck, "\n"))
+        end
+    end
+
+    calculate_citekeys()
+    if kt == "template" then
+        -- Fix duplicates
+        for k1, v1 in pairs(entry) do
+            local dup = { v1 }
+            for k2, v2 in pairs(entry) do
+                if k1 ~= k2 and v1.citekey == v2.citekey then table.insert(dup, v2) end
+            end
+            if #dup > 1 then
+                table.sort(dup, function(a, b) return a.added > b.added end)
+                local i = 1
+                for _, v in pairs(dup) do
+                    v.citekey = v.citekey .. get_sequence_string(i)
+                    i = i + 1
                 end
             end
         end
@@ -1162,7 +1164,7 @@ function M.info()
         ["tmpdir"] = config.tmpdir,
         ["docs"] = docs,
         ["citation template"] = cite_template,
-        ["banned words"] = table.concat(banned_words, ", "),
+        ["banned words"] = table.concat(banned_words, " "),
         ["excluded fields"] = table.concat(exclude_fields, ", "),
         ["n refs"] = n,
         ["types"] = ntypes,
@@ -1263,9 +1265,8 @@ function M.init()
     if not cite_template then cite_template = "{Authors}-{Year}" end
 
     -- Title words to be ignored
-    local bw = config.banned_words
-    if bw then
-        banned_words = str_split(bw, " ")
+    if config.banned_words then
+        banned_words = vim.split(config.banned_words, " ")
     else
         banned_words =
             { "a", "an", "the", "some", "from", "on", "in", "to", "of", "do", "with" }

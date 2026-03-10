@@ -37,7 +37,7 @@
 ---page in references (by default, ", p. ")
 ---@field year_page_sep? string
 ---@field open_cmd? string Command to open attachments
----Space separated list of words from title to be
+---Space separated list of title words to be
 ---excluded from citation keys
 ---@field banned_words? string
 

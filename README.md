@@ -7,6 +7,10 @@
 > Users of Neovim < 0.11.5 have to switch to the "pynvim" branch.
 
 > [!Note]
+> Users of Zotero < 8 have to switch to zotcite 0.7 (tag v0.7) if using Better
+> BibTeX citation keys.
+
+> [!Note]
 > Zotcite now uses conventional citation keys based on a citation template
 > and no longer requires the `zotref` filter. Alternatively, it can use Better
 > BibTeX citation keys. There is also an option to use the internal Zotero
@@ -38,7 +42,8 @@ _zotcite_ you can:
 
 - Required:
 
-  - Zotero >= 5
+  - Zotero >= 5 if not using Better-BibTeX. For Better-BibTeX users, Zotero >=
+    8 is required.
 
   - The `sqlite3` command line application.
 
