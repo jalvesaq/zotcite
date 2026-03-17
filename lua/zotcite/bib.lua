@@ -42,7 +42,12 @@ local find_tex_bib = function()
         if bib then return bib end
     end
 
-    local fallback_root = vim.fn.fnamemodify(bufdir .. "/../main.tex", ":p")
+    local cfg = require("zotcite.config").get_config()
+    local fallback_suffix = cfg.tex_fallback_root
+    if type(fallback_suffix) ~= "string" or fallback_suffix == "" then
+        fallback_suffix = "../main.tex"
+    end
+    local fallback_root = vim.fn.fnamemodify(bufdir .. "/" .. fallback_suffix, ":p")
     local fallback_lines = read_lines(fallback_root)
     bib = fallback_lines and extract_addbibresource(fallback_lines) or nil
     if bib then return bib end
