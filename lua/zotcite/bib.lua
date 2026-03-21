@@ -38,20 +38,29 @@ local find_tex_bib = function()
     if root then
         local rootpath = vim.fn.fnamemodify(bufdir .. "/" .. root, ":p")
         local rootlines = read_lines(rootpath)
-        bib = rootlines and extract_addbibresource(rootlines) or nil
-        if bib then return bib end
+        if not rootlines then
+            zwarn("Failed to read TeX root: '" .. rootpath .. "'")
+            return nil
+        end
+        bib = extract_addbibresource(rootlines)
+        if not bib then
+            zwarn(
+                "Could not find the '\\addbibresource' command in TeX root '"
+                    .. rootpath
+                    .. "'"
+            )
+        end
+        return bib
     end
 
-    local cfg = require("zotcite.config").get_config()
-    local fallback_suffix = cfg.tex_fallback_root
-    if type(fallback_suffix) ~= "string" or fallback_suffix == "" then
-        fallback_suffix = "../main.tex"
-    end
-    local fallback_root = vim.fn.fnamemodify(bufdir .. "/" .. fallback_suffix, ":p")
+    local tfr = require("zotcite.config").get_config().tex_fallback_root
+    local fallback_root = vim.fn.fnamemodify(bufdir .. "/" .. tfr, ":p")
     local fallback_lines = read_lines(fallback_root)
     bib = fallback_lines and extract_addbibresource(fallback_lines) or nil
-    if bib then return bib end
-
+    if bib then
+        bufdir = vim.fn.fnamemodify(fallback_root, ":p:h")
+        return bufdir .. "/" .. bib
+    end
     zwarn("Could not find the '\\addbibresource' command.")
     return nil
 end
