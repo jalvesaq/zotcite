@@ -63,7 +63,7 @@ local config = {
         "vimwiki",
     },
     python_path = "python3",
-    pdf_extractor = "pdfnotes.py", -- Default: "pdfnotes.py", alternative: "pdfnotes2.py"
+    pdf_extractor = "pdfnotes.py",
     tex_fallback_root = "../main.tex",
 }
 
