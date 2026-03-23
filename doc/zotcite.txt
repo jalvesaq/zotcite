@@ -177,7 +177,16 @@ If Zotcite is trying to use a non-writable directory as its temporary and
 cache directory, set the value of `tmpdir`. Example:
 >lua
  tmpdir = '/dev/shm/zotcite-user_name'
-
+<
+							   *tex_fallback_root*
+When editing LaTeX or Rnoweb documents, Zotcite first tries to find
+`\addbibresource{...}` in the current buffer, then in the file pointed by
+`% !TeX root = ...`. If both checks fail, Zotcite looks for a fallback root
+file at `bufdir .. "/" .. tex_fallback_root`.
+The default is `"../main.tex"`. Example:
+>lua
+ tex_fallback_root = "../main.tex"
+<
 Zotcite adds its `scripts` directory to the environment variable `PATH`. If
 it's not correctly finding the directory, you can set it manually:
 >lua

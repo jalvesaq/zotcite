@@ -40,6 +40,9 @@
 ---Space separated list of title words to be
 ---excluded from citation keys
 ---@field banned_words? string
+---Relative path from buffer directory to a fallback TeX root file
+---used when no `% !TeX root = ...` is found
+---@field tex_fallback_root? string
 
 ---@type ZotciteUserOpts
 local config = {
@@ -60,7 +63,8 @@ local config = {
         "vimwiki",
     },
     python_path = "python3",
-    pdf_extractor = "pdfnotes.py", -- Default: "pdfnotes.py", alternative: "pdfnotes2.py"
+    pdf_extractor = "pdfnotes.py",
+    tex_fallback_root = "../main.tex",
 }
 
 local did_global_init = false

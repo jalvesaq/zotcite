@@ -2,14 +2,71 @@ local zwarn = require("zotcite").zwarn
 
 local M = {}
 
-local find_tex_bib = function()
-    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+local extract_addbibresource = function(lines)
     for _, v in pairs(lines) do
         if v:find("\\addbibresource%{") then
             local bib = v:gsub("\\addbibresource%{", "")
             bib = bib:gsub("}.*", "")
             return bib
         end
+    end
+    return nil
+end
+
+local read_lines = function(path)
+    if not path or vim.fn.filereadable(path) == 0 then return nil end
+    return vim.fn.readfile(path)
+end
+
+local find_root_file = function(lines)
+    for _, v in pairs(lines) do
+        local root = v:match("^%s*%%+%s*!%s*[Tt][Ee][Xx]%s+root%s*=%s*(.-)%s*$")
+        if root and root ~= "" then return root end
+    end
+    return nil
+end
+
+local resolve_path = function(base_dir, path)
+    if not path or path == "" then return path end
+    if path:match("^/") or path:match("^%a:[/\\]") then return path end
+    return vim.fn.fnamemodify(base_dir .. "/" .. path, ":p")
+end
+
+local find_tex_bib = function()
+    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
+    local bufpath = vim.api.nvim_buf_get_name(0)
+    local bufdir = vim.fn.fnamemodify(bufpath, ":p:h")
+
+    local bib = extract_addbibresource(lines)
+    if bib then return resolve_path(bufdir, bib) end
+
+    local root = find_root_file(lines)
+    if root then
+        local rootpath = resolve_path(bufdir, root)
+        local rootlines = read_lines(rootpath)
+        if not rootlines then
+            zwarn("Failed to read TeX root: '" .. rootpath .. "'")
+            return nil
+        end
+        bib = extract_addbibresource(rootlines)
+        if not bib then
+            zwarn(
+                "Could not find the '\\addbibresource' command in TeX root '"
+                    .. rootpath
+                    .. "'"
+            )
+        end
+        local rootdir = vim.fn.fnamemodify(rootpath, ":p:h")
+        return resolve_path(rootdir, bib)
+    end
+
+    local tfr = require("zotcite.config").get_config().tex_fallback_root
+    local fallback_root = vim.fn.fnamemodify(bufdir .. "/" .. tfr, ":p")
+    local fallback_lines = read_lines(fallback_root)
+    bib = fallback_lines and extract_addbibresource(fallback_lines) or nil
+    if bib then
+        local rootdir = vim.fn.fnamemodify(fallback_root, ":p:h")
+        return resolve_path(rootdir, bib)
     end
     zwarn("Could not find the '\\addbibresource' command.")
     return nil
