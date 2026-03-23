@@ -42,7 +42,7 @@ local find_tex_bib = function()
 
     local root = find_root_file(lines)
     if root then
-        local rootpath = vim.fn.fnamemodify(bufdir .. "/" .. root, ":p")
+        local rootpath = resolve_path(bufdir, root)
         local rootlines = read_lines(rootpath)
         if not rootlines then
             zwarn("Failed to read TeX root: '" .. rootpath .. "'")
