@@ -713,6 +713,10 @@ end
 function M.update_bib(zkeys, bibf, ktype, verbose)
     local bib = {}
 
+    if config.bib_relative_to == "file_dir" then
+        bibf = vim.fn.substitute(vim.fn.expand("%:p"),[[^\(.*[/\\]\)[^/\\]*$]],[[\1]],'e') .. "/" .. bibf
+    end
+
     local f = io.open(bibf, "r")
     if f then
         if verbose then zwarn('zotcite: updating "' .. tostring(bibf) .. '"\n') end
