@@ -43,8 +43,8 @@
 ---Relative path from buffer directory to a fallback TeX root file
 ---used when no `% !TeX root = ...` is found
 ---@field tex_fallback_root? string
----Look for bibliography files relative to the CWD (default) or the file in the buffer
----@field bib_relative_to? string '"working_dir"' | '"file_dir"'
+---Look for bibliography files relative to the current file (default) or working directory
+---@field bib_relative_to? string '"file_dir"' | '"working_dir"'
 
 ---@type ZotciteUserOpts
 local config = {
@@ -67,7 +67,7 @@ local config = {
     python_path = "python3",
     pdf_extractor = "pdfnotes.py",
     tex_fallback_root = "../main.tex",
-    bib_relative_to = "working_dir", -- Default: "working_dir", alternative: "file_dir"
+    bib_relative_to = "file_dir",
 }
 
 local did_global_init = false
