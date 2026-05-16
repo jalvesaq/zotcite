@@ -713,8 +713,12 @@ end
 function M.update_bib(zkeys, bibf, ktype, verbose)
     local bib = {}
 
-    if config.bib_relative_to == "file_dir" then
-        bibf = vim.fn.substitute(vim.fn.expand("%:p"),[[^\(.*[/\\]\)[^/\\]*$]],[[\1]],'e') .. "/" .. bibf
+    if config.bib_relative_to == "file_dir" and not bibf:find("^/") then
+        local bpath = vim.api.nvim_buf_get_name(0)
+        if vim.uv.os_uname().sysname:find("Windows", 1, true) then
+            bpath = bpath:gsub("\\", "/")
+        end
+        bibf = bpath:gsub("(.*/).*", "%1") .. bibf
     end
 
     local f = io.open(bibf, "r")
