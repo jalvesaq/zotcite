@@ -28,14 +28,12 @@ end
 
 local resolve_path = function(base_dir, path)
     if not path or path == "" then return path end
-    if path:match("^/") or path:match("^%a:[/\\]") then return path end
+    if path:find("^/") or path:find("^%a:[/\\]") then return path end
     return vim.fn.fnamemodify(base_dir .. "/" .. path, ":p")
 end
 
-local find_tex_bib = function()
+local find_tex_bib = function(bufdir)
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
-    local bufpath = vim.api.nvim_buf_get_name(0)
-    local bufdir = vim.fn.fnamemodify(bufpath, ":p:h")
 
     local bib = extract_addbibresource(lines)
     if bib then return resolve_path(bufdir, bib) end
@@ -72,25 +70,25 @@ local find_tex_bib = function()
     return nil
 end
 
-local find_typst_bib = function()
+local find_typst_bib = function(bufdir)
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
     for _, v in pairs(lines) do
         if v and v:find("#bibliography%(") then
-            return v:match('#bibliography%(%s*"(%S-)".*')
+            return resolve_path(bufdir, v:match('#bibliography%(%s*"(%S-)".*'))
         end
     end
     zwarn("Could not find the `#bibliography` identifier.")
     return nil
 end
 
-local find_markdown_bib = function()
+local find_markdown_bib = function(bufdir)
     local ybib = require("zotcite.get").yaml_field("bibliography", 0)
     if not ybib then
         zwarn("Could not find 'bibliography' field in YAML header.")
         return nil
     end
 
-    if type(ybib) == "string" then return ybib end
+    if type(ybib) == "string" then return resolve_path(bufdir, ybib) end
 
     local bib = nil
     if type(ybib) == "table" then
@@ -108,11 +106,15 @@ local find_markdown_bib = function()
 end
 
 local find_bib_fn = function()
-    if vim.bo.filetype == "typst" then return find_typst_bib() end
-    if vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb" then
-        return find_tex_bib()
+    local brt = require("zotcite.config").get_config().bib_relative_to
+    local bibdir = brt == "working_dir" and vim.uv.cwd()
+        or vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p:h")
+    if vim.bo.filetype == "typst" then
+        return find_typst_bib(bibdir)
+    elseif vim.bo.filetype == "tex" or vim.bo.filetype == "rnoweb" then
+        return find_tex_bib(bibdir)
     end
-    return find_markdown_bib()
+    return find_markdown_bib(bibdir)
 end
 
 local get_typ_citations = function(kz)
