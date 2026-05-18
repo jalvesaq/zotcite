@@ -178,6 +178,13 @@ cache directory, set the value of `tmpdir`. Example:
 >lua
  tmpdir = '/dev/shm/zotcite-user_name'
 <
+							     *bib_relative_to*
+Zotcite will use the directory of the buffer being edited as the relative path
+to save Bib files, but you can change the relative path to the current working
+directory:
+>lua
+ bib_relative_to = "working_dir"
+<
 							   *tex_fallback_root*
 When editing LaTeX or Rnoweb documents, Zotcite first tries to find
 `\addbibresource{...}` in the current buffer, then in the file pointed by
