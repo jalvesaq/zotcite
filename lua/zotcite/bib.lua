@@ -13,6 +13,17 @@ local extract_addbibresource = function(lines)
     return nil
 end
 
+local extract_bibliography_texcmd = function(lines)
+    for _, v in pairs(lines) do
+        if v:find("\\bibliography%{") then
+            local bib = v:gsub("\\bibliography%{", "")
+            bib = bib:gsub("}.*", ".bib")
+            return bib
+        end
+    end
+    return nil
+end
+
 local read_lines = function(path)
     if not path or vim.fn.filereadable(path) == 0 then return nil end
     return vim.fn.readfile(path)
@@ -35,7 +46,7 @@ end
 local find_tex_bib = function(dir)
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, true)
 
-    local bib = extract_addbibresource(lines)
+    local bib = extract_addbibresource(lines) or extract_bibliography_texcmd(lines)
     if bib then return resolve_path(dir, bib) end
 
     local root = find_root_file(lines)
@@ -46,10 +57,10 @@ local find_tex_bib = function(dir)
             zwarn("Failed to read TeX root: '" .. rootpath .. "'")
             return nil
         end
-        bib = extract_addbibresource(rootlines)
+        bib = extract_addbibresource(rootlines) or extract_bibliography_texcmd(lines)
         if not bib then
             zwarn(
-                "Could not find the '\\addbibresource' command in TeX root '"
+                "Could not find the '\\addbibresource' or '\bibliography' command in TeX root '"
                     .. rootpath
                     .. "'"
             )
@@ -61,12 +72,12 @@ local find_tex_bib = function(dir)
     local tfr = require("zotcite.config").get_config().tex_fallback_root
     local fallback_root = vim.fn.fnamemodify(dir .. "/" .. tfr, ":p")
     local fallback_lines = read_lines(fallback_root)
-    bib = fallback_lines and extract_addbibresource(fallback_lines) or nil
+    bib = fallback_lines and (extract_addbibresource(fallback_lines) or extract_bibliography_texcmd(fallback_lines) or nil)
     if bib then
         local rootdir = vim.fn.fnamemodify(fallback_root, ":p:h")
         return resolve_path(rootdir, bib)
     end
-    zwarn("Could not find the '\\addbibresource' command.")
+    zwarn("Could not find the '\\addbibresource' or '\\bibliography' command.")
     return nil
 end
 
