@@ -1149,8 +1149,15 @@ end
 function M.info()
     local ntypes = {}
     local n = 0
+    local long = { size = 0 }
     for _, v in pairs(entry) do
         n = n + 1
+        if v.abstractNote and string.len(v.abstractNote) > 4000 then
+            if string.len(v.abstractNote) > long.size then
+                long.size = string.len(v.abstractNote)
+                long.citation = tostring(v.citekey)
+            end
+        end
         if ntypes[v.etype] then
             ntypes[v.etype] = ntypes[v.etype] + 1
         else
@@ -1169,6 +1176,7 @@ function M.info()
         ["n refs"] = n,
         ["types"] = ntypes,
     }
+    if long.size > 0 then r["longest abstract"] = long end
     return r
 end
 

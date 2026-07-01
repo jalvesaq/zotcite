@@ -510,6 +510,7 @@ M.yaml_field = function(field, bn)
             else
                 -- string
                 value = lines[i]:match("^%s*" .. field .. ":%s*(.-)%s*$")
+                if not value then return nil end
                 value = get_yaml_string(value)
             end
             return value
