@@ -155,7 +155,8 @@ local get_md_citations = function(kz)
         while true do
             local s, e = v:find(kp, i)
             if not s or not e then break end
-            table.insert(ckeys, v:sub(s + 1, e))
+            local prevchar = s > 1 and v:sub(s - 1, s - 1) or ""
+            if not prevchar:find("[%w/]") then table.insert(ckeys, v:sub(s + 1, e)) end
             i = e + 1
         end
     end
