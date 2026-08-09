@@ -663,6 +663,10 @@ local function get_bib_ref(item, ktype)
         e["pages"] = string.gsub(e["pages"], "([0-9])-([0-9])", "%1--%2")
     end
     local dont = {
+        "added",
+        "citationKey",
+        "zotkey",
+        "citekey",
         "etype",
         "issued",
         "abstract",

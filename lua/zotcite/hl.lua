@@ -34,42 +34,17 @@ end
 
 local vt_citations_bib = function(lines, ns)
     local set_m = vim.api.nvim_buf_set_extmark
-    local key = nil
-    local citekey = nil
-    local zotkey = nil
-    local zlnum = 0
-    local clnum = 0
-    local hl = "WarningMsg"
     for k, v in pairs(lines) do
         if v:find("^@%S*{.*,%s*$") then
-            key = v:match("^@%S*{(.*),%s*$")
-        elseif v:find("^%s*zotkey%s*=%s{%S*},") then
-            zotkey = v:match("^%s*zotkey%s*=%s{(%S*)},")
-            zlnum = k
-        elseif v:find("^%s*citekey%s*=%s{%S*},") then
-            citekey = v:match("^%s*citekey%s*=%s{(%S*)},")
-            clnum = k
-        end
-        if key and citekey and zotkey then
-            local grd = require("zotcite.zotero").get_ref_data
-            local kt =
-                require("zotcite.config").get_key_type(vim.api.nvim_get_current_buf())
-            local r = kt == "zotero" and grd(zotkey) or grd(citekey)
-            if not r or r.zotkey ~= zotkey then
-                local s, e = lines[zlnum]:find(zotkey)
-                if s and e then
-                    set_m(0, ns, zlnum - 1, s - 1, { end_col = e, hl_group = hl })
+            local key = v:match("^@%S*{(.*),%s*$")
+            local s, e = lines[k]:find(key, 1, true)
+            if s and e then
+                if require("zotcite.zotero").get_ref_data(key) then
+                    set_m(0, ns, k - 1, s - 1, { end_col = e, hl_group = "Identifier" })
+                else
+                    set_m(0, ns, k - 1, s - 1, { end_col = e, hl_group = "WarningMsg" })
                 end
             end
-            if not r or r.citekey ~= citekey then
-                local s, e = lines[clnum]:find(citekey:gsub("%-", "%%-"))
-                if s and e then
-                    set_m(0, ns, clnum - 1, s - 1, { end_col = e, hl_group = hl })
-                end
-            end
-            citekey = nil
-            zotkey = nil
-            key = nil
         end
     end
 end
