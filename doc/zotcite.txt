@@ -385,8 +385,6 @@ or with `pip`:
 ------------------------------------------------------------------------------
 3.4. Syntax Highlighting                                *zotcite_highlighting*
 
-Syntax highlighting customization is done with Vim variables.
-
 								  *hl_cite_key*
 If you want to disable Zotcite's syntax highlighting of citation keys, put in
 your `config`:
@@ -456,9 +454,5 @@ If either the plugin does not work or you want easy access to the values of
 some internal variables, do the following command:
 >vim
  :Zinfo
-
-Note that, unless you are editing Quarto documents, Zotcite will not enable
-omni completion if any of the buffer's lines matches the regular pattern
-`^bibliography:.*\.bib` when the markdown file is read.
 
 			 vim:tw=78:ts=8:ft=help:norl
