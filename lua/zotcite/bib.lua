@@ -69,7 +69,12 @@ local find_tex_bib = function(dir)
     local tfr = require("zotcite.config").get_config().tex_fallback_root
     local fallback_root = vim.fn.fnamemodify(dir .. "/" .. tfr, ":p")
     local fallback_lines = read_lines(fallback_root)
-    bib = fallback_lines and (extract_addbibresource(fallback_lines) or extract_bibliography_texcmd(fallback_lines) or nil)
+    bib = fallback_lines
+        and (
+            extract_addbibresource(fallback_lines)
+            or extract_bibliography_texcmd(fallback_lines)
+            or nil
+        )
     if bib then
         local rootdir = vim.fn.fnamemodify(fallback_root, ":p:h")
         return resolve_path(rootdir, bib)

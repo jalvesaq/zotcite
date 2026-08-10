@@ -688,9 +688,7 @@ local function get_bib_ref(item, ktype)
                 break
             end
         end
-        if not skip then
-            table.insert(fkeys, f)
-        end
+        if not skip then table.insert(fkeys, f) end
     end
     table.sort(fkeys)
     for _, f in ipairs(fkeys) do
@@ -753,7 +751,9 @@ function M.update_bib(zkeys, bibf, ktype, verbose)
     f = io.open(bibf, "w")
     if f then
         local keys = {}
-        for k in pairs(bib) do table.insert(keys, k) end
+        for k in pairs(bib) do
+            table.insert(keys, k)
+        end
         table.sort(keys)
         for _, k in ipairs(keys) do
             f:write(table.concat(bib[k], "\n") .. "\n")
