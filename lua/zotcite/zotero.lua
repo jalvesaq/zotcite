@@ -679,7 +679,8 @@ local function get_bib_ref(item, ktype)
         table.insert(dont, v)
     end
 
-    for f, val in pairs(e) do
+    local fkeys = {}
+    for f, _ in pairs(e) do
         local skip = false
         for _, d in pairs(dont) do
             if f == d then
@@ -688,9 +689,14 @@ local function get_bib_ref(item, ktype)
             end
         end
         if not skip then
-            local v = tostring(val):gsub("\n", " ")
-            table.insert(ref, "  " .. f .. " = {" .. v .. "},")
+            table.insert(fkeys, f)
         end
+    end
+    table.sort(fkeys)
+    for _, f in ipairs(fkeys) do
+        local val = e[f]
+        local v = tostring(val):gsub("\n", " ")
+        table.insert(ref, "  " .. f .. " = {" .. v .. "},")
     end
     table.insert(ref, "}")
     table.insert(ref, "")
