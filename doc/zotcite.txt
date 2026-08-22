@@ -14,6 +14,7 @@
     3.5. File types                                        |zotcite_filetypes|
     3.6. Open attachment                              |zotcite_open_in_zotero|
     3.7. Show errors of command to open attachment   |zotcite_wait_attachment|
+    3.8. Custom Lua functions                                   |zotcite_hook|
  4. Troubleshooting                                  |zotcite_troubleshooting|
 
 
@@ -444,6 +445,16 @@ you may want to temporarily set `wait_attachment` as `true` in your `config`:
 Then, Neovim should freeze until the attachment is closed, and, if the PDF
 viewer finishes with non-zero status, anything output to the `stderr` will be
 displayed as a warning message.
+
+
+------------------------------------------------------------------------------
+3.8. Custom Lua functions                                       *zotcite_hook*
+
+If you want the execution of Lua functions to change Zotcite's behavior, set
+the `hook` config option. Currently, there is only one hook, `bib_ref` which
+changes the contents of bibliographic entries before the `bib` file is
+generated (please see an example at
+https://github.com/jalvesaq/zotcite/issues/154).
 
 
 ==============================================================================

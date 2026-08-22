@@ -45,6 +45,8 @@
 ---@field tex_fallback_root? string
 ---Look for bibliography files relative to the current file (default) or working directory
 ---@field bib_relative_to? string '"file_dir"' | '"working_dir"'
+---Functions to run on various events. Do `:help zotcite_hook` for more information.
+---@field hook? { bib_ref: fun(e: table): table }
 
 ---@type ZotciteUserOpts
 local config = {

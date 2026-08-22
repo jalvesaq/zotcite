@@ -589,9 +589,12 @@ end
 
 ---@param item table The Zotero item
 ---@param ktype string Type of citation key
+---@return table
 local function get_bib_ref(item, ktype)
     local e = {}
     e = vim.tbl_extend("force", e, item)
+
+    if config.hook and config.hook.bib_ref then e = config.hook.bib_ref(e) end
 
     -- Fix the type
     if e["etype"] and _zbt and _zbt[e["etype"]] then
