@@ -467,4 +467,10 @@ some internal variables, do the following command:
 >vim
  :Zinfo
 
+If you are editing Typst documents with `blink.cmp` as a completion plugin and
+have the `tinymist` language server installed, you may need to manually
+trigger the completion. The reason is that `tinymist` sets `@` and `<` as
+trigger characters, and `blink.cmp` does not reset the completion after each
+keystroke.
+
 			 vim:tw=78:ts=8:ft=help:norl
