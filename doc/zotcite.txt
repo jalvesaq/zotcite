@@ -454,7 +454,8 @@ If you want the execution of Lua functions to change Zotcite's behavior, set
 the `hook` config option. Currently, there is only one hook, `bib_ref` which
 changes the contents of bibliographic entries before the `bib` file is
 generated (please see an example at
-https://github.com/jalvesaq/zotcite/issues/154).
+https://github.com/jalvesaq/zotcite/issues/154 and analyse the code of the
+`get_bib_ref` function at `lua/zotcite/zotero.lua`).
 
 
 ==============================================================================
