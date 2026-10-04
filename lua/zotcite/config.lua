@@ -40,9 +40,12 @@
 ---Space separated list of title words to be
 ---excluded from citation keys
 ---@field banned_words? string
----Relative path from buffer directory to a fallback TeX root file
+---Fallback TeX root path relative to the buffer directory, or resolver function,
 ---used when no `% !TeX root = ...` is found
----@field tex_fallback_root? string
+---@field tex_fallback_root? string|fun(buffer_path: string): string?
+---Fallback Typst root path relative to the buffer directory, or resolver function,
+---used when no `#bibliography(...)` is found in the current buffer
+---@field typst_fallback_root? string|fun(buffer_path: string): string?
 ---Look for bibliography files relative to the current file (default) or working directory
 ---@field bib_relative_to? string '"file_dir"' | '"working_dir"'
 ---Functions to run on various events. Do `:help zotcite_hook` for more information.
@@ -69,6 +72,7 @@ local config = {
     python_path = "python3",
     pdf_extractor = "pdfnotes.py",
     tex_fallback_root = "../main.tex",
+    typst_fallback_root = "../main.typ",
     bib_relative_to = "file_dir",
 }
 

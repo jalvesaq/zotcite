@@ -191,10 +191,23 @@ When editing LaTeX or Rnoweb documents, Zotcite first tries to find
 `\addbibresource{...}` in the current buffer, then in the file pointed to by
 `% !TeX root = ...`. If both checks fail, Zotcite looks for a fallback root
 file at `bufdir .. "/" .. tex_fallback_root`. The default is `"../main.tex"`.
+Instead of a path, `tex_fallback_root` may be a function that receives the
+current buffer path and returns the root-file path.
 Example:
 >lua
  tex_fallback_root = "../main.tex"
 <
+							*typst_fallback_root*
+When editing a Typst file without a `#bibliography(...)` call in the current
+buffer, Zotcite looks for a fallback root file at
+`bufdir .. "/" .. typst_fallback_root`. Zotcite searches that file for
+`#bibliography(...)` and resolves the bibliography path relative to it. The
+default is `"../main.typ"`. Example:
+>lua
+ typst_fallback_root = "../main.typ"
+<
+Instead of a path, `typst_fallback_root` may be a function that receives the
+current buffer path and returns the root-file path.
 Zotcite adds its `scripts` directory to the environment variable `PATH`. If
 it's not correctly finding the directory, you can set it manually:
 >lua
